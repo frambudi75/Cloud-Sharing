@@ -90,15 +90,16 @@ class GuestController
             }
         }
 
-        // Catat download counter dan audit log
-        $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-        $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
-        ShareService::recordDownload((int) $share['share_id'], $ip, $ua, $token);
-
         $fullPath = StorageService::getPhysicalPath($share['storage_path'], $share['storage_filename']);
         $forceDownload = !isset($_GET['preview']) || (int) $_GET['preview'] !== 1;
 
-        if ($forceDownload) {
+        // Catat download counter dan webhook HANYA jika benar-benar diunduh (bukan pratinjau) dan bukan range continuation
+        $isRangeContinuation = isset($_SERVER['HTTP_RANGE']) && !str_starts_with($_SERVER['HTTP_RANGE'], 'bytes=0-');
+        if ($forceDownload && !$isRangeContinuation) {
+            $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+            $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
+            ShareService::recordDownload((int) $share['share_id'], $ip, $ua, $token);
+
             WebhookService::trigger(
                 'download',
                 'Berkas Diunduh (Tautan Tamu)',

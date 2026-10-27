@@ -9,7 +9,7 @@ $diskUsed = $metrics['disk_used'] ?? 0;
 $diskPercent = $metrics['disk_percent'] ?? 0;
 ?>
 
-<div class="min-h-screen relative flex flex-col bg-slate-50 dark:bg-slate-950 overflow-hidden" id="serverSettingsApp" data-csrf="<?= htmlspecialchars($csrfToken) ?>">
+<div class="min-h-full relative flex flex-col bg-slate-50 dark:bg-slate-950 overflow-x-hidden" id="serverSettingsApp" data-csrf="<?= htmlspecialchars($csrfToken) ?>">
 
     <!-- Subtle Ambient Background Grid (Anti-Slop Modern Texture) -->
     <div class="absolute inset-0 bg-[linear-gradient(to_right,#cbd5e1_1px,transparent_1px),linear-gradient(to_bottom,#cbd5e1_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_30%,#000_60%,transparent_100%)] opacity-35 pointer-events-none"></div>
@@ -38,23 +38,24 @@ $diskPercent = $metrics['disk_percent'] ?? 0;
                 </button>
 
                 <a href="?action=users" 
-                   class="inline-flex items-center h-9 px-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-xs transition-colors">
-                    <svg class="w-4 h-4 mr-1.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   class="inline-flex items-center h-9 px-3 sm:px-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-xs transition-colors" title="Kelola Pengguna">
+                    <svg class="w-4 h-4 sm:mr-1.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
                     </svg>
-                    Kelola Pengguna
+                    <span class="hidden sm:inline">Kelola Pengguna</span>
                 </a>
 
                 <a href="?action=drive" 
-                   class="inline-flex items-center h-9 px-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-xs transition-colors">
-                    <svg class="w-4 h-4 mr-1.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   class="inline-flex items-center h-9 px-3 sm:px-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-xs transition-colors" title="Buka Drive Saya">
+                    <svg class="w-4 h-4 sm:mr-1.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
                     </svg>
-                    Buka Drive Saya
+                    <span class="hidden sm:inline">Buka Drive Saya</span>
                 </a>
 
-                <a href="?action=logout" class="inline-flex items-center justify-center h-9 px-3 text-xs font-semibold rounded-xl text-slate-700 hover:text-red-600 hover:bg-red-50 border border-slate-200 hover:border-red-200 transition-colors">
-                    Keluar
+                <a href="?action=logout" class="inline-flex items-center justify-center h-9 px-3 text-xs font-semibold rounded-xl text-slate-700 hover:text-red-600 hover:bg-red-50 border border-slate-200 hover:border-red-200 transition-colors" title="Keluar">
+                    <span class="hidden sm:inline">Keluar</span>
+                    <svg class="w-4 h-4 sm:hidden text-slate-500 hover:text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                 </a>
             </div>
         </div>
@@ -284,6 +285,7 @@ $diskPercent = $metrics['disk_percent'] ?? 0;
 
             <!-- Form Body -->
             <form id="webhookForm" onsubmit="saveWebhook(event)" class="p-6 space-y-6">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
                 
                 <!-- Toggle Webhook Active -->
                 <div class="flex items-center justify-between p-4 rounded-xl bg-slate-50 border border-slate-200/70">

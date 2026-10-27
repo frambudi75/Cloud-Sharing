@@ -5,16 +5,41 @@ namespace App\Services;
 
 use App\Config\Database;
 use PDO;
+use Throwable;
 
 class SettingService
 {
     private static array $cache = [];
+    private static bool $tableEnsured = false;
+
+    private static function ensureTable(): void
+    {
+        if (self::$tableEnsured) {
+            return;
+        }
+
+        try {
+            $db = Database::getConnection();
+            $db->exec("
+                CREATE TABLE IF NOT EXISTS `system_settings` (
+                    `setting_key` VARCHAR(64) PRIMARY KEY,
+                    `setting_value` TEXT NULL,
+                    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            ");
+            self::$tableEnsured = true;
+        } catch (Throwable $e) {
+            // Fail gracefully
+        }
+    }
 
     public static function get(string $key, ?string $default = null): ?string
     {
         if (isset(self::$cache[$key])) {
             return self::$cache[$key];
         }
+
+        self::ensureTable();
 
         try {
             $db = Database::getConnection();
@@ -26,16 +51,18 @@ class SettingService
                 self::$cache[$key] = (string) $val;
                 return self::$cache[$key];
             }
-        } catch (\Throwable $e) {
-            // Fail gracefully jika tabel belum di-create
+        } catch (Throwable $e) {
+            // Table might still be initializing
         }
 
         return $default;
     }
 
-    public static function set(string $key, ?string $value): void
+    public static function set(string $key, ?string $value): bool
     {
         self::$cache[$key] = $value;
+        self::ensureTable();
+
         try {
             $db = Database::getConnection();
             $stmt = $db->prepare("
@@ -43,18 +70,19 @@ class SettingService
                 VALUES (:k, :v) 
                 ON DUPLICATE KEY UPDATE setting_value = :v_update
             ");
-            $stmt->execute([
+            return $stmt->execute([
                 ':k' => $key,
                 ':v' => $value,
                 ':v_update' => $value,
             ]);
-        } catch (\Throwable $e) {
-            // Log or ignore
+        } catch (Throwable $e) {
+            return false;
         }
     }
 
     public static function getAll(): array
     {
+        self::ensureTable();
         $settings = [];
         try {
             $db = Database::getConnection();
@@ -63,7 +91,7 @@ class SettingService
                 $settings[$r['setting_key']] = $r['setting_value'];
                 self::$cache[$r['setting_key']] = $r['setting_value'];
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
         }
         return $settings;
     }

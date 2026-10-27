@@ -102,9 +102,14 @@ class ServerController
             return;
         }
 
-        SettingService::set('webhook_enabled', $enabled);
-        SettingService::set('webhook_url', $url);
-        SettingService::set('webhook_events', json_encode($cleanEvents));
+        $s1 = SettingService::set('webhook_enabled', $enabled);
+        $s2 = SettingService::set('webhook_url', $url);
+        $s3 = SettingService::set('webhook_events', json_encode($cleanEvents));
+
+        if (!$s1 || !$s2 || !$s3) {
+            $this->respondJson(['success' => false, 'error' => 'Gagal menyimpan pengaturan ke database.']);
+            return;
+        }
 
         $this->respondJson(['success' => true, 'message' => 'Pengaturan webhook berhasil disimpan.']);
     }

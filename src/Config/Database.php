@@ -82,7 +82,7 @@ class Database
             }
 
             // Cek keberadaan tabel inti
-            $requiredTables = ['users', 'folders', 'files', 'share_links', 'download_logs', 'user_shares'];
+            $requiredTables = ['users', 'folders', 'files', 'share_links', 'download_logs', 'user_shares', 'system_settings'];
             $stmt = $pdo->query("SHOW TABLES");
             $existingTables = $stmt->fetchAll(PDO::FETCH_COLUMN);
 

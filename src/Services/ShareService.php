@@ -53,6 +53,10 @@ class ShareService
             }
         }
 
+        // Nonaktifkan tautan aktif sebelumnya untuk berkas ini agar limit & konfigurasi baru berlaku bersih
+        $deactivateStmt = $db->prepare("UPDATE share_links SET is_active = 0 WHERE file_id = :file_id AND user_id = :user_id");
+        $deactivateStmt->execute([':file_id' => $fileId, ':user_id' => $userId]);
+
         $insertStmt = $db->prepare("
             INSERT INTO share_links (
                 file_id, user_id, share_token, password_hash, 
