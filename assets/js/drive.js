@@ -453,14 +453,12 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // =========================================================================
-    // 8. Drag-and-Drop File Upload with Pulse Animation & Multi-File Support
+    // 8. Drag-and-Drop File Upload & Multi-File Support
     // =========================================================================
     const dropZone = document.getElementById('dropZone');
     const fileUploadInput = document.getElementById('fileUploadInput');
-    const uploadProgressContainer = document.getElementById('uploadProgressContainer');
-    const uploadProgressBar = document.getElementById('uploadProgressBar');
-    const uploadPercentage = document.getElementById('uploadPercentage');
-    const uploadFileName = document.getElementById('uploadFileName');
+    const globalDropOverlay = document.getElementById('globalDropOverlay');
+    let dragCounter = 0;
 
     if (fileUploadInput) {
         fileUploadInput.addEventListener('change', () => {
@@ -473,7 +471,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (dropZone) {
         dropZone.style.cursor = 'pointer';
-        dropZone.addEventListener('click', (e) => {
+        dropZone.addEventListener('click', () => {
             if (fileUploadInput) fileUploadInput.click();
         });
 
@@ -501,27 +499,41 @@ document.addEventListener('DOMContentLoaded', () => {
                 handleFiles(e.dataTransfer.files);
             }
         });
-
-        // Window-wide drag and drop support
-        window.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('dragover-active');
-        });
-
-        window.addEventListener('dragleave', (e) => {
-            if (e.clientX <= 0 || e.clientY <= 0) {
-                dropZone.classList.remove('dragover-active');
-            }
-        });
-
-        window.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('dragover-active');
-            if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-                handleFiles(e.dataTransfer.files);
-            }
-        });
     }
+
+    // Global Window-Wide Drag and Drop with Overlay
+    window.addEventListener('dragenter', (e) => {
+        e.preventDefault();
+        dragCounter++;
+        if (globalDropOverlay) globalDropOverlay.classList.remove('hidden');
+        if (dropZone) dropZone.classList.add('dragover-active');
+    });
+
+    window.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        if (globalDropOverlay && globalDropOverlay.classList.contains('hidden')) {
+            globalDropOverlay.classList.remove('hidden');
+        }
+    });
+
+    window.addEventListener('dragleave', (e) => {
+        dragCounter--;
+        if (dragCounter <= 0) {
+            dragCounter = 0;
+            if (globalDropOverlay) globalDropOverlay.classList.add('hidden');
+            if (dropZone) dropZone.classList.remove('dragover-active');
+        }
+    });
+
+    window.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dragCounter = 0;
+        if (globalDropOverlay) globalDropOverlay.classList.add('hidden');
+        if (dropZone) dropZone.classList.remove('dragover-active');
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            handleFiles(e.dataTransfer.files);
+        }
+    });
 
     async function handleFiles(fileList) {
         if (!fileList || fileList.length === 0) return;
@@ -529,21 +541,52 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let i = 0; i < files.length; i++) {
             await uploadSingleFile(files[i], i + 1, files.length);
         }
-        window.location.reload();
+        showToast('Berkas berhasil diunggah.');
+        setTimeout(() => {
+            window.location.reload();
+        }, 500);
+    }
+
+    function getOrCreateUploadDock() {
+        let dock = document.getElementById('uploadDock');
+        if (!dock) {
+            dock = document.createElement('div');
+            dock.id = 'uploadDock';
+            dock.className = 'fixed bottom-5 right-5 z-50 w-80 sm:w-96 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden';
+            dock.innerHTML = `
+                <div class="h-11 px-4 bg-slate-900 text-white flex items-center justify-between text-xs font-semibold">
+                    <span id="uploadDockTitle">Mengunggah berkas...</span>
+                    <button type="button" onclick="this.closest('#uploadDock').remove()" class="text-slate-400 hover:text-white">&times;</button>
+                </div>
+                <div class="p-4 space-y-2.5">
+                    <div class="flex items-center justify-between text-xs">
+                        <span id="uploadDockFileName" class="text-slate-800 font-medium truncate max-w-[220px]">Nama Berkas</span>
+                        <span id="uploadDockPercent" class="text-brand-600 font-mono font-bold">0%</span>
+                    </div>
+                    <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                        <div id="uploadDockBar" class="h-2 rounded-full bg-brand-600 transition-all duration-150" style="width: 0%"></div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(dock);
+        }
+        return dock;
     }
 
     function uploadSingleFile(file, currentIndex, totalFiles) {
         return new Promise((resolve) => {
-            if (!uploadProgressContainer) {
-                resolve();
-                return;
-            }
+            const dock = getOrCreateUploadDock();
+            dock.classList.remove('hidden');
 
-            uploadProgressContainer.classList.remove('hidden');
-            const prefix = totalFiles > 1 ? `(${currentIndex}/${totalFiles}) ` : '';
-            uploadFileName.textContent = prefix + file.name;
-            uploadProgressBar.style.width = '0%';
-            uploadPercentage.textContent = '0%';
+            const titleEl = dock.querySelector('#uploadDockTitle');
+            const fileEl = dock.querySelector('#uploadDockFileName');
+            const percentEl = dock.querySelector('#uploadDockPercent');
+            const barEl = dock.querySelector('#uploadDockBar');
+
+            if (titleEl) titleEl.textContent = `Mengunggah (${currentIndex}/${totalFiles})...`;
+            if (fileEl) fileEl.textContent = file.name;
+            if (percentEl) percentEl.textContent = '0%';
+            if (barEl) barEl.style.width = '0%';
 
             const formData = new FormData();
             formData.append('csrf_token', csrfToken);
@@ -555,12 +598,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const xhr = new XMLHttpRequest();
             xhr.open('POST', '?action=upload', true);
             xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            xhr.setRequestHeader('X-CSRF-TOKEN', csrfToken);
 
             xhr.upload.onprogress = (e) => {
                 if (e.lengthComputable) {
                     const percentComplete = Math.round((e.loaded / e.total) * 100);
-                    uploadProgressBar.style.width = percentComplete + '%';
-                    uploadPercentage.textContent = percentComplete + '%';
+                    if (barEl) barEl.style.width = percentComplete + '%';
+                    if (percentEl) percentEl.textContent = percentComplete + '%';
                 }
             };
 
@@ -894,51 +938,124 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // =========================================================================
-    // 11. In-Browser File Preview Modal
+    // 11. File Detail & Preview Modal
     // =========================================================================
-    window.previewFile = function (fileId, fileName, mimeType) {
-        const modal = document.getElementById('previewModal');
-        const title = document.getElementById('previewModalTitle');
-        const body = document.getElementById('previewModalBody');
-
-        if (!modal || !title || !body) return;
-
-        title.textContent = `Pratinjau: ${fileName}`;
-        body.innerHTML = '';
-
-        const previewUrl = `?action=download_direct&file_id=${fileId}&preview=1`;
-
-        if (mimeType.startsWith('image/')) {
-            const img = document.createElement('img');
-            img.src = previewUrl;
-            img.alt = fileName;
-            img.className = 'max-w-full max-h-[70vh] rounded-lg shadow-sm object-contain';
-            body.appendChild(img);
-        } else if (mimeType === 'application/pdf') {
-            const iframe = document.createElement('iframe');
-            iframe.src = previewUrl;
-            iframe.className = 'w-full h-[70vh] rounded-lg border-0';
-            body.appendChild(iframe);
-        } else if (mimeType.startsWith('video/')) {
-            const video = document.createElement('video');
-            video.src = previewUrl;
-            video.controls = true;
-            video.className = 'max-w-full max-h-[70vh] rounded-lg';
-            body.appendChild(video);
-        } else if (mimeType.startsWith('audio/')) {
-            const audio = document.createElement('audio');
-            audio.src = previewUrl;
-            audio.controls = true;
-            audio.className = 'w-full max-w-md';
-            body.appendChild(audio);
-        } else {
-            const iframe = document.createElement('iframe');
-            iframe.src = previewUrl;
-            iframe.className = 'w-full h-[70vh] bg-white rounded-lg p-4 font-mono text-xs';
-            body.appendChild(iframe);
+    window.openFileDetail = function (fileData) {
+        closeContextMenu();
+        const modal = document.getElementById('fileDetailModal');
+        if (!modal) {
+            window.location.href = `?action=download_direct&file_id=${fileData.id}&preview=1`;
+            return;
         }
 
-        openModal('previewModal');
+        const nameEl = document.getElementById('detailFileName');
+        const badgeEl = document.getElementById('detailFileBadge');
+        const sizeEl = document.getElementById('detailFileSize');
+        const mimeEl = document.getElementById('detailFileMime');
+        const dateEl = document.getElementById('detailFileDate');
+        const shareStatusEl = document.getElementById('detailFileShareStatus');
+        const previewContainer = document.getElementById('detailPreviewContainer');
+
+        if (nameEl) nameEl.textContent = fileData.name;
+        if (badgeEl) {
+            badgeEl.textContent = fileData.badge || 'FILE';
+            badgeEl.className = `inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold ${fileData.bg || 'bg-slate-100 text-slate-700'}`;
+        }
+        if (sizeEl) sizeEl.textContent = fileData.formatted_size;
+        if (mimeEl) mimeEl.textContent = fileData.mime;
+        if (dateEl) dateEl.textContent = fileData.created_at;
+        if (shareStatusEl) {
+            if (fileData.is_shared) {
+                shareStatusEl.innerHTML = `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Publik</span>`;
+            } else if (fileData.user_shares_count > 0) {
+                shareStatusEl.innerHTML = `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">${fileData.user_shares_count} Pengguna</span>`;
+            } else {
+                shareStatusEl.innerHTML = `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-slate-100 text-slate-500">Pribadi</span>`;
+            }
+        }
+
+        if (previewContainer) {
+            previewContainer.innerHTML = '';
+            const previewUrl = `?action=download_direct&file_id=${fileData.id}&preview=1`;
+
+            if (fileData.mime && fileData.mime.startsWith('image/')) {
+                const img = document.createElement('img');
+                img.src = previewUrl;
+                img.alt = fileData.name;
+                img.className = 'max-h-[50vh] max-w-full rounded-xl object-contain shadow-xs mx-auto';
+                previewContainer.appendChild(img);
+            } else if (fileData.mime === 'application/pdf') {
+                const iframe = document.createElement('iframe');
+                iframe.src = previewUrl;
+                iframe.className = 'w-full h-[50vh] rounded-xl border border-slate-200';
+                previewContainer.appendChild(iframe);
+            } else if (fileData.mime && fileData.mime.startsWith('video/')) {
+                const video = document.createElement('video');
+                video.src = previewUrl;
+                video.controls = true;
+                video.className = 'max-h-[50vh] max-w-full rounded-xl shadow-xs mx-auto';
+                previewContainer.appendChild(video);
+            } else if (fileData.mime && fileData.mime.startsWith('audio/')) {
+                const audioBox = document.createElement('div');
+                audioBox.className = 'p-6 bg-white border border-slate-200 rounded-xl flex flex-col items-center justify-center w-full max-w-md mx-auto';
+                audioBox.innerHTML = `
+                    <div class="h-14 w-14 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
+                        <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 20 20"><path d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z"></path></svg>
+                    </div>
+                    <audio controls class="w-full"><source src="${previewUrl}"></audio>
+                `;
+                previewContainer.appendChild(audioBox);
+            } else {
+                const emptyBox = document.createElement('div');
+                emptyBox.className = 'p-8 text-center text-slate-400';
+                emptyBox.innerHTML = `
+                    <div class="h-16 w-16 mx-auto mb-2.5 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center">
+                        <span class="text-base font-bold">${fileData.badge || 'FILE'}</span>
+                    </div>
+                    <h4 class="text-xs font-semibold text-slate-700">${fileData.name}</h4>
+                    <p class="text-xs text-slate-400 mt-1 max-w-xs mx-auto">Pratinjau langsung tidak tersedia untuk format ini. Anda dapat mengunduhnya secara langsung.</p>
+                `;
+                previewContainer.appendChild(emptyBox);
+            }
+        }
+
+        const btnDownload = document.getElementById('detailBtnDownload');
+        const btnShare = document.getElementById('detailBtnShare');
+        const btnDelete = document.getElementById('detailBtnDelete');
+
+        if (btnDownload) {
+            btnDownload.href = `?action=download_direct&file_id=${fileData.id}`;
+        }
+        if (btnShare) {
+            btnShare.onclick = () => {
+                closeModal('fileDetailModal');
+                openShareModal(fileData.id, fileData.name, fileData.share_token || '');
+            };
+        }
+        if (btnDelete) {
+            btnDelete.onclick = () => {
+                closeModal('fileDetailModal');
+                deleteFile(fileData.id, fileData.name);
+            };
+        }
+
+        openModal('fileDetailModal');
+    };
+
+    window.previewFile = function (fileId, fileName, mimeType) {
+        window.openFileDetail({
+            id: fileId,
+            name: fileName,
+            mime: mimeType,
+            formatted_size: '-',
+            size: 0,
+            badge: 'FILE',
+            bg: 'bg-slate-100 text-slate-700',
+            created_at: '-',
+            is_shared: false,
+            share_token: '',
+            user_shares_count: 0
+        });
     };
 
     // =========================================================================

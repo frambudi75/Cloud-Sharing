@@ -69,6 +69,17 @@ $totalShared = $totalSharedCount ?? 0;
      data-folder-id="<?= htmlspecialchars((string)($folderId ?? '')) ?>"
      data-active-tab="<?= htmlspecialchars($activeTab) ?>">
 
+    <!-- Global Drag & Drop Overlay -->
+    <div id="globalDropOverlay" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex flex-col items-center justify-center p-6 border-4 border-dashed border-brand-400 pointer-events-none transition-all">
+        <div class="h-20 w-20 rounded-2xl bg-brand-500/20 text-brand-400 flex items-center justify-center mb-4 animate-bounce">
+            <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+            </svg>
+        </div>
+        <h2 class="text-2xl font-bold text-white tracking-tight">Lepaskan Berkas di Sini</h2>
+        <p class="text-xs text-slate-300 mt-1">Berkas akan langsung diunggah ke folder aktif</p>
+    </div>
+
     <!-- Top Navigation Bar (Mockup Aligned) -->
     <header class="bg-white/95 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-30 shadow-xs">
         <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -578,15 +589,29 @@ $totalShared = $totalSharedCount ?? 0;
                                 </div>
                             <?php endforeach; ?>
 
-                            <!-- 2. File Cards (Mockup Aligned: Big Icon, Three-dot Menu, Size & Date) -->
+                            <!-- 2. File Cards (Clean, Accessible Cards with Thumbnails & Options) -->
                             <?php foreach ($files as $file): ?>
                                 <?php
                                 $typeInfo = StorageService::getFileTypeInfo($file['mime_type'], $file['original_name']);
                                 $hasPublicShare = !empty($file['is_shared']) && (int)$file['is_shared'] === 1;
                                 $directShareCount = (int)($file['user_shares_count'] ?? 0);
                                 $ext = strtolower(pathinfo($file['original_name'], PATHINFO_EXTENSION));
+                                $fileJson = htmlspecialchars(json_encode([
+                                    'id' => (int)$file['id'],
+                                    'name' => $file['original_name'],
+                                    'size' => (int)$file['file_size'],
+                                    'formatted_size' => StorageService::formatBytes((int)$file['file_size']),
+                                    'mime' => $file['mime_type'],
+                                    'type' => $typeInfo['type'],
+                                    'badge' => $typeInfo['badge'],
+                                    'bg' => $typeInfo['bg'],
+                                    'created_at' => date('d M Y, H:i', strtotime($file['created_at'])),
+                                    'is_shared' => $hasPublicShare,
+                                    'share_token' => $file['share_token'] ?? '',
+                                    'user_shares_count' => $directShareCount,
+                                ]), ENT_QUOTES, 'UTF-8');
                                 ?>
-                                <div class="file-card group relative bg-white border border-slate-200/80 hover:border-brand-300 hover:shadow-lg hover:-translate-y-0.5 rounded-2xl p-4 flex flex-col justify-between transition-all duration-200 animate-item-in"
+                                <div class="file-card group relative bg-white border border-slate-200/90 hover:border-brand-400 hover:shadow-md rounded-2xl p-3.5 flex flex-col justify-between transition-all duration-150 animate-item-in"
                                      data-id="<?= $file['id'] ?>"
                                      data-filename="<?= htmlspecialchars(strtolower($file['original_name'])) ?>"
                                      data-rawname="<?= htmlspecialchars($file['original_name']) ?>"
@@ -596,98 +621,87 @@ $totalShared = $totalSharedCount ?? 0;
                                      data-sharetoken="<?= htmlspecialchars($file['share_token'] ?? '') ?>"
                                      oncontextmenu="handleFileContextMenu(event, <?= $file['id'] ?>, '<?= htmlspecialchars(addslashes($file['original_name'])) ?>', '<?= htmlspecialchars($file['mime_type']) ?>', '<?= htmlspecialchars($file['share_token'] ?? '') ?>')">
                                     
-                                    <!-- Card Header: Checkbox & Three-dot Actions Menu -->
-                                    <div class="flex items-center justify-between">
+                                    <!-- Card Header: Checkbox & Actions Dropdown -->
+                                    <div class="flex items-center justify-between mb-2">
                                         <input type="checkbox" 
                                                class="file-select-checkbox h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer"
                                                data-id="<?= $file['id'] ?>" 
                                                onchange="onFileCheckboxChange(this)"
                                                onclick="event.stopPropagation()">
 
-                                        <!-- Three-dot menu button & popover (Mockup Aligned) -->
                                         <div class="relative">
                                             <button type="button" 
                                                     onclick="toggleCardMenu(event, 'cardMenu_<?= $file['id'] ?>')" 
-                                                    class="h-7 w-7 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors">
+                                                    class="h-7 w-7 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors"
+                                                    title="Opsi berkas">
                                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                                     <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
                                                 </svg>
                                             </button>
 
-                                            <!-- In-Card Action Dropdown (Mockup Aligned) -->
-                                            <div id="cardMenu_<?= $file['id'] ?>" class="card-action-menu hidden absolute right-0 top-8 z-30 w-36 bg-white rounded-xl border border-slate-200 shadow-xl py-1 text-xs font-semibold text-slate-700 animate-item-in">
-                                                <button type="button" onclick="previewFile(<?= $file['id'] ?>, '<?= htmlspecialchars(addslashes($file['original_name'])) ?>', '<?= htmlspecialchars($file['mime_type']) ?>')" 
-                                                        class="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center">
-                                                    <svg class="w-3.5 h-3.5 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                                                    Pratinjau
-                                                </button>
-                                                <button type="button" onclick="copyShareUrl('<?= htmlspecialchars($file['share_token'] ?? '') ?>', this)" 
-                                                        class="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center">
-                                                    <svg class="w-3.5 h-3.5 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101"></path></svg>
-                                                    Salin Link
-                                                </button>
-                                                <button type="button" onclick="openShareModal(<?= $file['id'] ?>, '<?= htmlspecialchars(addslashes($file['original_name'])) ?>', '<?= htmlspecialchars($file['share_token'] ?? '') ?>')" 
-                                                        class="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center">
-                                                    <svg class="w-3.5 h-3.5 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316"></path></svg>
-                                                    Bagikan
+                                            <!-- In-Card Action Dropdown -->
+                                            <div id="cardMenu_<?= $file['id'] ?>" class="card-action-menu hidden absolute right-0 top-8 z-40 w-44 bg-white rounded-xl border border-slate-200 shadow-xl py-1 text-xs font-semibold text-slate-700">
+                                                <button type="button" onclick="openFileDetail(<?= $fileJson ?>)" 
+                                                        class="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center text-slate-700">
+                                                    <svg class="w-4 h-4 mr-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                                    Detail & Pratinjau
                                                 </button>
                                                 <a href="?action=download_direct&file_id=<?= $file['id'] ?>" 
-                                                   class="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center text-slate-700">
-                                                    <svg class="w-3.5 h-3.5 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                                                    Download
+                                                   class="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center text-slate-700">
+                                                    <svg class="w-4 h-4 mr-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                                    Unduh Berkas
                                                 </a>
+                                                <button type="button" onclick="openShareModal(<?= $file['id'] ?>, '<?= htmlspecialchars(addslashes($file['original_name'])) ?>', '<?= htmlspecialchars($file['share_token'] ?? '') ?>')" 
+                                                        class="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center text-slate-700">
+                                                    <svg class="w-4 h-4 mr-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 12a3 3 0 100-6 3 3 0 000 6zM18 6a3 3 0 100-6 3 3 0 000 6zM18 20a3 3 0 100-6 3 3 0 000 6z"></path></svg>
+                                                    Bagikan
+                                                </button>
+                                                <?php if ($hasPublicShare): ?>
+                                                    <button type="button" onclick="copyShareUrl('<?= htmlspecialchars($file['share_token']) ?>', this)" 
+                                                            class="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center text-emerald-600">
+                                                        <svg class="w-4 h-4 mr-2.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101"></path></svg>
+                                                        Salin Link
+                                                    </button>
+                                                <?php endif; ?>
                                                 <div class="my-1 border-t border-slate-100"></div>
                                                 <button type="button" onclick="deleteFile(<?= $file['id'] ?>, '<?= htmlspecialchars(addslashes($file['original_name'])) ?>')" 
-                                                        class="w-full text-left px-3 py-1.5 hover:bg-red-50 text-red-600 flex items-center">
-                                                    <svg class="w-3.5 h-3.5 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                        class="w-full text-left px-3.5 py-2 hover:bg-rose-50 text-rose-600 flex items-center">
+                                                    <svg class="w-4 h-4 mr-2.5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                                     Hapus
                                                 </button>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <!-- Big Centered Distinctive File Icon (Mockup Aligned) -->
-                                    <div class="my-3 flex flex-col items-center text-center cursor-pointer" 
-                                         onclick="previewFile(<?= $file['id'] ?>, '<?= htmlspecialchars(addslashes($file['original_name'])) ?>', '<?= htmlspecialchars($file['mime_type']) ?>')">
-                                        
-                                        <?php if ($typeInfo['type'] === 'pdf'): ?>
-                                            <div class="h-16 w-16 rounded-2xl bg-red-500 text-white flex flex-col items-center justify-center font-black shadow-sm group-hover:scale-105 transition-transform">
-                                                <svg class="w-6 h-6 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                                                <span class="text-[9px] tracking-wider font-extrabold leading-none">PDF</span>
-                                            </div>
-                                        <?php elseif ($typeInfo['type'] === 'image'): ?>
-                                            <div class="h-16 w-16 rounded-2xl bg-sky-400 text-white flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
-                                                <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"></path></svg>
-                                            </div>
-                                        <?php elseif ($typeInfo['type'] === 'video'): ?>
-                                            <div class="h-16 w-16 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
-                                                <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path></svg>
-                                            </div>
-                                        <?php elseif ($typeInfo['type'] === 'archive'): ?>
-                                            <div class="h-16 w-16 rounded-2xl bg-purple-500 text-white flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
-                                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
-                                            </div>
-                                        <?php elseif (in_array($ext, ['xls', 'xlsx', 'csv'])): ?>
-                                            <div class="h-16 w-16 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
-                                                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"></path></svg>
-                                            </div>
-                                        <?php elseif ($typeInfo['type'] === 'document'): ?>
-                                            <div class="h-16 w-16 rounded-2xl bg-blue-500 text-white flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
-                                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                    <!-- Card Body: Thumbnail or Icon Box -->
+                                    <div class="cursor-pointer" onclick="openFileDetail(<?= $fileJson ?>)">
+                                        <?php if ($typeInfo['type'] === 'image'): ?>
+                                            <div class="h-28 w-full rounded-xl bg-slate-100 overflow-hidden relative mb-2.5 flex items-center justify-center border border-slate-200/60 group/thumb">
+                                                <img src="?action=download_direct&file_id=<?= $file['id'] ?>&thumb=1" 
+                                                     alt="<?= htmlspecialchars($file['original_name']) ?>" 
+                                                     class="h-full w-full object-cover group-hover/thumb:scale-105 transition-transform duration-200" 
+                                                     loading="lazy" 
+                                                     onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');">
+                                                <div class="hidden h-full w-full flex items-center justify-center bg-sky-50 text-sky-500">
+                                                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"></path></svg>
+                                                </div>
                                             </div>
                                         <?php else: ?>
-                                            <div class="h-16 w-16 rounded-2xl bg-slate-200 text-slate-600 flex items-center justify-center group-hover:scale-105 transition-transform">
-                                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path></svg>
+                                            <div class="h-28 w-full rounded-xl bg-slate-50 border border-slate-100 mb-2.5 flex flex-col items-center justify-center group-hover:bg-brand-50/30 transition-colors">
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold <?= $typeInfo['bg'] ?> mb-1.5">
+                                                    <?= $typeInfo['badge'] ?>
+                                                </span>
+                                                <svg class="w-8 h-8 text-slate-400 group-hover:text-brand-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                                             </div>
                                         <?php endif; ?>
 
-                                        <h3 class="text-xs font-bold text-slate-900 mt-2 truncate w-full group-hover:text-brand-600" title="<?= htmlspecialchars($file['original_name']) ?>">
+                                        <h3 class="text-xs font-semibold text-slate-900 truncate w-full group-hover:text-brand-600 mb-1" title="<?= htmlspecialchars($file['original_name']) ?>">
                                             <?= htmlspecialchars($file['original_name']) ?>
                                         </h3>
                                     </div>
 
-                                    <!-- Bottom Meta: Size & Date (Mockup Aligned) -->
-                                    <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400 font-mono">
+                                    <!-- Bottom Meta: Size & Date -->
+                                    <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-mono">
                                         <span><?= StorageService::formatBytes((int)$file['file_size']) ?></span>
                                         <span>•</span>
                                         <span><?= date('d M Y', strtotime($file['created_at'])) ?></span>
@@ -715,7 +729,25 @@ $totalShared = $totalSharedCount ?? 0;
                                     </thead>
                                     <tbody class="divide-y divide-slate-100 text-sm">
                                         <?php foreach ($files as $file): ?>
-                                            <?php $typeInfo = StorageService::getFileTypeInfo($file['mime_type'], $file['original_name']); ?>
+                                            <?php 
+                                            $typeInfo = StorageService::getFileTypeInfo($file['mime_type'], $file['original_name']); 
+                                            $hasPublicShare = !empty($file['is_shared']) && (int)$file['is_shared'] === 1;
+                                            $directShareCount = (int)($file['user_shares_count'] ?? 0);
+                                            $fileJson = htmlspecialchars(json_encode([
+                                                'id' => (int)$file['id'],
+                                                'name' => $file['original_name'],
+                                                'size' => (int)$file['file_size'],
+                                                'formatted_size' => StorageService::formatBytes((int)$file['file_size']),
+                                                'mime' => $file['mime_type'],
+                                                'type' => $typeInfo['type'],
+                                                'badge' => $typeInfo['badge'],
+                                                'bg' => $typeInfo['bg'],
+                                                'created_at' => date('d M Y, H:i', strtotime($file['created_at'])),
+                                                'is_shared' => $hasPublicShare,
+                                                'share_token' => $file['share_token'] ?? '',
+                                                'user_shares_count' => $directShareCount,
+                                            ]), ENT_QUOTES, 'UTF-8');
+                                            ?>
                                             <tr class="file-row hover:bg-slate-50/70 transition-colors" 
                                                 data-id="<?= $file['id'] ?>"
                                                 data-filename="<?= htmlspecialchars(strtolower($file['original_name'])) ?>"
@@ -740,7 +772,7 @@ $totalShared = $totalSharedCount ?? 0;
                                                     <?= StorageService::formatBytes((int)$file['file_size']) ?>
                                                 </td>
                                                 <td class="py-3 px-4 whitespace-nowrap">
-                                                    <?php if (!empty($file['is_shared']) && (int)$file['is_shared'] === 1): ?>
+                                                    <?php if ($hasPublicShare): ?>
                                                         <button type="button" onclick="copyShareUrl('<?= htmlspecialchars($file['share_token']) ?>', this)" 
                                                                 class="copy-btn inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 transition-all">
                                                             Salin Link
@@ -752,21 +784,42 @@ $totalShared = $totalSharedCount ?? 0;
                                                 <td class="py-3 px-4 text-xs text-slate-500">
                                                     <?= date('d M Y, H:i', strtotime($file['created_at'])) ?>
                                                 </td>
-                                                <td class="py-3 px-4 text-right whitespace-nowrap space-x-1">
-                                                    <button type="button" onclick="previewFile(<?= $file['id'] ?>, '<?= htmlspecialchars(addslashes($file['original_name'])) ?>', '<?= htmlspecialchars($file['mime_type']) ?>')" 
-                                                            class="h-7 w-7 rounded text-slate-500 hover:text-brand-600" title="Pratinjau">
-                                                        <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                                                    </button>
-                                                    <button type="button" onclick="openShareModal(<?= $file['id'] ?>, '<?= htmlspecialchars(addslashes($file['original_name'])) ?>', '<?= htmlspecialchars($file['share_token'] ?? '') ?>')" 
-                                                            class="h-7 w-7 rounded text-slate-500 hover:text-emerald-600" title="Bagikan">
-                                                        <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316"></path></svg>
-                                                    </button>
-                                                    <a href="?action=download_direct&file_id=<?= $file['id'] ?>" class="h-7 w-7 rounded text-slate-500 hover:text-brand-600 inline-flex items-center justify-center" title="Unduh">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                                                    </a>
-                                                    <button type="button" onclick="deleteFile(<?= $file['id'] ?>, '<?= htmlspecialchars(addslashes($file['original_name'])) ?>')" class="h-7 w-7 rounded text-slate-500 hover:text-red-600" title="Hapus">
-                                                        <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                                    </button>
+                                                <td class="py-3 px-4 text-right whitespace-nowrap">
+                                                    <div class="inline-flex items-center space-x-1.5 justify-end">
+                                                        <button type="button" 
+                                                                onclick="openFileDetail(<?= $fileJson ?>)" 
+                                                                class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-brand-50 text-slate-600 hover:text-brand-600 border border-slate-200/80 inline-flex items-center justify-center transition-all duration-150 shadow-2xs" 
+                                                                title="Detail & Pratinjau">
+                                                            <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                                            </svg>
+                                                        </button>
+                                                        <button type="button" 
+                                                                onclick="openShareModal(<?= $file['id'] ?>, '<?= htmlspecialchars(addslashes($file['original_name'])) ?>', '<?= htmlspecialchars($file['share_token'] ?? '') ?>')" 
+                                                                class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-emerald-50 text-slate-600 hover:text-emerald-600 border border-slate-200/80 inline-flex items-center justify-center transition-all duration-150 shadow-2xs" 
+                                                                title="Bagikan">
+                                                            <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316"></path>
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 12a3 3 0 100-6 3 3 0 000 6zM18 6a3 3 0 100-6 3 3 0 000 6zM18 20a3 3 0 100-6 3 3 0 000 6z"></path>
+                                                            </svg>
+                                                        </button>
+                                                        <a href="?action=download_direct&file_id=<?= $file['id'] ?>" 
+                                                           class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 border border-slate-200/80 inline-flex items-center justify-center transition-all duration-150 shadow-2xs" 
+                                                           title="Unduh">
+                                                            <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                                            </svg>
+                                                        </a>
+                                                        <button type="button" 
+                                                                onclick="deleteFile(<?= $file['id'] ?>, '<?= htmlspecialchars(addslashes($file['original_name'])) ?>')" 
+                                                                class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200/80 inline-flex items-center justify-center transition-all duration-150 shadow-2xs" 
+                                                                title="Hapus">
+                                                            <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                                            </svg>
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         <?php endforeach; ?>
@@ -986,16 +1039,65 @@ $totalShared = $totalSharedCount ?? 0;
         </div>
     </div>
 
-    <!-- Modal 3: File Previewer Modal -->
-    <div id="previewModal" class="hidden fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-item-in">
+    <!-- Modal 3: File Detail & Preview Modal -->
+    <div id="fileDetailModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden animate-item-in">
+            <!-- Header -->
             <div class="h-14 px-6 border-b border-slate-200 flex items-center justify-between bg-slate-50">
-                <span class="font-bold text-slate-800 text-sm truncate" id="previewModalTitle">Pratinjau Berkas</span>
-                <button type="button" onclick="closeModal('previewModal')" class="h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition-colors">
+                <div class="flex items-center space-x-2.5 truncate max-w-[80%]">
+                    <span id="detailFileBadge" class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-700">FILE</span>
+                    <h3 class="font-bold text-slate-800 text-sm truncate" id="detailFileName">Nama Berkas</h3>
+                </div>
+                <button type="button" onclick="closeModal('fileDetailModal')" class="h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
-            <div class="flex-1 p-6 overflow-auto flex items-center justify-center bg-slate-100" id="previewModalBody"></div>
+
+            <!-- Content Area (Preview & Meta) -->
+            <div class="flex-1 overflow-y-auto p-6 space-y-6">
+                <!-- Preview Canvas -->
+                <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 flex items-center justify-center min-h-[220px]" id="detailPreviewContainer">
+                    <!-- Dynamic preview loaded by JS -->
+                </div>
+
+                <!-- File Metadata Grid -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-xl bg-slate-50/70 border border-slate-200 text-xs">
+                    <div>
+                        <span class="text-slate-400 block mb-0.5">Ukuran Berkas</span>
+                        <span class="font-semibold text-slate-800 font-mono" id="detailFileSize">-</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block mb-0.5">Tipe Konten</span>
+                        <span class="font-semibold text-slate-800 truncate block font-mono" id="detailFileMime">-</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block mb-0.5">Tanggal Diunggah</span>
+                        <span class="font-semibold text-slate-800" id="detailFileDate">-</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block mb-0.5">Status Berbagi</span>
+                        <span id="detailFileShareStatus">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Action Buttons -->
+            <div class="h-16 px-6 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
+                <button type="button" id="detailBtnDelete" class="inline-flex items-center px-3.5 py-2 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 border border-rose-200 transition-colors">
+                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    Hapus
+                </button>
+                <div class="flex items-center space-x-2">
+                    <button type="button" id="detailBtnShare" class="inline-flex items-center px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition-colors">
+                        <svg class="w-4 h-4 mr-1.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 12a3 3 0 100-6 3 3 0 000 6zM18 6a3 3 0 100-6 3 3 0 000 6zM18 20a3 3 0 100-6 3 3 0 000 6z"></path></svg>
+                        Bagikan
+                    </button>
+                    <a id="detailBtnDownload" href="#" class="inline-flex items-center px-4 py-2 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 shadow-xs transition-colors">
+                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        Unduh Berkas
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 

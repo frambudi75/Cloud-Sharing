@@ -11,16 +11,28 @@
     <link rel="alternate icon" href="favicon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="assets/img/favicon.svg">
 
+    <!-- Google Fonts: Plus Jakarta Sans for crisp modern typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
     <!-- Tailwind CSS CDN untuk standalone & XAMPP native -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
                     colors: {
                         brand: {
                             50: '#eef2ff',
                             100: '#e0e7ff',
+                            200: '#c7d2fe',
+                            300: '#a5b4fc',
+                            400: '#818cf8',
                             500: '#6366f1',
                             600: '#4f46e5',
                             700: '#4338ca',
@@ -33,9 +45,12 @@
         }
     </script>
     <style>
-        /* Antislop Focus & Utility styles */
+        /* Modern Typography & Focus */
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
         *:focus-visible {
-            outline: 2px solid #4f46e5;
+            outline: 2px solid #6366f1;
             outline-offset: 2px;
         }
         /* Custom scrollbar for clean aesthetic */
@@ -53,6 +68,16 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
         }
+        /* Card & Dropzone Animations */
+        @keyframes subtlePulse {
+            0%, 100% { border-color: #a5b4fc; box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.15); }
+            50% { border-color: #6366f1; box-shadow: 0 0 0 6px rgba(99, 102, 241, 0.1); }
+        }
+        .dragover-active {
+            border-color: #4f46e5 !important;
+            background-color: #eef2ff !important;
+            animation: subtlePulse 1.5s ease-in-out infinite;
+        }
     </style>
 </head>
-<body class="h-full text-slate-800 antialiased flex flex-col font-sans">
+<body class="h-full text-slate-800 antialiased flex flex-col font-sans selection:bg-brand-500 selection:text-white">

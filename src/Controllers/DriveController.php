@@ -357,7 +357,8 @@ class DriveController
             exit;
         }
 
-        $forceDownload = !isset($_GET['preview']) || (int) $_GET['preview'] !== 1;
+        $forceDownload = (!isset($_GET['preview']) || (int) $_GET['preview'] !== 1) 
+            && (!isset($_GET['thumb']) || (int) $_GET['thumb'] !== 1);
 
         // Jika permission hanya 'view' dan mencoba download langsung, cegah!
         if ($isSharedWithMe && $permission === 'view' && $forceDownload) {
