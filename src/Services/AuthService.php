@@ -11,10 +11,14 @@ class AuthService
     public static function startSession(): void
     {
         if (session_status() === PHP_SESSION_NONE) {
-            ini_set('session.cookie_httponly', '1');
-            ini_set('session.cookie_samesite', 'Lax');
-            ini_set('session.use_only_cookies', '1');
-            session_start();
+            if (!headers_sent()) {
+                ini_set('session.cookie_httponly', '1');
+                ini_set('session.cookie_samesite', 'Lax');
+                ini_set('session.use_only_cookies', '1');
+                session_start();
+            } else {
+                @session_start();
+            }
         }
     }
 

@@ -176,11 +176,24 @@ class StorageService
 
             $fileId = (int) $db->lastInsertId();
 
-            // Update kuota terpakai user
+            // Update kuota terpakai user secara atomik dengan syarat kuota tidak terlampaui
             $updateQuotaStmt = $db->prepare("
-                UPDATE users SET storage_used = storage_used + :size WHERE id = :user_id
+                UPDATE users SET storage_used = storage_used + :size 
+                WHERE id = :user_id AND (storage_used + :size_check <= storage_quota)
             ");
-            $updateQuotaStmt->execute([':size' => $fileSize, ':user_id' => $userId]);
+            $updateQuotaStmt->execute([
+                ':size' => $fileSize, 
+                ':size_check' => $fileSize,
+                ':user_id' => $userId
+            ]);
+
+            if ($updateQuotaStmt->rowCount() === 0) {
+                $db->rollBack();
+                if (file_exists($targetFullPath)) {
+                    unlink($targetFullPath);
+                }
+                return ['success' => false, 'error' => 'Kapasitas penyimpanan Anda telah terlampaui.'];
+            }
 
             $db->commit();
 
@@ -274,10 +287,24 @@ class StorageService
 
             $fileId = (int) $db->lastInsertId();
 
+            // Update kuota terpakai user secara atomik
             $updateQuotaStmt = $db->prepare("
-                UPDATE users SET storage_used = storage_used + :size WHERE id = :user_id
+                UPDATE users SET storage_used = storage_used + :size 
+                WHERE id = :user_id AND (storage_used + :size_check <= storage_quota)
             ");
-            $updateQuotaStmt->execute([':size' => $fileSize, ':user_id' => $userId]);
+            $updateQuotaStmt->execute([
+                ':size' => $fileSize, 
+                ':size_check' => $fileSize,
+                ':user_id' => $userId
+            ]);
+
+            if ($updateQuotaStmt->rowCount() === 0) {
+                $db->rollBack();
+                if (file_exists($targetFullPath)) {
+                    @unlink($targetFullPath);
+                }
+                return ['success' => false, 'error' => 'Kapasitas penyimpanan Anda telah terlampaui.'];
+            }
 
             $db->commit();
 
@@ -349,9 +376,7 @@ class StorageService
 
     public static function getPhysicalPath(string $storagePath, string $storageFilename): string
     {
-        $uploadBaseDir = self::getUploadDir();
-        $cleanPath = preg_replace('~^uploads[\\\\/]~', '', $storagePath);
-        return $uploadBaseDir . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $cleanPath) . $storageFilename;
+        return self::getFullPath($storagePath, $storageFilename);
     }
 
     public static function formatBytes(int $bytes, int $precision = 2): string

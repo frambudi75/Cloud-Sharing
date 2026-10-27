@@ -759,8 +759,8 @@ class DriveController
 
         $db = Database::getConnection();
 
-        // 1. Cek apakah berkas milik user sendiri
-        $stmt = $db->prepare("SELECT * FROM files WHERE id = :id AND user_id = :user_id LIMIT 1");
+        // 1. Cek apakah berkas milik user sendiri (dan tidak di tempat sampah)
+        $stmt = $db->prepare("SELECT * FROM files WHERE id = :id AND user_id = :user_id AND deleted_at IS NULL LIMIT 1");
         $stmt->execute([':id' => $fileId, ':user_id' => $userId]);
         $file = $stmt->fetch();
 
@@ -772,7 +772,7 @@ class DriveController
                 SELECT f.*, us.permission 
                 FROM user_shares us
                 INNER JOIN files f ON us.file_id = f.id
-                WHERE us.file_id = :file_id AND us.shared_with_user_id = :user_id
+                WHERE us.file_id = :file_id AND us.shared_with_user_id = :user_id AND f.deleted_at IS NULL
                 LIMIT 1
             ");
             $shareStmt->execute([':file_id' => $fileId, ':user_id' => $userId]);

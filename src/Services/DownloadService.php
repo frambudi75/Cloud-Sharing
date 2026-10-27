@@ -78,7 +78,9 @@ class DownloadService
         header("Content-Type: {$mimeType}");
         header("Content-Disposition: {$disposition}; filename=\"{$clientFilename}\"; filename*=UTF-8''{$encodedFilename}");
         header("Accept-Ranges: bytes");
-        header("Content-Range: bytes {$start}-{$end}/{$fileSize}");
+        if ($httpCode === 206) {
+            header("Content-Range: bytes {$start}-{$end}/{$fileSize}");
+        }
         header("Content-Length: {$length}");
         header("Cache-Control: private, max-age=3600, must-revalidate");
         header("Pragma: public");

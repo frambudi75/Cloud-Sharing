@@ -139,8 +139,9 @@ switch ($action) {
         (new UserController())->deleteUser();
         break;
 
-    // Database Self-Healing / Auto-Repair
+    // Database Self-Healing / Auto-Repair (Khusus Admin)
     case 'repair_db':
+        AuthService::requireAdmin();
         $repairResult = Database::repairSchema();
         if (isset($_GET['format']) && $_GET['format'] === 'json') {
             header('Content-Type: application/json');

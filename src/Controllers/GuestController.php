@@ -49,12 +49,17 @@ class GuestController
 
         // Handle POST password unlock
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['unlock_password'])) {
-            $submittedPassword = (string) $_POST['unlock_password'];
-            if (ShareService::verifyPassword($share, $submittedPassword)) {
-                $_SESSION["unlocked_share_{$token}"] = true;
-                $isUnlocked = true;
+            $csrf = $_POST['csrf_token'] ?? null;
+            if (!AuthService::verifyCsrf($csrf)) {
+                $passwordError = 'Sesi keamanan kedaluwarsa. Silakan muat ulang halaman.';
             } else {
-                $passwordError = 'Kata sandi salah. Silakan coba kembali.';
+                $submittedPassword = (string) $_POST['unlock_password'];
+                if (ShareService::verifyPassword($share, $submittedPassword)) {
+                    $_SESSION["unlocked_share_{$token}"] = true;
+                    $isUnlocked = true;
+                } else {
+                    $passwordError = 'Kata sandi salah. Silakan coba kembali.';
+                }
             }
         }
 
@@ -87,7 +92,7 @@ class GuestController
         // Catat download counter dan audit log
         $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
         $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
-        ShareService::recordDownload((int) $share['share_id'], $ip, $ua);
+        ShareService::recordDownload((int) $share['share_id'], $ip, $ua, $token);
 
         $fullPath = StorageService::getPhysicalPath($share['storage_path'], $share['storage_filename']);
         $forceDownload = !isset($_GET['preview']) || (int) $_GET['preview'] !== 1;

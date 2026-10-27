@@ -140,7 +140,7 @@ class ShareService
         return password_verify($password, $share['password_hash']);
     }
 
-    public static function recordDownload(int $shareId, string $ip, ?string $userAgent): void
+    public static function recordDownload(int $shareId, string $ip, ?string $userAgent, ?string $token = null): void
     {
         $db = Database::getConnection();
         $db->beginTransaction();
@@ -162,6 +162,10 @@ class ShareService
             ]);
 
             $db->commit();
+
+            if (!empty($token)) {
+                CacheService::delete("share:{$token}");
+            }
         } catch (\Exception $e) {
             $db->rollBack();
         }
