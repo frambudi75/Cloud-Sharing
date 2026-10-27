@@ -70,6 +70,11 @@ $totalShared = $totalSharedCount ?? 0;
         background-color: #111827 !important;
         border-color: #1f2937 !important;
     }
+    html.dark .shared-alert-banner {
+        background: linear-gradient(90deg, #111827 0%, #1e1b4b 100%) !important;
+        border-color: #3730a3 !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+    }
 
     /* Card & Folder hover micro-interactions (Anti-Slop Modern Feel) */
     .file-card, .droppable-folder {
@@ -463,14 +468,14 @@ $totalShared = $totalSharedCount ?? 0;
 
                 <!-- Trash Notice Banner -->
                 <?php if ($activeTab === 'trash'): ?>
-                    <div class="bg-amber-50/90 border border-amber-200 rounded-2xl p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs animate-item-in">
+                    <div class="bg-amber-50/90 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 rounded-2xl p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs animate-item-in">
                         <div class="flex items-center space-x-3">
-                            <div class="h-8 w-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0">
+                            <div class="h-8 w-8 rounded-lg bg-amber-100 dark:bg-amber-900/80 text-amber-700 dark:text-amber-300 flex items-center justify-center flex-shrink-0">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                             </div>
                             <div>
-                                <h3 class="text-xs font-bold text-amber-950">Keranjang Sampah</h3>
-                                <p class="text-[11px] text-amber-800 mt-0.5">Berkas di sini dapat dipulihkan atau dihapus permanen untuk mengembalikan kuota penyimpanan.</p>
+                                <h3 class="text-xs font-bold text-amber-950 dark:text-amber-200">Keranjang Sampah</h3>
+                                <p class="text-[11px] text-amber-800 dark:text-amber-300/80 mt-0.5">Berkas di sini dapat dipulihkan atau dihapus permanen untuk mengembalikan kuota penyimpanan.</p>
                             </div>
                         </div>
                         <?php if (!empty($files) || !empty($folders)): ?>
@@ -573,17 +578,17 @@ $totalShared = $totalSharedCount ?? 0;
 
                     <!-- Notification if there are files shared to this user -->
                     <?php if ($activeTab === 'my_drive' && !empty($sharedWithMeFiles) && count($sharedWithMeFiles) > 0): ?>
-                        <div class="p-4 rounded-2xl bg-gradient-to-r from-brand-50 to-indigo-50 border border-brand-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs animate-item-in">
-                            <div class="flex items-center space-x-3">
-                                <div class="h-10 w-10 rounded-xl bg-brand-600 text-white flex items-center justify-center flex-shrink-0 shadow-sm">
+                        <div class="shared-alert-banner p-4 rounded-2xl bg-gradient-to-r from-brand-50 to-indigo-50/80 dark:from-slate-900 dark:to-indigo-950/50 border border-brand-200/90 dark:border-indigo-900/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs animate-item-in">
+                            <div class="flex items-center space-x-3.5">
+                                <div class="h-10 w-10 rounded-xl bg-brand-600 dark:bg-brand-500 text-white flex items-center justify-center shrink-0 shadow-sm shadow-brand-500/20">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                                 </div>
                                 <div>
-                                    <h4 class="text-xs font-bold text-slate-900">Anda memiliki <?= count($sharedWithMeFiles) ?> berkas yang dibagikan kepada Anda</h4>
-                                    <p class="text-[11px] text-slate-500">Berkas dibagikan oleh <?= htmlspecialchars($sharedWithMeFiles[0]['shared_by_username'] ?? 'pengguna lain') ?>. Anda dapat mengaksesnya langsung.</p>
+                                    <h4 class="text-xs font-bold text-slate-900 dark:text-white">Anda memiliki <?= count($sharedWithMeFiles) ?> berkas yang dibagikan kepada Anda</h4>
+                                    <p class="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5">Berkas dibagikan oleh <strong class="font-semibold text-slate-800 dark:text-white"><?= htmlspecialchars($sharedWithMeFiles[0]['shared_by_username'] ?? 'pengguna lain') ?></strong>. Anda dapat melihat dan mengunduhnya langsung.</p>
                                 </div>
                             </div>
-                            <a href="?action=drive&tab=shared_with_me" class="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 active:scale-[0.98] text-white text-xs font-bold shadow-xs transition-all whitespace-nowrap">
+                            <a href="?action=drive&tab=shared_with_me" class="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 active:scale-[0.98] text-white text-xs font-bold shadow-xs shadow-brand-500/20 transition-all whitespace-nowrap">
                                 Buka Berkas Dibagikan →
                             </a>
                         </div>
