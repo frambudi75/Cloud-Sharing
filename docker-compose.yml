@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  web:
+    image: nginx:alpine
+    container_name: filesharing_web
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    volumes:
+      - ./:/var/www/html:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - storage_data:/var/www/storage
+    depends_on:
+      - app
+    networks:
+      - filesharing_net
+
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+      args:
+        PHP_VERSION: ${PHP_VERSION:-8.4}
+    container_name: filesharing_app
+    restart: unless-stopped
+    volumes:
+      - ./:/var/www/html
+      - storage_data:/var/www/storage
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE:-filesharing_db}
+      DB_USERNAME: ${DB_USERNAME:-fileshare_user}
+      DB_PASSWORD: ${DB_PASSWORD:-fileshare_secret}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      APP_URL: ${APP_URL:-http://localhost:8080}
+      STORAGE_PATH: /var/www/storage/uploads
+    depends_on:
+      - db
+      - redis
+    networks:
+      - filesharing_net
+
+  redis:
+    image: redis:7-alpine
+    container_name: filesharing_redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "${REDIS_EXTERNAL_PORT:-6380}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - filesharing_net
+
+  db:
+    image: mariadb:10.11
+    container_name: filesharing_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootsecret}
+      MYSQL_DATABASE: ${DB_DATABASE:-filesharing_db}
+      MYSQL_USER: ${DB_USERNAME:-fileshare_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-fileshare_secret}
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./docker/mariadb/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "${DB_EXTERNAL_PORT:-3307}:3306"
+    networks:
+      - filesharing_net
+
+volumes:
+  db_data:
+  storage_data:
+  redis_data:
+
+networks:
+  filesharing_net:
+    driver: bridge
