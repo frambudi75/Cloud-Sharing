@@ -80,6 +80,24 @@ switch ($action) {
     case 'rename_folder':
         (new DriveController())->renameFolder();
         break;
+    case 'restore_file':
+        (new DriveController())->restoreFile();
+        break;
+    case 'restore_folder':
+        (new DriveController())->restoreFolder();
+        break;
+    case 'permanent_delete_file':
+        (new DriveController())->permanentDeleteFile();
+        break;
+    case 'permanent_delete_folder':
+        (new DriveController())->permanentDeleteFolder();
+        break;
+    case 'empty_trash':
+        (new DriveController())->emptyTrash();
+        break;
+    case 'download_folder_zip':
+        (new DriveController())->downloadFolderZip();
+        break;
     case 'create_share':
         (new DriveController())->createShare();
         break;

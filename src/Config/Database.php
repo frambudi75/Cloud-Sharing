@@ -100,6 +100,19 @@ class Database
             } catch (\Throwable $ignored) {
             }
 
+            // Pastikan kolom deleted_at ada di tabel files dan folders untuk recycle bin
+            try {
+                $colsFiles = $pdo->query("SHOW COLUMNS FROM files LIKE 'deleted_at'");
+                if ($colsFiles && $colsFiles->rowCount() === 0) {
+                    $pdo->exec("ALTER TABLE files ADD COLUMN deleted_at TIMESTAMP NULL DEFAULT NULL, ADD INDEX idx_files_deleted (deleted_at)");
+                }
+                $colsFolders = $pdo->query("SHOW COLUMNS FROM folders LIKE 'deleted_at'");
+                if ($colsFolders && $colsFolders->rowCount() === 0) {
+                    $pdo->exec("ALTER TABLE folders ADD COLUMN deleted_at TIMESTAMP NULL DEFAULT NULL, ADD INDEX idx_folders_deleted (deleted_at)");
+                }
+            } catch (\Throwable $ignored) {
+            }
+
             self::$schemaVerified = true;
             return ['status' => true, 'repaired' => false, 'message' => 'Seluruh tabel lengkap'];
         } catch (PDOException $e) {
@@ -163,12 +176,14 @@ class Database
                     `user_id` BIGINT UNSIGNED NOT NULL,
                     `parent_id` BIGINT UNSIGNED NULL DEFAULT NULL,
                     `name` VARCHAR(255) NOT NULL,
+                    `deleted_at` TIMESTAMP NULL DEFAULT NULL,
                     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                     CONSTRAINT `fk_folders_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
                     CONSTRAINT `fk_folders_parent` FOREIGN KEY (`parent_id`) REFERENCES `folders` (`id`) ON DELETE CASCADE,
                     INDEX `idx_user_parent` (`user_id`, `parent_id`),
-                    INDEX `idx_folders_user_name` (`user_id`, `name`)
+                    INDEX `idx_folders_user_name` (`user_id`, `name`),
+                    INDEX `idx_folders_deleted` (`deleted_at`)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
             ");
 
@@ -184,6 +199,7 @@ class Database
                     `mime_type` VARCHAR(100) NOT NULL,
                     `file_size` BIGINT UNSIGNED NOT NULL,
                     `file_hash` CHAR(64) NULL,
+                    `deleted_at` TIMESTAMP NULL DEFAULT NULL,
                     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                     CONSTRAINT `fk_files_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
@@ -191,7 +207,8 @@ class Database
                     INDEX `idx_files_user_folder` (`user_id`, `folder_id`),
                     INDEX `idx_files_user_created` (`user_id`, `created_at`),
                     INDEX `idx_files_user_name` (`user_id`, `original_name`),
-                    INDEX `idx_files_hash` (`file_hash`)
+                    INDEX `idx_files_hash` (`file_hash`),
+                    INDEX `idx_files_deleted` (`deleted_at`)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
             ");
 

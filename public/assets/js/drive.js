@@ -71,6 +71,109 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // =========================================================================
+    // 1b. Dark Mode Theme Toggle
+    // =========================================================================
+    function syncThemeIcons(isDark) {
+        const sunIcon = document.getElementById('themeIconSun');
+        const moonIcon = document.getElementById('themeIconMoon');
+        if (sunIcon && moonIcon) {
+            if (isDark) {
+                sunIcon.classList.remove('hidden');
+                moonIcon.classList.add('hidden');
+            } else {
+                sunIcon.classList.add('hidden');
+                moonIcon.classList.remove('hidden');
+            }
+        }
+    }
+
+    window.toggleDarkMode = function () {
+        const isDark = document.documentElement.classList.toggle('dark');
+        try {
+            localStorage.setItem('drive_theme', isDark ? 'dark' : 'light');
+        } catch (e) {}
+        syncThemeIcons(isDark);
+    };
+
+    // Initial sync of theme icons
+    syncThemeIcons(document.documentElement.classList.contains('dark'));
+
+    // =========================================================================
+    // 1c. Instant Live Search & Filter Chips
+    // =========================================================================
+    let currentFilterCategory = 'all';
+
+    window.setFilterCategory = function (category, buttonEl) {
+        currentFilterCategory = category;
+        document.querySelectorAll('.filter-chip').forEach(chip => {
+            if (chip === buttonEl) {
+                chip.className = 'filter-chip active px-3 py-1.5 rounded-xl font-bold bg-brand-600 text-white shadow-xs transition-all';
+            } else {
+                chip.className = 'filter-chip px-3 py-1.5 rounded-xl font-semibold bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 transition-all';
+            }
+        });
+        applyLiveFilter();
+    };
+
+    function applyLiveFilter() {
+        const searchInput = document.getElementById('searchInput');
+        const query = (searchInput ? searchInput.value : '').toLowerCase().trim();
+
+        // Filter File Cards in Grid View
+        const fileCards = document.querySelectorAll('.file-card');
+        fileCards.forEach(card => {
+            const fileName = (card.getAttribute('data-filename') || '').toLowerCase();
+            const rawName = (card.getAttribute('data-rawname') || '').toLowerCase();
+            const fileCat = card.getAttribute('data-category') || 'document';
+
+            const matchesQuery = !query || fileName.includes(query) || rawName.includes(query);
+            const matchesCategory = (currentFilterCategory === 'all') || (fileCat === currentFilterCategory);
+
+            if (matchesQuery && matchesCategory) {
+                card.classList.remove('hidden');
+            } else {
+                card.classList.add('hidden');
+            }
+        });
+
+        // Filter Folder Cards in Grid View
+        const folderCards = document.querySelectorAll('#filesGridView .folder-drop-zone');
+        folderCards.forEach(folder => {
+            const folderName = (folder.getAttribute('data-folder-name') || '').toLowerCase();
+            const matchesQuery = !query || folderName.includes(query);
+            const matchesCategory = (currentFilterCategory === 'all');
+
+            if (matchesQuery && matchesCategory) {
+                folder.classList.remove('hidden');
+            } else {
+                folder.classList.add('hidden');
+            }
+        });
+
+        // Filter Table Rows in List View
+        const fileRows = document.querySelectorAll('#filesTable tbody .file-row');
+        fileRows.forEach(row => {
+            const fileName = (row.getAttribute('data-filename') || '').toLowerCase();
+            const rawName = (row.getAttribute('data-rawname') || '').toLowerCase();
+            const fileCat = row.getAttribute('data-category') || 'document';
+
+            const matchesQuery = !query || fileName.includes(query) || rawName.includes(query);
+            const matchesCategory = (currentFilterCategory === 'all') || (fileCat === currentFilterCategory);
+
+            if (matchesQuery && matchesCategory) {
+                row.classList.remove('hidden');
+            } else {
+                row.classList.add('hidden');
+            }
+        });
+    }
+
+    const searchInputEl = document.getElementById('searchInput');
+    if (searchInputEl) {
+        searchInputEl.addEventListener('input', applyLiveFilter);
+    }
+
+    // =========================================================================
     // 2. View Mode Switcher (Grid vs List View)
     // =========================================================================
     window.setViewMode = function (mode) {
@@ -408,7 +511,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.deleteFolder = async function (folderId, folderName) {
-        if (!confirm(`Hapus folder "${folderName}" beserta seluruh isinya? Tindakan ini tidak dapat dibatalkan.`)) {
+        if (!confirm(`Pindahkan folder "${folderName}" beserta isinya ke Keranjang Sampah?`)) {
             return;
         }
 
@@ -423,9 +526,10 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const result = await response.json();
             if (result.success) {
-                window.location.reload();
+                showToast(`Folder "${folderName}" dipindahkan ke Sampah.`);
+                setTimeout(() => window.location.reload(), 300);
             } else {
-                alert(result.error || 'Gagal menghapus folder.');
+                alert(result.error || 'Gagal memindahkan folder ke sampah.');
             }
         } catch (err) {
             alert('Terjadi kesalahan jaringan saat menghapus folder.');
@@ -433,10 +537,10 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // =========================================================================
-    // 7. Single File Deletion
+    // 7. Single File Deletion (Soft Delete to Trash)
     // =========================================================================
     window.deleteFile = async function (fileId, fileName) {
-        if (!confirm(`Hapus berkas "${fileName}" secara permanen?`)) {
+        if (!confirm(`Pindahkan berkas "${fileName}" ke Keranjang Sampah?`)) {
             return;
         }
 
@@ -451,12 +555,137 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const result = await response.json();
             if (result.success) {
-                window.location.reload();
+                showToast(`Berkas "${fileName}" dipindahkan ke Sampah.`);
+                setTimeout(() => window.location.reload(), 300);
             } else {
-                alert(result.error || 'Gagal menghapus berkas.');
+                alert(result.error || 'Gagal memindahkan berkas ke sampah.');
             }
         } catch (err) {
             alert('Terjadi kesalahan saat menghapus berkas.');
+        }
+    };
+
+    // =========================================================================
+    // 7a. Recycle Bin / Trash Actions (Restore & Permanent Delete)
+    // =========================================================================
+    window.restoreFile = async function (fileId, fileName) {
+        const formData = new FormData();
+        formData.append('csrf_token', csrfToken);
+        formData.append('file_id', fileId);
+
+        try {
+            const response = await fetch('?action=restore_file', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+            if (result.success) {
+                showToast(`Berkas "${fileName}" berhasil dipulihkan!`);
+                setTimeout(() => window.location.reload(), 300);
+            } else {
+                alert(result.error || 'Gagal memulihkan berkas.');
+            }
+        } catch (err) {
+            alert('Terjadi kesalahan jaringan saat memulihkan berkas.');
+        }
+    };
+
+    window.permanentDeleteFile = async function (fileId, fileName) {
+        if (!confirm(`Hapus berkas "${fileName}" secara PERMANEN? Tindakan ini tidak dapat dibatalkan.`)) {
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('csrf_token', csrfToken);
+        formData.append('file_id', fileId);
+
+        try {
+            const response = await fetch('?action=permanent_delete_file', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+            if (result.success) {
+                showToast(`Berkas "${fileName}" berhasil dimusnahkan.`);
+                setTimeout(() => window.location.reload(), 300);
+            } else {
+                alert(result.error || 'Gagal menghapus berkas permanen.');
+            }
+        } catch (err) {
+            alert('Terjadi kesalahan jaringan saat menghapus berkas permanen.');
+        }
+    };
+
+    window.restoreFolder = async function (folderId, folderName) {
+        const formData = new FormData();
+        formData.append('csrf_token', csrfToken);
+        formData.append('folder_id', folderId);
+
+        try {
+            const response = await fetch('?action=restore_folder', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+            if (result.success) {
+                showToast(`Folder "${folderName}" berhasil dipulihkan!`);
+                setTimeout(() => window.location.reload(), 300);
+            } else {
+                alert(result.error || 'Gagal memulihkan folder.');
+            }
+        } catch (err) {
+            alert('Terjadi kesalahan jaringan saat memulihkan folder.');
+        }
+    };
+
+    window.permanentDeleteFolder = async function (folderId, folderName) {
+        if (!confirm(`Hapus folder "${folderName}" beserta isinya secara PERMANEN? Tindakan ini tidak dapat dibatalkan.`)) {
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('csrf_token', csrfToken);
+        formData.append('folder_id', folderId);
+
+        try {
+            const response = await fetch('?action=permanent_delete_folder', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+            if (result.success) {
+                showToast(`Folder "${folderName}" berhasil dimusnahkan.`);
+                setTimeout(() => window.location.reload(), 300);
+            } else {
+                alert(result.error || 'Gagal menghapus folder permanen.');
+            }
+        } catch (err) {
+            alert('Terjadi kesalahan jaringan saat menghapus folder permanen.');
+        }
+    };
+
+    window.emptyTrashConfirm = async function () {
+        if (!confirm('Kosongkan semua berkas dan folder di dalam Keranjang Sampah secara PERMANEN?')) {
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('csrf_token', csrfToken);
+
+        try {
+            const response = await fetch('?action=empty_trash', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+            if (result.success) {
+                showToast('Keranjang sampah berhasil dikosongkan!');
+                setTimeout(() => window.location.reload(), 300);
+            } else {
+                alert(result.error || 'Gagal mengosongkan sampah.');
+            }
+        } catch (err) {
+            alert('Terjadi kesalahan jaringan saat mengosongkan sampah.');
         }
     };
 
@@ -1409,42 +1638,75 @@ document.addEventListener('DOMContentLoaded', () => {
             previewContainer.innerHTML = '';
             const previewUrl = `?action=download_direct&file_id=${fileData.id}&preview=1`;
 
+            const btnOpenNewTab = document.getElementById('detailBtnOpenNewTab');
+            if (btnOpenNewTab) {
+                btnOpenNewTab.href = previewUrl;
+            }
+
+            const fileNameLower = (fileData.name || '').toLowerCase();
+            const textExtensions = ['.txt', '.md', '.markdown', '.json', '.js', '.ts', '.css', '.html', '.htm', '.xml', '.sql', '.sh', '.py', '.php', '.yml', '.yaml', '.log', '.csv', '.env', '.ini'];
+            const isTextCode = textExtensions.some(ext => fileNameLower.endsWith(ext)) || (fileData.mime && (fileData.mime.startsWith('text/') || fileData.mime === 'application/json' || fileData.mime === 'application/javascript'));
+
             if (fileData.mime && fileData.mime.startsWith('image/')) {
                 const img = document.createElement('img');
                 img.src = previewUrl;
                 img.alt = fileData.name;
                 img.className = 'max-h-[50vh] max-w-full rounded-xl object-contain shadow-xs mx-auto';
                 previewContainer.appendChild(img);
-            } else if (fileData.mime === 'application/pdf') {
+            } else if (fileData.mime === 'application/pdf' || fileNameLower.endsWith('.pdf')) {
                 const iframe = document.createElement('iframe');
                 iframe.src = previewUrl;
-                iframe.className = 'w-full h-[50vh] rounded-xl border border-slate-200';
+                iframe.className = 'w-full h-[55vh] rounded-xl border border-slate-200 dark:border-slate-700 bg-white';
                 previewContainer.appendChild(iframe);
             } else if (fileData.mime && fileData.mime.startsWith('video/')) {
                 const video = document.createElement('video');
                 video.src = previewUrl;
                 video.controls = true;
-                video.className = 'max-h-[50vh] max-w-full rounded-xl shadow-xs mx-auto';
+                video.className = 'max-h-[50vh] max-w-full rounded-xl shadow-xs mx-auto bg-black';
                 previewContainer.appendChild(video);
             } else if (fileData.mime && fileData.mime.startsWith('audio/')) {
                 const audioBox = document.createElement('div');
-                audioBox.className = 'p-6 bg-white border border-slate-200 rounded-xl flex flex-col items-center justify-center w-full max-w-md mx-auto';
+                audioBox.className = 'p-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl flex flex-col items-center justify-center w-full max-w-md mx-auto';
                 audioBox.innerHTML = `
-                    <div class="h-14 w-14 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
+                    <div class="h-14 w-14 rounded-xl bg-indigo-50 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-3">
                         <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 20 20"><path d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z"></path></svg>
                     </div>
                     <audio controls class="w-full"><source src="${previewUrl}"></audio>
                 `;
                 previewContainer.appendChild(audioBox);
+            } else if (isTextCode) {
+                const codeBox = document.createElement('div');
+                codeBox.className = 'w-full flex flex-col space-y-2';
+                codeBox.innerHTML = `
+                    <div class="flex items-center justify-between text-xs font-mono text-slate-500 pb-1 border-b border-slate-200 dark:border-slate-700">
+                        <span>Pratinjau Kode / Teks</span>
+                        <span class="text-[10px] text-slate-400">Maks. 200KB</span>
+                    </div>
+                    <pre class="w-full max-h-[50vh] overflow-auto p-4 rounded-xl bg-slate-900 text-slate-100 font-mono text-xs leading-relaxed select-text whitespace-pre border border-slate-800"><code id="codePreviewContent">Memuat isi berkas...</code></pre>
+                `;
+                previewContainer.appendChild(codeBox);
+
+                fetch(previewUrl)
+                    .then(r => r.text())
+                    .then(text => {
+                        const codeEl = document.getElementById('codePreviewContent');
+                        if (codeEl) {
+                            codeEl.textContent = text.slice(0, 200000);
+                        }
+                    })
+                    .catch(() => {
+                        const codeEl = document.getElementById('codePreviewContent');
+                        if (codeEl) codeEl.textContent = 'Gagal memuat pratinjau teks.';
+                    });
             } else {
                 const emptyBox = document.createElement('div');
                 emptyBox.className = 'p-8 text-center text-slate-400';
                 emptyBox.innerHTML = `
-                    <div class="h-16 w-16 mx-auto mb-2.5 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center">
+                    <div class="h-16 w-16 mx-auto mb-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center">
                         <span class="text-base font-bold">${fileData.badge || 'FILE'}</span>
                     </div>
-                    <h4 class="text-xs font-semibold text-slate-700">${fileData.name}</h4>
-                    <p class="text-xs text-slate-400 mt-1 max-w-xs mx-auto">Pratinjau langsung tidak tersedia untuk format ini. Anda dapat mengunduhnya secara langsung.</p>
+                    <h4 class="text-xs font-semibold text-slate-700 dark:text-slate-300">${escapeHtml(fileData.name)}</h4>
+                    <p class="text-xs text-slate-400 mt-1 max-w-xs mx-auto">Pratinjau langsung tidak tersedia untuk format berkas ini. Anda dapat mengunduhnya secara langsung.</p>
                 `;
                 previewContainer.appendChild(emptyBox);
             }

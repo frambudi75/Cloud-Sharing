@@ -296,6 +296,13 @@ class StorageService
         }
     }
 
+    public static function getFullPath(string $storagePath, string $storageFilename): string
+    {
+        $uploadBaseDir = self::getUploadDir();
+        $cleanPath = preg_replace('~^uploads[\\\\/]~', '', $storagePath);
+        return $uploadBaseDir . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $cleanPath) . $storageFilename;
+    }
+
     public static function deleteFile(int $fileId, int $userId): array
     {
         $db = Database::getConnection();
@@ -312,10 +319,7 @@ class StorageService
             return ['success' => false, 'error' => 'Berkas tidak ditemukan atau Anda tidak memiliki izin.'];
         }
 
-        $uploadBaseDir = self::getUploadDir();
-        // Bersihkan prefix uploads/ jika ada
-        $cleanPath = preg_replace('~^uploads[\\\\/]~', '', $file['storage_path']);
-        $fullPath = $uploadBaseDir . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $cleanPath) . $file['storage_filename'];
+        $fullPath = self::getFullPath($file['storage_path'], $file['storage_filename']);
 
         $db->beginTransaction();
         try {

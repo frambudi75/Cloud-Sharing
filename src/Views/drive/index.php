@@ -96,8 +96,16 @@ $totalShared = $totalSharedCount ?? 0;
                 </a>
             </div>
 
-            <!-- Right: Admin Links, User Info & Logout -->
-            <div class="flex items-center space-x-2 sm:space-x-4">
+            <!-- Right: Admin Links, Theme Toggle, User Info & Logout -->
+            <div class="flex items-center space-x-2 sm:space-x-3">
+                <!-- Dark Mode Toggle Button -->
+                <button type="button" id="themeToggleBtn" onclick="toggleDarkMode()" 
+                        class="h-9 w-9 rounded-xl border border-slate-200 hover:bg-slate-100 flex items-center justify-center text-slate-600 transition-colors" 
+                        title="Ganti Mode Terang / Gelap">
+                    <svg id="themeIconSun" class="w-4 h-4 hidden text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    <svg id="themeIconMoon" class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                </button>
+
                 <?php if (!empty($user['role']) && $user['role'] === 'admin'): ?>
                     <a href="?action=users" 
                        class="inline-flex items-center h-9 px-3.5 text-xs font-semibold rounded-xl text-slate-700 hover:text-brand-600 hover:bg-slate-100 border border-slate-200 transition-colors">
@@ -305,102 +313,142 @@ $totalShared = $totalSharedCount ?? 0;
                         </div>
 
                     </div>
-                </div>
+                </div>                <!-- Action Bar (Search, Filter Chips, Sort, Grid/List Switcher, Folder Baru, Upload) -->
+                <div class="space-y-3 pt-2">
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                        
+                        <!-- Search Input -->
+                        <div class="relative flex-1 max-w-md">
+                            <input type="text" id="searchInput" placeholder="Cari berkas atau folder..." 
+                                   class="w-full h-10 pl-9 pr-8 text-xs rounded-xl border border-slate-200 bg-white placeholder:text-slate-400 focus:border-brand-600 focus:ring-1 focus:ring-brand-600 shadow-xs transition-all">
+                            <svg class="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                            <span class="hidden sm:inline-block absolute right-2.5 top-2.5 px-1.5 py-0.5 text-[9px] text-slate-400 bg-slate-100 border border-slate-200 rounded font-mono pointer-events-none" title="Tekan / untuk mencari">/</span>
+                        </div>
 
-                <!-- Action Bar (Search, Sort, Grid/List Switcher, Folder Baru, Upload) -->
-                <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2">
-                    
-                    <!-- Search Input -->
-                    <div class="relative flex-1 max-w-md">
-                        <input type="text" id="searchInput" placeholder="Cari berkas..." 
-                               class="w-full h-10 pl-9 pr-8 text-xs rounded-xl border border-slate-200 bg-white placeholder:text-slate-400 focus:border-brand-600 focus:ring-1 focus:ring-brand-600 shadow-xs transition-all">
-                        <svg class="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                        </svg>
-                        <span class="hidden sm:inline-block absolute right-2.5 top-2.5 px-1.5 py-0.5 text-[9px] text-slate-400 bg-slate-100 border border-slate-200 rounded font-mono pointer-events-none" title="Tekan / untuk mencari">/</span >
+                        <!-- Right Controls: Sort, View Switcher, Folder Baru, Upload Berkas -->
+                        <div class="flex flex-wrap items-center gap-2">
+                            
+                            <!-- Sort Dropdown -->
+                            <div class="relative">
+                                <select id="sortSelect" onchange="sortFiles(this.value)" 
+                                        class="h-10 pl-8 pr-7 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-700 hover:border-slate-300 focus:border-brand-600 focus:ring-1 focus:ring-brand-600 cursor-pointer appearance-none shadow-xs">
+                                    <option value="created_desc">Terbaru</option>
+                                    <option value="created_asc">Terlama</option>
+                                    <option value="name_asc">Nama (A - Z)</option>
+                                    <option value="name_desc">Nama (Z - A)</option>
+                                    <option value="size_desc">Ukuran (Besar)</option>
+                                    <option value="size_asc">Ukuran (Kecil)</option>
+                                </select>
+                                <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-3.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"></path>
+                                </svg>
+                                <svg class="w-3 h-3 text-slate-400 absolute right-2.5 top-3.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </div>
+
+                            <!-- View Mode Switcher (Grid vs List) -->
+                            <div class="inline-flex p-0.5 bg-slate-100 rounded-xl border border-slate-200 shadow-xs">
+                                <button type="button" id="btnViewGrid" onclick="setViewMode('grid')" 
+                                        class="h-9 px-2.5 rounded-lg text-xs font-semibold flex items-center transition-all bg-white text-brand-600 shadow-xs" title="Tampilan Kartu / Grid">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                                    </svg>
+                                </button>
+                                <button type="button" id="btnViewList" onclick="setViewMode('list')" 
+                                        class="h-9 px-2.5 rounded-lg text-xs font-semibold flex items-center transition-all text-slate-500 hover:text-slate-800" title="Tampilan Daftar / Tabel">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <?php if ($activeTab === 'my_drive'): ?>
+                                <!-- Folder Baru Button -->
+                                <button type="button" id="btnNewFolderModal" 
+                                        class="inline-flex items-center h-10 px-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold shadow-xs hover:border-slate-300 transition-all">
+                                    <svg class="w-4 h-4 mr-1.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path>
+                                    </svg>
+                                    Folder Baru
+                                </button>
+
+                                <!-- Upload Berkas Button (Primary Indigo) -->
+                                <label for="fileUploadInput" 
+                                       class="inline-flex items-center h-10 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white text-xs font-bold shadow-md shadow-brand-500/20 transition-all cursor-pointer">
+                                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                                    </svg>
+                                    Upload Berkas
+                                </label>
+                                <input type="file" id="fileUploadInput" class="hidden" multiple>
+                            <?php endif; ?>
+
+                        </div>
                     </div>
 
-                    <!-- Right Controls: Sort, View Switcher, Folder Baru, Upload Berkas -->
-                    <div class="flex flex-wrap items-center gap-2">
-                        
-                        <!-- Sort Dropdown -->
-                        <div class="relative">
-                            <select id="sortSelect" onchange="sortFiles(this.value)" 
-                                    class="h-10 pl-8 pr-7 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-700 hover:border-slate-300 focus:border-brand-600 focus:ring-1 focus:ring-brand-600 cursor-pointer appearance-none shadow-xs">
-                                <option value="created_desc">Terbaru</option>
-                                <option value="created_asc">Terlama</option>
-                                <option value="name_asc">Nama (A - Z)</option>
-                                <option value="name_desc">Nama (Z - A)</option>
-                                <option value="size_desc">Ukuran (Besar)</option>
-                                <option value="size_asc">Ukuran (Kecil)</option>
-                            </select>
-                            <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-3.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"></path>
-                            </svg>
-                            <svg class="w-3 h-3 text-slate-400 absolute right-2.5 top-3.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                            </svg>
-                        </div>
-
-                        <!-- View Mode Switcher (Grid vs List) -->
-                        <div class="inline-flex p-0.5 bg-slate-100 rounded-xl border border-slate-200 shadow-xs">
-                            <button type="button" id="btnViewGrid" onclick="setViewMode('grid')" 
-                                    class="h-9 px-2.5 rounded-lg text-xs font-semibold flex items-center transition-all bg-white text-brand-600 shadow-xs" title="Tampilan Kartu / Grid">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
-                                </svg>
-                            </button>
-                            <button type="button" id="btnViewList" onclick="setViewMode('list')" 
-                                    class="h-9 px-2.5 rounded-lg text-xs font-semibold flex items-center transition-all text-slate-500 hover:text-slate-800" title="Tampilan Daftar / Tabel">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                                </svg>
-                            </button>
-                        </div>
-
-                        <?php if ($activeTab === 'my_drive'): ?>
-                            <!-- Folder Baru Button -->
-                            <button type="button" id="btnNewFolderModal" 
-                                    class="inline-flex items-center h-10 px-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold shadow-xs hover:border-slate-300 transition-all">
-                                <svg class="w-4 h-4 mr-1.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path>
-                                </svg>
-                                Folder Baru
-                            </button>
-
-                            <!-- Upload Berkas Button (Primary Indigo) -->
-                            <label for="fileUploadInput" 
-                                   class="inline-flex items-center h-10 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white text-xs font-bold shadow-md shadow-brand-500/20 transition-all cursor-pointer">
-                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
-                                </svg>
-                                Upload Berkas
-                            </label>
-                            <input type="file" id="fileUploadInput" class="hidden" multiple>
-                        <?php endif; ?>
-
+                    <!-- Instant Filter Chips -->
+                    <div class="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
+                        <button type="button" onclick="setFilterCategory('all', this)" class="filter-chip active px-3 py-1.5 rounded-xl font-bold bg-brand-600 text-white shadow-xs transition-all" data-category="all">Semua</button>
+                        <button type="button" onclick="setFilterCategory('image', this)" class="filter-chip px-3 py-1.5 rounded-xl font-semibold bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 transition-all" data-category="image">🖼️ Gambar</button>
+                        <button type="button" onclick="setFilterCategory('document', this)" class="filter-chip px-3 py-1.5 rounded-xl font-semibold bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 transition-all" data-category="document">📄 Dokumen</button>
+                        <button type="button" onclick="setFilterCategory('media', this)" class="filter-chip px-3 py-1.5 rounded-xl font-semibold bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 transition-all" data-category="media">🎬 Video & Audio</button>
+                        <button type="button" onclick="setFilterCategory('archive', this)" class="filter-chip px-3 py-1.5 rounded-xl font-semibold bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 transition-all" data-category="archive">📦 Arsip / ZIP</button>
                     </div>
                 </div>
 
                 <!-- Breadcrumbs (when inside subfolders) -->
                 <?php if (!empty($breadcrumbs) && count($breadcrumbs) > 1): ?>
-                    <nav class="flex items-center space-x-1.5 text-xs text-slate-500 pt-1">
-                        <?php foreach ($breadcrumbs as $index => $crumb): ?>
-                            <?php if ($index > 0): ?>
-                                <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                            <?php endif; ?>
-                            <?php if ($index === count($breadcrumbs) - 1): ?>
-                                <span class="font-bold text-slate-900 px-2 py-0.5 rounded bg-slate-200/80"><?= htmlspecialchars($crumb['name']) ?></span>
-                            <?php else: ?>
-                                <a href="?action=drive<?= $crumb['id'] !== null ? '&folder=' . $crumb['id'] : '' ?>" 
-                                   class="folder-drop-zone hover:text-brand-600 font-semibold px-2 py-0.5 rounded hover:bg-slate-100 transition-all"
-                                   data-folder-id="<?= $crumb['id'] !== null ? $crumb['id'] : 'root' ?>"
-                                   data-folder-name="<?= htmlspecialchars($crumb['name']) ?>">
-                                    <?= htmlspecialchars($crumb['name']) ?>
-                                </a>
-                            <?php endif; ?>
-                        <?php endforeach; ?>
+                    <nav class="flex items-center justify-between text-xs text-slate-500 pt-1">
+                        <div class="flex items-center space-x-1.5">
+                            <?php foreach ($breadcrumbs as $index => $crumb): ?>
+                                <?php if ($index > 0): ?>
+                                    <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                <?php endif; ?>
+                                <?php if ($index === count($breadcrumbs) - 1): ?>
+                                    <span class="font-bold text-slate-900 px-2 py-0.5 rounded bg-slate-200/80"><?= htmlspecialchars($crumb['name']) ?></span>
+                                <?php else: ?>
+                                    <a href="?action=drive<?= $crumb['id'] !== null ? '&folder=' . $crumb['id'] : '' ?>" 
+                                       class="folder-drop-zone hover:text-brand-600 font-semibold px-2 py-0.5 rounded hover:bg-slate-100 transition-all"
+                                       data-folder-id="<?= $crumb['id'] !== null ? $crumb['id'] : 'root' ?>"
+                                       data-folder-name="<?= htmlspecialchars($crumb['name']) ?>">
+                                        <?= htmlspecialchars($crumb['name']) ?>
+                                    </a>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                        </div>
+                        <?php if ($folderId !== null && $activeTab === 'my_drive'): ?>
+                            <a href="?action=download_folder_zip&folder_id=<?= $folderId ?>" 
+                               class="inline-flex items-center h-7 px-2.5 rounded-lg text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-300 transition-all shadow-2xs" 
+                               title="Unduh seluruh folder ini sebagai berkas ZIP">
+                                <svg class="w-3.5 h-3.5 mr-1 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                Unduh ZIP
+                            </a>
+                        <?php endif; ?>
                     </nav>
+                <?php endif; ?>
+
+                <!-- Trash Notice Banner -->
+                <?php if ($activeTab === 'trash'): ?>
+                    <div class="bg-amber-50/90 border border-amber-200/90 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs animate-item-in">
+                        <div class="flex items-center space-x-3">
+                            <div class="h-10 w-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </div>
+                            <div>
+                                <h3 class="text-xs font-bold text-amber-950">Keranjang Sampah</h3>
+                                <p class="text-[11px] text-amber-800 mt-0.5">Berkas dan folder di sini dapat dipulihkan atau dihapus permanen untuk mengosongkan kuota storage.</p>
+                            </div>
+                        </div>
+                        <?php if (!empty($files) || !empty($folders)): ?>
+                            <button type="button" onclick="emptyTrashConfirm()" 
+                                    class="h-9 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs transition-colors whitespace-nowrap">
+                                Kosongkan Sampah
+                            </button>
+                        <?php endif; ?>
+                    </div>
                 <?php endif; ?>
 
                 <!-- Animated Drag & Drop Zone Area -->
@@ -566,20 +614,36 @@ $totalShared = $totalSharedCount ?? 0;
                             <?php foreach ($folders as $folder): ?>
                                 <div class="file-card folder-drop-zone group relative bg-white border border-slate-200/80 hover:border-brand-300 hover:shadow-lg hover:-translate-y-0.5 rounded-2xl p-4 flex flex-col justify-between transition-all duration-200 animate-item-in"
                                      data-folder-id="<?= $folder['id'] ?>"
-                                     data-folder-name="<?= htmlspecialchars($folder['name']) ?>">
+                                     data-category="all"
+                                     data-folder-name="<?= htmlspecialchars(strtolower($folder['name'])) ?>">
                                     <div class="flex items-center justify-between">
                                         <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Folder</span>
                                         <div class="flex items-center space-x-1">
-                                            <button type="button" onclick="openRenameModal('folder', <?= $folder['id'] ?>, '<?= htmlspecialchars(addslashes($folder['name'])) ?>')"
-                                                    class="text-slate-400 hover:text-brand-600 transition-colors p-1 rounded-lg hover:bg-slate-100" title="Ganti nama folder">
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                                            </button>
-                                            <button type="button" onclick="deleteFolder(<?= $folder['id'] ?>, '<?= htmlspecialchars(addslashes($folder['name'])) ?>')" 
-                                                    class="text-slate-400 hover:text-red-600 transition-colors p-1 rounded-lg hover:bg-red-50" title="Hapus folder">
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                            </button>
+                                            <?php if ($activeTab === 'trash'): ?>
+                                                <button type="button" onclick="restoreFolder(<?= $folder['id'] ?>, '<?= htmlspecialchars(addslashes($folder['name'])) ?>')" 
+                                                        class="text-slate-400 hover:text-emerald-600 transition-colors p-1 rounded-lg hover:bg-emerald-50" title="Pulihkan folder">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                                </button>
+                                                <button type="button" onclick="permanentDeleteFolder(<?= $folder['id'] ?>, '<?= htmlspecialchars(addslashes($folder['name'])) ?>')" 
+                                                        class="text-slate-400 hover:text-rose-600 transition-colors p-1 rounded-lg hover:bg-rose-50" title="Hapus permanen">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                </button>
+                                            <?php else: ?>
+                                                <a href="?action=download_folder_zip&folder_id=<?= $folder['id'] ?>" 
+                                                   class="text-slate-400 hover:text-amber-600 transition-colors p-1 rounded-lg hover:bg-amber-50" title="Unduh Folder sebagai ZIP">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                                </a>
+                                                <button type="button" onclick="openRenameModal('folder', <?= $folder['id'] ?>, '<?= htmlspecialchars(addslashes($folder['name'])) ?>')"
+                                                        class="text-slate-400 hover:text-brand-600 transition-colors p-1 rounded-lg hover:bg-slate-100" title="Ganti nama folder">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                                </button>
+                                                <button type="button" onclick="deleteFolder(<?= $folder['id'] ?>, '<?= htmlspecialchars(addslashes($folder['name'])) ?>')" 
+                                                        class="text-slate-400 hover:text-rose-600 transition-colors p-1 rounded-lg hover:bg-rose-50" title="Hapus folder">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                </button>
+                                            <?php endif; ?>
                                         </div>
-                                    </div>
+                                    </div>            </div>
 
                                     <!-- Big Centered Folder Icon (Mockup Aligned) -->
                                     <a href="?action=drive&folder=<?= $folder['id'] ?>" class="my-3 flex flex-col items-center text-center">
@@ -625,6 +689,7 @@ $totalShared = $totalSharedCount ?? 0;
                                 <div class="file-card draggable-file group relative bg-white border border-slate-200/90 hover:border-brand-400 hover:shadow-md rounded-2xl p-3.5 flex flex-col justify-between transition-all duration-150 animate-item-in cursor-grab active:cursor-grabbing"
                                      draggable="true"
                                      data-id="<?= $file['id'] ?>"
+                                     data-category="<?= htmlspecialchars($typeInfo['type']) ?>"
                                      data-filename="<?= htmlspecialchars(strtolower($file['original_name'])) ?>"
                                      data-rawname="<?= htmlspecialchars($file['original_name']) ?>"
                                      data-filesize="<?= (int)$file['file_size'] ?>"
@@ -653,39 +718,52 @@ $totalShared = $totalSharedCount ?? 0;
 
                                             <!-- In-Card Action Dropdown -->
                                             <div id="cardMenu_<?= $file['id'] ?>" class="card-action-menu hidden absolute right-0 top-8 z-40 w-44 bg-white rounded-xl border border-slate-200 shadow-xl py-1 text-xs font-semibold text-slate-700">
-                                                <button type="button" onclick="openFileDetail(<?= $fileJson ?>)" 
-                                                        class="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center text-slate-700">
-                                                    <svg class="w-4 h-4 mr-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                                                    Detail & Pratinjau
-                                                </button>
-                                                <a href="?action=download_direct&file_id=<?= $file['id'] ?>" 
-                                                   class="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center text-slate-700">
-                                                    <svg class="w-4 h-4 mr-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                                                    Unduh Berkas
-                                                </a>
-                                                <button type="button" onclick="openShareModal(<?= $file['id'] ?>, '<?= htmlspecialchars(addslashes($file['original_name'])) ?>', '<?= htmlspecialchars($file['share_token'] ?? '') ?>')" 
-                                                        class="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center text-slate-700">
-                                                    <svg class="w-4 h-4 mr-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 12a3 3 0 100-6 3 3 0 000 6zM18 6a3 3 0 100-6 3 3 0 000 6zM18 20a3 3 0 100-6 3 3 0 000 6z"></path></svg>
-                                                    Bagikan
-                                                </button>
-                                                <?php if ($hasPublicShare): ?>
-                                                    <button type="button" onclick="copyShareUrl('<?= htmlspecialchars($file['share_token']) ?>', this)" 
-                                                            class="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center text-emerald-600">
-                                                        <svg class="w-4 h-4 mr-2.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101"></path></svg>
-                                                        Salin Link
+                                                <?php if ($activeTab === 'trash'): ?>
+                                                    <button type="button" onclick="restoreFile(<?= $file['id'] ?>, '<?= htmlspecialchars(addslashes($file['original_name'])) ?>')" 
+                                                            class="w-full text-left px-3.5 py-2 hover:bg-emerald-50 text-emerald-600 flex items-center">
+                                                        <svg class="w-4 h-4 mr-2.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                                        Pulihkan Berkas
+                                                    </button>
+                                                    <button type="button" onclick="permanentDeleteFile(<?= $file['id'] ?>, '<?= htmlspecialchars(addslashes($file['original_name'])) ?>')" 
+                                                            class="w-full text-left px-3.5 py-2 hover:bg-rose-50 text-rose-600 flex items-center">
+                                                        <svg class="w-4 h-4 mr-2.5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                        Hapus Permanen
+                                                    </button>
+                                                <?php else: ?>
+                                                    <button type="button" onclick="openFileDetail(<?= $fileJson ?>)" 
+                                                            class="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center text-slate-700">
+                                                        <svg class="w-4 h-4 mr-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                                        Detail & Pratinjau
+                                                    </button>
+                                                    <a href="?action=download_direct&file_id=<?= $file['id'] ?>" 
+                                                       class="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center text-slate-700">
+                                                        <svg class="w-4 h-4 mr-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                                        Unduh Berkas
+                                                    </a>
+                                                    <button type="button" onclick="openShareModal(<?= $file['id'] ?>, '<?= htmlspecialchars(addslashes($file['original_name'])) ?>', '<?= htmlspecialchars($file['share_token'] ?? '') ?>')" 
+                                                            class="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center text-slate-700">
+                                                        <svg class="w-4 h-4 mr-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 12a3 3 0 100-6 3 3 0 000 6zM18 6a3 3 0 100-6 3 3 0 000 6zM18 20a3 3 0 100-6 3 3 0 000 6z"></path></svg>
+                                                        Bagikan
+                                                    </button>
+                                                    <?php if ($hasPublicShare): ?>
+                                                        <button type="button" onclick="copyShareUrl('<?= htmlspecialchars($file['share_token']) ?>', this)" 
+                                                                class="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center text-emerald-600">
+                                                            <svg class="w-4 h-4 mr-2.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101"></path></svg>
+                                                            Salin Link
+                                                        </button>
+                                                    <?php endif; ?>
+                                                    <button type="button" onclick="openRenameModal('file', <?= $file['id'] ?>, '<?= htmlspecialchars(addslashes($file['original_name'])) ?>')" 
+                                                            class="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center text-slate-700">
+                                                        <svg class="w-4 h-4 mr-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                                        Ganti Nama
+                                                    </button>
+                                                    <div class="my-1 border-t border-slate-100"></div>
+                                                    <button type="button" onclick="deleteFile(<?= $file['id'] ?>, '<?= htmlspecialchars(addslashes($file['original_name'])) ?>')" 
+                                                            class="w-full text-left px-3.5 py-2 hover:bg-rose-50 text-rose-600 flex items-center">
+                                                        <svg class="w-4 h-4 mr-2.5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                        Hapus
                                                     </button>
                                                 <?php endif; ?>
-                                                <button type="button" onclick="openRenameModal('file', <?= $file['id'] ?>, '<?= htmlspecialchars(addslashes($file['original_name'])) ?>')" 
-                                                        class="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center text-slate-700">
-                                                    <svg class="w-4 h-4 mr-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                                                    Ganti Nama
-                                                </button>
-                                                <div class="my-1 border-t border-slate-100"></div>
-                                                <button type="button" onclick="deleteFile(<?= $file['id'] ?>, '<?= htmlspecialchars(addslashes($file['original_name'])) ?>')" 
-                                                        class="w-full text-left px-3.5 py-2 hover:bg-rose-50 text-rose-600 flex items-center">
-                                                    <svg class="w-4 h-4 mr-2.5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                                    Hapus
-                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -768,6 +846,7 @@ $totalShared = $totalSharedCount ?? 0;
                                             <tr class="file-row draggable-file hover:bg-slate-50/70 transition-colors cursor-grab active:cursor-grabbing" 
                                                 draggable="true"
                                                 data-id="<?= $file['id'] ?>"
+                                                data-category="<?= htmlspecialchars($typeInfo['type']) ?>"
                                                 data-filename="<?= htmlspecialchars(strtolower($file['original_name'])) ?>"
                                                 data-rawname="<?= htmlspecialchars($file['original_name']) ?>"
                                                 data-filesize="<?= (int)$file['file_size'] ?>"
@@ -804,47 +883,66 @@ $totalShared = $totalSharedCount ?? 0;
                                                 </td>
                                                 <td class="py-3 px-4 text-right whitespace-nowrap">
                                                     <div class="inline-flex items-center space-x-1.5 justify-end">
-                                                        <button type="button" 
-                                                                onclick="openFileDetail(<?= $fileJson ?>)" 
-                                                                class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-brand-50 text-slate-600 hover:text-brand-600 border border-slate-200/80 inline-flex items-center justify-center transition-all duration-150 shadow-2xs" 
-                                                                title="Detail & Pratinjau">
-                                                            <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                                            </svg>
-                                                        </button>
-                                                        <button type="button" 
-                                                                onclick="openShareModal(<?= $file['id'] ?>, '<?= htmlspecialchars(addslashes($file['original_name'])) ?>', '<?= htmlspecialchars($file['share_token'] ?? '') ?>')" 
-                                                                class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-emerald-50 text-slate-600 hover:text-emerald-600 border border-slate-200/80 inline-flex items-center justify-center transition-all duration-150 shadow-2xs" 
-                                                                title="Bagikan">
-                                                            <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316"></path>
-                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 12a3 3 0 100-6 3 3 0 000 6zM18 6a3 3 0 100-6 3 3 0 000 6zM18 20a3 3 0 100-6 3 3 0 000 6z"></path>
-                                                            </svg>
-                                                        </button>
-                                                        <a href="?action=download_direct&file_id=<?= $file['id'] ?>" 
-                                                           class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 border border-slate-200/80 inline-flex items-center justify-center transition-all duration-150 shadow-2xs" 
-                                                           title="Unduh">
-                                                            <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                                                            </svg>
-                                                        </a>
-                                                        <button type="button" 
-                                                                onclick="openRenameModal('file', <?= $file['id'] ?>, '<?= htmlspecialchars(addslashes($file['original_name'])) ?>')" 
-                                                                class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-amber-50 text-slate-600 hover:text-amber-600 border border-slate-200/80 inline-flex items-center justify-center transition-all duration-150 shadow-2xs" 
-                                                                title="Ganti Nama">
-                                                            <svg class="w-3.5 h-3.5" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                                                            </svg>
-                                                        </button>
-                                                        <button type="button" 
-                                                                onclick="deleteFile(<?= $file['id'] ?>, '<?= htmlspecialchars(addslashes($file['original_name'])) ?>')" 
-                                                                class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200/80 inline-flex items-center justify-center transition-all duration-150 shadow-2xs" 
-                                                                title="Hapus">
-                                                            <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                                            </svg>
-                                                        </button>
+                                                        <?php if ($activeTab === 'trash'): ?>
+                                                            <button type="button" 
+                                                                    onclick="restoreFile(<?= $file['id'] ?>, '<?= htmlspecialchars(addslashes($file['original_name'])) ?>')" 
+                                                                    class="w-8 h-8 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border border-emerald-200 inline-flex items-center justify-center transition-all duration-150 shadow-2xs" 
+                                                                    title="Pulihkan Berkas">
+                                                                <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                                                </svg>
+                                                            </button>
+                                                            <button type="button" 
+                                                                    onclick="permanentDeleteFile(<?= $file['id'] ?>, '<?= htmlspecialchars(addslashes($file['original_name'])) ?>')" 
+                                                                    class="w-8 h-8 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 inline-flex items-center justify-center transition-all duration-150 shadow-2xs" 
+                                                                    title="Hapus Permanen">
+                                                                <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                                                </svg>
+                                                            </button>
+                                                        <?php else: ?>
+                                                            <button type="button" 
+                                                                    onclick="openFileDetail(<?= $fileJson ?>)" 
+                                                                    class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-brand-50 text-slate-600 hover:text-brand-600 border border-slate-200/80 inline-flex items-center justify-center transition-all duration-150 shadow-2xs" 
+                                                                    title="Detail & Pratinjau">
+                                                                <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                                                </svg>
+                                                            </button>
+                                                            <button type="button" 
+                                                                    onclick="openShareModal(<?= $file['id'] ?>, '<?= htmlspecialchars(addslashes($file['original_name'])) ?>', '<?= htmlspecialchars($file['share_token'] ?? '') ?>')" 
+                                                                    class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-emerald-50 text-slate-600 hover:text-emerald-600 border border-slate-200/80 inline-flex items-center justify-center transition-all duration-150 shadow-2xs" 
+                                                                    title="Bagikan">
+                                                                <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316"></path>
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 12a3 3 0 100-6 3 3 0 000 6zM18 6a3 3 0 100-6 3 3 0 000 6zM18 20a3 3 0 100-6 3 3 0 000 6z"></path>
+                                                                </svg>
+                                                            </button>
+                                                            <a href="?action=download_direct&file_id=<?= $file['id'] ?>" 
+                                                               class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 border border-slate-200/80 inline-flex items-center justify-center transition-all duration-150 shadow-2xs" 
+                                                               title="Unduh">
+                                                                <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                                                </svg>
+                                                            </a>
+                                                            <button type="button" 
+                                                                    onclick="openRenameModal('file', <?= $file['id'] ?>, '<?= htmlspecialchars(addslashes($file['original_name'])) ?>')" 
+                                                                    class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-amber-50 text-slate-600 hover:text-amber-600 border border-slate-200/80 inline-flex items-center justify-center transition-all duration-150 shadow-2xs" 
+                                                                    title="Ganti Nama">
+                                                                <svg class="w-3.5 h-3.5" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                                                </svg>
+                                                            </button>
+                                                            <button type="button" 
+                                                                    onclick="deleteFile(<?= $file['id'] ?>, '<?= htmlspecialchars(addslashes($file['original_name'])) ?>')" 
+                                                                    class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200/80 inline-flex items-center justify-center transition-all duration-150 shadow-2xs" 
+                                                                    title="Pindahkan ke Sampah">
+                                                                <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                                                </svg>
+                                                            </button>
+                                                        <?php endif; ?>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -1078,9 +1176,14 @@ $totalShared = $totalSharedCount ?? 0;
                     <span id="detailFileBadge" class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-700">FILE</span>
                     <h3 class="font-bold text-slate-800 text-sm truncate" id="detailFileName">Nama Berkas</h3>
                 </div>
-                <button type="button" onclick="closeModal('fileDetailModal')" class="h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
+                <div class="flex items-center space-x-1.5">
+                    <a id="detailBtnOpenNewTab" href="#" target="_blank" class="h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-brand-600 hover:bg-slate-200 transition-colors" title="Buka di Tab Baru">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                    </a>
+                    <button type="button" onclick="closeModal('fileDetailModal')" class="h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
             </div>
 
             <!-- Content Area (Preview & Meta) -->

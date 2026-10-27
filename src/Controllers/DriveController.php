@@ -54,14 +54,14 @@ class DriveController
             $files = array_values($sharedWithMeFiles);
             $folders = [];
         } elseif ($activeTab === 'recent') {
-            // Tab Terbaru (50 berkas terbaru)
+            // Tab Terbaru (50 berkas terbaru yang tidak di tempat sampah)
             $recentQuery = "
                 SELECT f.id, f.original_name, f.storage_filename, f.storage_path, f.mime_type, f.file_size, f.created_at,
                        s.share_token, s.is_active as is_shared, s.expires_at, s.download_count, s.max_downloads,
                        (SELECT COUNT(*) FROM user_shares us WHERE us.file_id = f.id) as user_shares_count
                 FROM files f
                 LEFT JOIN share_links s ON f.id = s.file_id AND s.is_active = 1
-                WHERE f.user_id = :user_id
+                WHERE f.user_id = :user_id AND f.deleted_at IS NULL
                 ORDER BY f.created_at DESC
                 LIMIT 50
             ";
@@ -69,11 +69,30 @@ class DriveController
             $recentStmt->execute([':user_id' => $userId]);
             $files = $recentStmt->fetchAll();
             $folders = [];
+        } elseif ($activeTab === 'trash') {
+            // Tab Sampah (Recycle Bin)
+            $breadcrumbs = [['id' => null, 'name' => 'Keranjang Sampah']];
+
+            // Ambil subfolder yang dihapus
+            $trashFoldersStmt = $db->prepare("SELECT id, name, updated_at, deleted_at FROM folders WHERE user_id = :user_id AND deleted_at IS NOT NULL ORDER BY deleted_at DESC");
+            $trashFoldersStmt->execute([':user_id' => $userId]);
+            $folders = $trashFoldersStmt->fetchAll();
+
+            // Ambil file yang dihapus
+            $trashFilesStmt = $db->prepare("
+                SELECT f.id, f.original_name, f.storage_filename, f.storage_path, f.mime_type, f.file_size, f.created_at, f.deleted_at,
+                       0 as is_shared, NULL as share_token, 0 as user_shares_count
+                FROM files f
+                WHERE f.user_id = :user_id AND f.deleted_at IS NOT NULL
+                ORDER BY f.deleted_at DESC
+            ");
+            $trashFilesStmt->execute([':user_id' => $userId]);
+            $files = $trashFilesStmt->fetchAll();
         } else {
             // Tab Drive Saya (Default)
             $currentFolder = null;
             if ($folderId !== null) {
-                $folderStmt = $db->prepare("SELECT id, name, parent_id FROM folders WHERE id = :id AND user_id = :user_id");
+                $folderStmt = $db->prepare("SELECT id, name, parent_id FROM folders WHERE id = :id AND user_id = :user_id AND deleted_at IS NULL");
                 $folderStmt->execute([':id' => $folderId, ':user_id' => $userId]);
                 $currentFolder = $folderStmt->fetch();
 
@@ -88,7 +107,7 @@ class DriveController
                 while ($tempFolder) {
                     array_unshift($trail, ['id' => $tempFolder['id'], 'name' => $tempFolder['name']]);
                     if ($tempFolder['parent_id'] !== null) {
-                        $parentStmt = $db->prepare("SELECT id, name, parent_id FROM folders WHERE id = :id AND user_id = :user_id");
+                        $parentStmt = $db->prepare("SELECT id, name, parent_id FROM folders WHERE id = :id AND user_id = :user_id AND deleted_at IS NULL");
                         $parentStmt->execute([':id' => $tempFolder['parent_id'], ':user_id' => $userId]);
                         $tempFolder = $parentStmt->fetch();
                     } else {
@@ -98,16 +117,16 @@ class DriveController
                 $breadcrumbs = array_merge($breadcrumbs, $trail);
             }
 
-            // Ambil subfolder
+            // Ambil subfolder aktif
             if (!empty($search)) {
-                $folderQuery = "SELECT id, name, updated_at FROM folders WHERE user_id = :user_id AND name LIKE :search ORDER BY name ASC";
+                $folderQuery = "SELECT id, name, updated_at FROM folders WHERE user_id = :user_id AND deleted_at IS NULL AND name LIKE :search ORDER BY name ASC";
                 $folderParams = [':user_id' => $userId, ':search' => "%{$search}%"];
             } else {
                 if ($folderId === null) {
-                    $folderQuery = "SELECT id, name, updated_at FROM folders WHERE user_id = :user_id AND parent_id IS NULL ORDER BY name ASC";
+                    $folderQuery = "SELECT id, name, updated_at FROM folders WHERE user_id = :user_id AND deleted_at IS NULL AND parent_id IS NULL ORDER BY name ASC";
                     $folderParams = [':user_id' => $userId];
                 } else {
-                    $folderQuery = "SELECT id, name, updated_at FROM folders WHERE user_id = :user_id AND parent_id = :parent_id ORDER BY name ASC";
+                    $folderQuery = "SELECT id, name, updated_at FROM folders WHERE user_id = :user_id AND deleted_at IS NULL AND parent_id = :parent_id ORDER BY name ASC";
                     $folderParams = [':user_id' => $userId, ':parent_id' => $folderId];
                 }
             }
@@ -115,7 +134,7 @@ class DriveController
             $foldersStmt->execute($folderParams);
             $folders = $foldersStmt->fetchAll();
 
-            // Ambil file
+            // Ambil file aktif
             if (!empty($search)) {
                 $fileQuery = "
                     SELECT f.id, f.original_name, f.storage_filename, f.storage_path, f.mime_type, f.file_size, f.created_at,
@@ -123,7 +142,7 @@ class DriveController
                            (SELECT COUNT(*) FROM user_shares us WHERE us.file_id = f.id) as user_shares_count
                     FROM files f
                     LEFT JOIN share_links s ON f.id = s.file_id AND s.is_active = 1
-                    WHERE f.user_id = :user_id AND f.original_name LIKE :search
+                    WHERE f.user_id = :user_id AND f.deleted_at IS NULL AND f.original_name LIKE :search
                     ORDER BY f.created_at DESC
                 ";
                 $fileParams = [':user_id' => $userId, ':search' => "%{$search}%"];
@@ -135,7 +154,7 @@ class DriveController
                                (SELECT COUNT(*) FROM user_shares us WHERE us.file_id = f.id) as user_shares_count
                         FROM files f
                         LEFT JOIN share_links s ON f.id = s.file_id AND s.is_active = 1
-                        WHERE f.user_id = :user_id AND f.folder_id IS NULL
+                        WHERE f.user_id = :user_id AND f.deleted_at IS NULL AND f.folder_id IS NULL
                         ORDER BY f.created_at DESC
                     ";
                     $fileParams = [':user_id' => $userId];
@@ -146,7 +165,7 @@ class DriveController
                                (SELECT COUNT(*) FROM user_shares us WHERE us.file_id = f.id) as user_shares_count
                         FROM files f
                         LEFT JOIN share_links s ON f.id = s.file_id AND s.is_active = 1
-                        WHERE f.user_id = :user_id AND f.folder_id = :folder_id
+                        WHERE f.user_id = :user_id AND f.deleted_at IS NULL AND f.folder_id = :folder_id
                         ORDER BY f.created_at DESC
                     ";
                     $fileParams = [':user_id' => $userId, ':folder_id' => $folderId];
@@ -157,9 +176,9 @@ class DriveController
             $files = $filesStmt->fetchAll();
         }
 
-        // Summary Counts for Modern Dashboard Overview
-        $totalFilesCount = (int) $db->query("SELECT COUNT(*) FROM files WHERE user_id = {$userId}")->fetchColumn();
-        $totalFoldersCount = (int) $db->query("SELECT COUNT(*) FROM folders WHERE user_id = {$userId}")->fetchColumn();
+        // Summary Counts for Modern Dashboard Overview (Hanya yang aktif / bukan sampah)
+        $totalFilesCount = (int) $db->query("SELECT COUNT(*) FROM files WHERE user_id = {$userId} AND deleted_at IS NULL")->fetchColumn();
+        $totalFoldersCount = (int) $db->query("SELECT COUNT(*) FROM folders WHERE user_id = {$userId} AND deleted_at IS NULL")->fetchColumn();
         $totalSharedCount = (int) $db->query("
             SELECT (
                 (SELECT COUNT(*) FROM share_links WHERE user_id = {$userId} AND is_active = 1) +
@@ -338,8 +357,11 @@ class DriveController
         $userId = (int) AuthService::id();
         $fileId = (int) ($_POST['file_id'] ?? 0);
 
-        $result = StorageService::deleteFile($fileId, $userId);
-        $this->respondJson($result);
+        $db = Database::getConnection();
+        $stmt = $db->prepare("UPDATE files SET deleted_at = NOW() WHERE id = :id AND user_id = :user_id");
+        $stmt->execute([':id' => $fileId, ':user_id' => $userId]);
+
+        $this->respondJson(['success' => true]);
     }
 
     public function bulkDeleteFiles(): void
@@ -360,8 +382,13 @@ class DriveController
             return;
         }
 
-        $result = StorageService::bulkDeleteFiles($fileIds, $userId);
-        $this->respondJson($result);
+        $cleanIds = array_map('intval', $fileIds);
+        $placeholders = implode(',', array_fill(0, count($cleanIds), '?'));
+        $db = Database::getConnection();
+        $stmt = $db->prepare("UPDATE files SET deleted_at = NOW() WHERE user_id = ? AND id IN ($placeholders)");
+        $stmt->execute(array_merge([$userId], $cleanIds));
+
+        $this->respondJson(['success' => true, 'count' => count($cleanIds)]);
     }
 
     public function deleteFolder(): void
@@ -371,10 +398,168 @@ class DriveController
         $folderId = (int) ($_POST['folder_id'] ?? 0);
 
         $db = Database::getConnection();
+        $stmt = $db->prepare("UPDATE folders SET deleted_at = NOW() WHERE id = :id AND user_id = :user_id");
+        $stmt->execute([':id' => $folderId, ':user_id' => $userId]);
+
+        $this->respondJson(['success' => true]);
+    }
+
+    public function restoreFile(): void
+    {
+        $this->validateCsrf();
+        $userId = (int) AuthService::id();
+        $fileId = (int) ($_POST['file_id'] ?? 0);
+
+        $db = Database::getConnection();
+        $stmt = $db->prepare("UPDATE files SET deleted_at = NULL WHERE id = :id AND user_id = :user_id");
+        $stmt->execute([':id' => $fileId, ':user_id' => $userId]);
+
+        $this->respondJson(['success' => true]);
+    }
+
+    public function restoreFolder(): void
+    {
+        $this->validateCsrf();
+        $userId = (int) AuthService::id();
+        $folderId = (int) ($_POST['folder_id'] ?? 0);
+
+        $db = Database::getConnection();
+        $stmt = $db->prepare("UPDATE folders SET deleted_at = NULL WHERE id = :id AND user_id = :user_id");
+        $stmt->execute([':id' => $folderId, ':user_id' => $userId]);
+
+        $this->respondJson(['success' => true]);
+    }
+
+    public function permanentDeleteFile(): void
+    {
+        $this->validateCsrf();
+        $userId = (int) AuthService::id();
+        $fileId = (int) ($_POST['file_id'] ?? 0);
+
+        $result = StorageService::deleteFile($fileId, $userId);
+        $this->respondJson($result);
+    }
+
+    public function permanentDeleteFolder(): void
+    {
+        $this->validateCsrf();
+        $userId = (int) AuthService::id();
+        $folderId = (int) ($_POST['folder_id'] ?? 0);
+
+        $db = Database::getConnection();
+        $filesStmt = $db->prepare("SELECT id FROM files WHERE folder_id = :fid AND user_id = :uid");
+        $filesStmt->execute([':fid' => $folderId, ':uid' => $userId]);
+        $files = $filesStmt->fetchAll();
+        foreach ($files as $f) {
+            StorageService::deleteFile((int) $f['id'], $userId);
+        }
+
         $stmt = $db->prepare("DELETE FROM folders WHERE id = :id AND user_id = :user_id");
         $stmt->execute([':id' => $folderId, ':user_id' => $userId]);
 
         $this->respondJson(['success' => true]);
+    }
+
+    public function emptyTrash(): void
+    {
+        $this->validateCsrf();
+        $userId = (int) AuthService::id();
+        $db = Database::getConnection();
+
+        $filesStmt = $db->prepare("SELECT id FROM files WHERE user_id = :user_id AND deleted_at IS NOT NULL");
+        $filesStmt->execute([':user_id' => $userId]);
+        $files = $filesStmt->fetchAll();
+        foreach ($files as $f) {
+            StorageService::deleteFile((int) $f['id'], $userId);
+        }
+
+        $folderStmt = $db->prepare("DELETE FROM folders WHERE user_id = :user_id AND deleted_at IS NOT NULL");
+        $folderStmt->execute([':user_id' => $userId]);
+
+        $this->respondJson(['success' => true]);
+    }
+
+    public function downloadFolderZip(): void
+    {
+        $userId = (int) AuthService::id();
+        $folderId = (int) ($_GET['folder_id'] ?? 0);
+
+        if ($folderId <= 0) {
+            http_response_code(400);
+            die('ID folder tidak valid.');
+        }
+
+        $db = Database::getConnection();
+        $stmt = $db->prepare("SELECT id, name FROM folders WHERE id = :id AND user_id = :user_id AND deleted_at IS NULL");
+        $stmt->execute([':id' => $folderId, ':user_id' => $userId]);
+        $folder = $stmt->fetch();
+
+        if (!$folder) {
+            http_response_code(404);
+            die('Folder tidak ditemukan.');
+        }
+
+        if (!class_exists('ZipArchive')) {
+            http_response_code(500);
+            die('Ekstensi PHP ZipArchive tidak aktif.');
+        }
+
+        $zip = new \ZipArchive();
+        $tempZipPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'folder_' . $folderId . '_' . uniqid() . '.zip';
+
+        if ($zip->open($tempZipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+            http_response_code(500);
+            die('Gagal membuat arsip ZIP.');
+        }
+
+        $addFolderToZip = function ($currentFolderId, $zipPath) use (&$addFolderToZip, $zip, $db, $userId) {
+            $fileStmt = $db->prepare("SELECT id, original_name, storage_path, storage_filename FROM files WHERE folder_id = :fid AND user_id = :uid AND deleted_at IS NULL");
+            $fileStmt->execute([':fid' => $currentFolderId, ':uid' => $userId]);
+            $files = $fileStmt->fetchAll();
+
+            foreach ($files as $f) {
+                $fullPath = StorageService::getFullPath($f['storage_path'], $f['storage_filename']);
+                if (file_exists($fullPath) && is_readable($fullPath)) {
+                    $entryName = ($zipPath !== '' ? $zipPath . '/' : '') . $f['original_name'];
+                    $zip->addFile($fullPath, $entryName);
+                }
+            }
+
+            $subStmt = $db->prepare("SELECT id, name FROM folders WHERE parent_id = :pid AND user_id = :uid AND deleted_at IS NULL");
+            $subStmt->execute([':pid' => $currentFolderId, ':uid' => $userId]);
+            $subs = $subStmt->fetchAll();
+
+            foreach ($subs as $sub) {
+                $subZipPath = ($zipPath !== '' ? $zipPath . '/' : '') . $sub['name'];
+                $zip->addEmptyDir($subZipPath);
+                $addFolderToZip($sub['id'], $subZipPath);
+            }
+        };
+
+        $zip->addEmptyDir($folder['name']);
+        $addFolderToZip($folderId, $folder['name']);
+        $zip->close();
+
+        if (!file_exists($tempZipPath)) {
+            http_response_code(500);
+            die('Berkas ZIP gagal dihasilkan.');
+        }
+
+        $cleanZipName = preg_replace('/[^a-zA-Z0-9_\-\.]/', '_', $folder['name']) . '.zip';
+
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+
+        header('Content-Type: application/zip');
+        header('Content-Disposition: attachment; filename="' . $cleanZipName . '"');
+        header('Content-Length: ' . filesize($tempZipPath));
+        header('Cache-Control: private, no-transform');
+        header('X-Accel-Buffering: no');
+
+        readfile($tempZipPath);
+        @unlink($tempZipPath);
+        exit;
     }
 
     public function moveFile(): void

@@ -16,10 +16,22 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
+    <!-- Dark Mode Immediate Pre-render Script -->
+    <script>
+        try {
+            if (localStorage.getItem('drive_theme') === 'dark' || (!('drive_theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        } catch (e) {}
+    </script>
+
     <!-- Tailwind CSS CDN untuk standalone & XAMPP native -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     fontFamily: {
@@ -45,6 +57,54 @@
         }
     </script>
     <style>
+        /* Modern Slate Dark Mode Styles */
+        html.dark, html.dark body {
+            background-color: #0b0f19 !important;
+            color: #f1f5f9 !important;
+        }
+        html.dark .bg-white {
+            background-color: #111827 !important;
+            color: #f1f5f9 !important;
+        }
+        html.dark .bg-slate-50, html.dark .bg-slate-50\/70 {
+            background-color: #0b0f19 !important;
+        }
+        html.dark .bg-slate-100 {
+            background-color: #1f2937 !important;
+            color: #e2e8f0 !important;
+        }
+        html.dark .border-slate-200, html.dark .border-slate-200\/80, html.dark .border-slate-100 {
+            border-color: #1f2937 !important;
+        }
+        html.dark .text-slate-900, html.dark .text-slate-800, html.dark .text-slate-700 {
+            color: #f3f4f6 !important;
+        }
+        html.dark .text-slate-600, html.dark .text-slate-500, html.dark .text-slate-400 {
+            color: #94a3b8 !important;
+        }
+        html.dark header {
+            background-color: rgba(17, 24, 39, 0.95) !important;
+            border-color: #1f2937 !important;
+        }
+        html.dark input, html.dark select, html.dark textarea {
+            background-color: #111827 !important;
+            color: #f3f4f6 !important;
+            border-color: #374151 !important;
+        }
+        html.dark .file-row:hover {
+            background-color: #1e293b !important;
+        }
+        html.dark .file-card {
+            background-color: #111827 !important;
+            border-color: #1f2937 !important;
+        }
+        html.dark .file-card:hover {
+            border-color: #6366f1 !important;
+        }
+        html.dark .sidebar-nav-active {
+            background-color: #1e1b4b !important;
+            color: #818cf8 !important;
+        }
         /* Modern Typography & Focus */
         body {
             font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
