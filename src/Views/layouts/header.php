@@ -25,6 +25,34 @@
                 document.documentElement.classList.remove('dark');
             }
         } catch (e) {}
+
+        function syncThemeIcons(isDark) {
+            document.querySelectorAll('#themeToggleBtn').forEach(btn => {
+                const sun = btn.querySelector('#themeIconSun') || btn.querySelector('svg:first-child');
+                const moon = btn.querySelector('#themeIconMoon') || btn.querySelector('svg:last-child');
+                if (sun && moon) {
+                    if (isDark) {
+                        sun.classList.remove('hidden');
+                        moon.classList.add('hidden');
+                    } else {
+                        sun.classList.add('hidden');
+                        moon.classList.remove('hidden');
+                    }
+                }
+            });
+        }
+
+        window.toggleDarkMode = function () {
+            const isDark = document.documentElement.classList.toggle('dark');
+            try {
+                localStorage.setItem('drive_theme', isDark ? 'dark' : 'light');
+            } catch (e) {}
+            syncThemeIcons(isDark);
+        };
+
+        document.addEventListener('DOMContentLoaded', function () {
+            syncThemeIcons(document.documentElement.classList.contains('dark'));
+        });
     </script>
 
     <!-- Tailwind CSS CDN untuk standalone & XAMPP native -->

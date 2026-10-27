@@ -18,10 +18,10 @@ $canPreview = !empty($share['allow_preview']) && ($isImage || $isPdf || $isVideo
         <!-- Header Brand Icon -->
         <div class="flex justify-center mb-6">
             <img src="assets/img/favicon.svg" alt="Cloud Sharing Logo" 
-                 class="h-14 w-14 rounded-2xl shadow-md shadow-brand-500/20">
+                 class="h-14 w-14 rounded-2xl shadow-xs">
         </div>
 
-        <div class="bg-white py-8 px-6 shadow-sm border border-slate-200 rounded-2xl sm:px-10">
+        <div class="bg-white py-8 px-6 shadow-xs border border-slate-200/80 rounded-3xl sm:px-10">
             
             <?php if (!$isUnlocked): ?>
                 <!-- Form Masukkan Password (Jika diproteksi) -->
