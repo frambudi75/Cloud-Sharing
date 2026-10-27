@@ -538,7 +538,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         alert(res.error || 'Gagal mengunggah berkas.');
                     }
                 } catch (e) {
-                    alert('Respons server tidak valid saat upload.');
+                    console.error('Non-JSON response:', xhr.responseText);
+                    const snippet = xhr.responseText ? xhr.responseText.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 150) : '';
+                    alert('Respons server: ' + (snippet || 'Format respons tidak dikenali.'));
                 }
             } else {
                 alert(`Gagal mengunggah berkas (HTTP ${xhr.status}).`);

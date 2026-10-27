@@ -204,17 +204,24 @@ class DriveController
 
     public function upload(): void
     {
-        $this->validateCsrf();
-        $userId = (int) AuthService::id();
-        $folderId = !empty($_POST['folder_id']) && is_numeric($_POST['folder_id']) ? (int) $_POST['folder_id'] : null;
+        try {
+            $this->validateCsrf();
+            $userId = (int) AuthService::id();
+            $folderId = !empty($_POST['folder_id']) && is_numeric($_POST['folder_id']) ? (int) $_POST['folder_id'] : null;
 
-        if (!isset($_FILES['file'])) {
-            $this->respondJson(['success' => false, 'error' => 'Tidak ada berkas yang diterima.']);
-            return;
+            if (!isset($_FILES['file'])) {
+                $this->respondJson(['success' => false, 'error' => 'Tidak ada berkas yang diterima.']);
+                return;
+            }
+
+            $result = StorageService::storeUploadedFile($_FILES['file'], $userId, $folderId);
+            $this->respondJson($result);
+        } catch (\Throwable $e) {
+            $this->respondJson([
+                'success' => false,
+                'error' => 'Gagal mengunggah berkas: ' . $e->getMessage()
+            ]);
         }
-
-        $result = StorageService::storeUploadedFile($_FILES['file'], $userId, $folderId);
-        $this->respondJson($result);
     }
 
     public function deleteFile(): void

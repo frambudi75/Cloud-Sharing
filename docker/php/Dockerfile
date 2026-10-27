@@ -29,8 +29,14 @@ RUN pecl install redis \
 # Salin custom konfigurasi php.ini
 COPY ./docker/php/php.ini /usr/local/etc/php/conf.d/custom.ini
 
+# Entrypoint script untuk memastikan ownership direktori storage
+COPY ./docker/php/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 WORKDIR /var/www/html
 
 EXPOSE 9000
 
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["php-fpm"]
+
