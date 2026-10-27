@@ -501,8 +501,114 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Global Window-Wide Drag and Drop with Overlay
+    // =========================================================================
+    // 8.1 Drag and Drop File to Folder (Pindahkan Berkas)
+    // =========================================================================
+    let isInternalFileDrag = false;
+    let draggedFileId = null;
+    let draggedFileEl = null;
+
+    function initFileToFolderDragAndDrop() {
+        const draggableFiles = document.querySelectorAll('.draggable-file');
+        const folderDropZones = document.querySelectorAll('.folder-drop-zone');
+
+        draggableFiles.forEach(fileEl => {
+            fileEl.addEventListener('dragstart', (e) => {
+                isInternalFileDrag = true;
+                draggedFileEl = fileEl;
+                draggedFileId = fileEl.getAttribute('data-id');
+                
+                if (e.dataTransfer) {
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', draggedFileId || '');
+                }
+
+                fileEl.classList.add('opacity-40', 'scale-[0.98]', 'border-brand-400');
+            });
+
+            fileEl.addEventListener('dragend', () => {
+                isInternalFileDrag = false;
+                draggedFileEl = null;
+                draggedFileId = null;
+
+                fileEl.classList.remove('opacity-40', 'scale-[0.98]', 'border-brand-400');
+                folderDropZones.forEach(f => {
+                    f.classList.remove('ring-2', 'ring-brand-500', 'bg-brand-50/70', 'scale-[1.02]');
+                });
+            });
+        });
+
+        folderDropZones.forEach(folderEl => {
+            folderEl.addEventListener('dragover', (e) => {
+                if (!isInternalFileDrag) return;
+                e.preventDefault();
+                e.stopPropagation();
+                if (e.dataTransfer) {
+                    e.dataTransfer.dropEffect = 'move';
+                }
+                folderEl.classList.add('ring-2', 'ring-brand-500', 'bg-brand-50/70', 'scale-[1.02]');
+            });
+
+            folderEl.addEventListener('dragleave', (e) => {
+                if (!isInternalFileDrag) return;
+                e.preventDefault();
+                folderEl.classList.remove('ring-2', 'ring-brand-500', 'bg-brand-50/70', 'scale-[1.02]');
+            });
+
+            folderEl.addEventListener('drop', async (e) => {
+                if (!isInternalFileDrag) return;
+                e.preventDefault();
+                e.stopPropagation();
+
+                folderEl.classList.remove('ring-2', 'ring-brand-500', 'bg-brand-50/70', 'scale-[1.02]');
+
+                const fileId = (e.dataTransfer ? e.dataTransfer.getData('text/plain') : '') || draggedFileId;
+                const folderId = folderEl.getAttribute('data-folder-id');
+                const folderName = folderEl.getAttribute('data-folder-name') || 'Folder';
+
+                if (!fileId) return;
+
+                showToast(`Memindahkan ke ${folderName}...`);
+
+                try {
+                    const formData = new FormData();
+                    formData.append('csrf_token', csrfToken);
+                    formData.append('file_id', fileId);
+                    if (folderId && folderId !== 'root') {
+                        formData.append('folder_id', folderId);
+                    }
+
+                    const response = await fetch('?action=move_file', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const res = await response.json();
+                    if (res.success) {
+                        showToast(`Berkas berhasil dipindahkan ke ${folderName}!`);
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 500);
+                    } else {
+                        alert(res.error || 'Gagal memindahkan berkas.');
+                    }
+                } catch (err) {
+                    alert('Terjadi kesalahan saat memindahkan berkas.');
+                }
+            });
+        });
+    }
+
+    // Panggil inisialisasi Drag & Drop File ke Folder
+    initFileToFolderDragAndDrop();
+
+    // =========================================================================
+    // 8.2 Global Window-Wide Drag and Drop for Uploading from Desktop
+    // =========================================================================
     window.addEventListener('dragenter', (e) => {
+        if (isInternalFileDrag || !e.dataTransfer || !e.dataTransfer.types.includes('Files')) {
+            return;
+        }
         e.preventDefault();
         dragCounter++;
         if (globalDropOverlay) globalDropOverlay.classList.remove('hidden');
@@ -510,6 +616,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     window.addEventListener('dragover', (e) => {
+        if (isInternalFileDrag || !e.dataTransfer || !e.dataTransfer.types.includes('Files')) {
+            return;
+        }
         e.preventDefault();
         if (globalDropOverlay && globalDropOverlay.classList.contains('hidden')) {
             globalDropOverlay.classList.remove('hidden');
@@ -517,6 +626,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     window.addEventListener('dragleave', (e) => {
+        if (isInternalFileDrag) return;
         dragCounter--;
         if (dragCounter <= 0) {
             dragCounter = 0;
@@ -526,6 +636,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     window.addEventListener('drop', (e) => {
+        if (isInternalFileDrag) return;
         e.preventDefault();
         dragCounter = 0;
         if (globalDropOverlay) globalDropOverlay.classList.add('hidden');

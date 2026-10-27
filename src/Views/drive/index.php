@@ -392,7 +392,10 @@ $totalShared = $totalSharedCount ?? 0;
                             <?php if ($index === count($breadcrumbs) - 1): ?>
                                 <span class="font-bold text-slate-900 px-2 py-0.5 rounded bg-slate-200/80"><?= htmlspecialchars($crumb['name']) ?></span>
                             <?php else: ?>
-                                <a href="?action=drive<?= $crumb['id'] !== null ? '&folder=' . $crumb['id'] : '' ?>" class="hover:text-brand-600 font-semibold px-1 py-0.5 rounded hover:bg-slate-100">
+                                <a href="?action=drive<?= $crumb['id'] !== null ? '&folder=' . $crumb['id'] : '' ?>" 
+                                   class="folder-drop-zone hover:text-brand-600 font-semibold px-2 py-0.5 rounded hover:bg-slate-100 transition-all"
+                                   data-folder-id="<?= $crumb['id'] !== null ? $crumb['id'] : 'root' ?>"
+                                   data-folder-name="<?= htmlspecialchars($crumb['name']) ?>">
                                     <?= htmlspecialchars($crumb['name']) ?>
                                 </a>
                             <?php endif; ?>
@@ -561,7 +564,9 @@ $totalShared = $totalSharedCount ?? 0;
                             
                             <!-- 1. Folder Cards -->
                             <?php foreach ($folders as $folder): ?>
-                                <div class="file-card group relative bg-white border border-slate-200/80 hover:border-brand-300 hover:shadow-lg hover:-translate-y-0.5 rounded-2xl p-4 flex flex-col justify-between transition-all duration-200 animate-item-in">
+                                <div class="file-card folder-drop-zone group relative bg-white border border-slate-200/80 hover:border-brand-300 hover:shadow-lg hover:-translate-y-0.5 rounded-2xl p-4 flex flex-col justify-between transition-all duration-200 animate-item-in"
+                                     data-folder-id="<?= $folder['id'] ?>"
+                                     data-folder-name="<?= htmlspecialchars($folder['name']) ?>">
                                     <div class="flex items-center justify-between">
                                         <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Folder</span>
                                         <button type="button" onclick="deleteFolder(<?= $folder['id'] ?>, '<?= htmlspecialchars(addslashes($folder['name'])) ?>')" 
@@ -611,7 +616,8 @@ $totalShared = $totalSharedCount ?? 0;
                                     'user_shares_count' => $directShareCount,
                                 ]), ENT_QUOTES, 'UTF-8');
                                 ?>
-                                <div class="file-card group relative bg-white border border-slate-200/90 hover:border-brand-400 hover:shadow-md rounded-2xl p-3.5 flex flex-col justify-between transition-all duration-150 animate-item-in"
+                                <div class="file-card draggable-file group relative bg-white border border-slate-200/90 hover:border-brand-400 hover:shadow-md rounded-2xl p-3.5 flex flex-col justify-between transition-all duration-150 animate-item-in cursor-grab active:cursor-grabbing"
+                                     draggable="true"
                                      data-id="<?= $file['id'] ?>"
                                      data-filename="<?= htmlspecialchars(strtolower($file['original_name'])) ?>"
                                      data-rawname="<?= htmlspecialchars($file['original_name']) ?>"
@@ -748,7 +754,8 @@ $totalShared = $totalSharedCount ?? 0;
                                                 'user_shares_count' => $directShareCount,
                                             ]), ENT_QUOTES, 'UTF-8');
                                             ?>
-                                            <tr class="file-row hover:bg-slate-50/70 transition-colors" 
+                                            <tr class="file-row draggable-file hover:bg-slate-50/70 transition-colors cursor-grab active:cursor-grabbing" 
+                                                draggable="true"
                                                 data-id="<?= $file['id'] ?>"
                                                 data-filename="<?= htmlspecialchars(strtolower($file['original_name'])) ?>"
                                                 data-rawname="<?= htmlspecialchars($file['original_name']) ?>"

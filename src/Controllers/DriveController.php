@@ -377,6 +377,48 @@ class DriveController
         $this->respondJson(['success' => true]);
     }
 
+    public function moveFile(): void
+    {
+        $this->validateCsrf();
+        $userId = (int) AuthService::id();
+        $fileId = (int) ($_POST['file_id'] ?? 0);
+        $folderId = isset($_POST['folder_id']) && $_POST['folder_id'] !== '' && $_POST['folder_id'] !== 'root' && is_numeric($_POST['folder_id'])
+            ? (int) $_POST['folder_id']
+            : null;
+
+        if ($fileId <= 0) {
+            $this->respondJson(['success' => false, 'error' => 'Berkas tidak valid.']);
+            return;
+        }
+
+        $db = Database::getConnection();
+
+        $checkFile = $db->prepare("SELECT id, original_name FROM files WHERE id = :id AND user_id = :user_id");
+        $checkFile->execute([':id' => $fileId, ':user_id' => $userId]);
+        if (!$checkFile->fetch()) {
+            $this->respondJson(['success' => false, 'error' => 'Berkas tidak ditemukan.']);
+            return;
+        }
+
+        if ($folderId !== null) {
+            $checkFolder = $db->prepare("SELECT id, name FROM folders WHERE id = :id AND user_id = :user_id");
+            $checkFolder->execute([':id' => $folderId, ':user_id' => $userId]);
+            if (!$checkFolder->fetch()) {
+                $this->respondJson(['success' => false, 'error' => 'Folder tujuan tidak ditemukan.']);
+                return;
+            }
+        }
+
+        $stmt = $db->prepare("UPDATE files SET folder_id = :folder_id WHERE id = :file_id AND user_id = :user_id");
+        $stmt->execute([
+            ':folder_id' => $folderId,
+            ':file_id'   => $fileId,
+            ':user_id'   => $userId,
+        ]);
+
+        $this->respondJson(['success' => true]);
+    }
+
     public function createShare(): void
     {
         $this->validateCsrf();
