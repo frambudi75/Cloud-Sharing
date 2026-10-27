@@ -246,8 +246,11 @@ class DriveController
                 return;
             }
 
-            // Cek kuota pada potongan pertama
+            // Cek kuota pada potongan pertama & bersihkan potongan usang secara berkala
             if ($chunkIndex === 0) {
+                if (mt_rand(1, 10) === 1) {
+                    StorageService::cleanOldChunks(86400);
+                }
                 $user = AuthService::user();
                 if ($user && ($user['storage_used'] + $totalSize) > $user['storage_quota']) {
                     $this->respondJson(['success' => false, 'error' => 'Kapasitas penyimpanan Anda tidak mencukupi untuk berkas ini.']);

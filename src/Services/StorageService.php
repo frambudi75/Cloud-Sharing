@@ -61,6 +61,39 @@ class StorageService
         return realpath($chunkDir) ?: $chunkDir;
     }
 
+    public static function cleanOldChunks(int $maxAgeSeconds = 86400): void
+    {
+        try {
+            $chunkDir = self::getChunkDir();
+            if (!is_dir($chunkDir)) return;
+
+            $now = time();
+            $items = scandir($chunkDir);
+            if (!$items) return;
+
+            foreach ($items as $item) {
+                if ($item === '.' || $item === '..') continue;
+                $itemPath = $chunkDir . DIRECTORY_SEPARATOR . $item;
+                if (is_dir($itemPath)) {
+                    $mtime = filemtime($itemPath);
+                    if ($mtime !== false && ($now - $mtime) > $maxAgeSeconds) {
+                        $files = scandir($itemPath);
+                        if ($files) {
+                            foreach ($files as $f) {
+                                if ($f !== '.' && $f !== '..') {
+                                    @unlink($itemPath . DIRECTORY_SEPARATOR . $f);
+                                }
+                            }
+                        }
+                        @rmdir($itemPath);
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // Silently ignore to prevent disruption
+        }
+    }
+
     public static function storeUploadedFile(array $uploadedFile, int $userId, ?int $folderId = null): array
     {
         if ($uploadedFile['error'] !== UPLOAD_ERR_OK) {
