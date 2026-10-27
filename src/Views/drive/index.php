@@ -216,266 +216,192 @@ $totalShared = $totalSharedCount ?? 0;
                         </a>
                     </div>
                 </nav>
+
+                <!-- Storage Metric Card in Sidebar (Clean, Unobtrusive) -->
+                <div class="p-3.5 bg-white rounded-2xl border border-slate-200/80 shadow-xs">
+                    <div class="flex items-center justify-between text-xs font-bold text-slate-800 mb-1.5">
+                        <span class="flex items-center text-[11px]">
+                            <svg class="w-3.5 h-3.5 mr-1.5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2 1.5 3 3.5 3h9c2 0 3.5-1 3.5-3V7c0-2-1.5-3-3.5-3h-9C5.5 4 4 5 4 7z"></path></svg>
+                            Penyimpanan
+                        </span>
+                        <span class="text-[10px] font-mono text-brand-600 font-bold"><?= $quotaPercentage ?>%</span>
+                    </div>
+                    <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden mb-1.5">
+                        <div class="storage-bar-glow h-1.5 rounded-full transition-all duration-500" style="width: <?= $quotaPercentage ?>%"></div>
+                    </div>
+                    <div class="text-[10px] text-slate-500 font-mono">
+                        <?= StorageService::formatBytes($storageUsed) ?> / <?= StorageService::formatBytes($storageQuota) ?>
+                    </div>
+                    <div class="mt-2 pt-2 border-t border-slate-100 grid grid-cols-3 gap-1 text-center font-mono">
+                        <div title="<?= $totalFiles ?> Berkas">
+                            <div class="font-bold text-slate-800 text-[11px]"><?= $totalFiles ?></div>
+                            <div class="text-slate-400 text-[9px]">Berkas</div>
+                        </div>
+                        <div title="<?= $totalFolders ?> Folder">
+                            <div class="font-bold text-slate-800 text-[11px]"><?= $totalFolders ?></div>
+                            <div class="text-slate-400 text-[9px]">Folder</div>
+                        </div>
+                        <div title="<?= $totalShared ?> Dibagikan">
+                            <div class="font-bold text-slate-800 text-[11px]"><?= $totalShared ?></div>
+                            <div class="text-slate-400 text-[9px]">Berbagi</div>
+                        </div>
+                    </div>
+                </div>
             </aside>
 
             <!-- ============================================================= -->
-            <!-- 2. MAIN DRIVE CONTENT AREA (Mockup Aligned)                    -->
+            <!-- 2. MAIN DRIVE CONTENT AREA (Clean, Spacious, Productive)       -->
             <!-- ============================================================= -->
-            <main class="col-span-12 lg:col-span-9 xl:col-span-10 space-y-5">
+            <main class="col-span-12 lg:col-span-9 xl:col-span-10 space-y-3.5">
 
-                <!-- Header Row: Title & 4 Summary Overview Cards (Mockup Aligned) -->
-                <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
-                    <div>
-                        <h1 class="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-                            <?= $activeTab === 'shared_with_me' ? 'Dibagikan ke Saya' : ($activeTab === 'recent' ? 'Terbaru' : ($activeTab === 'starred' ? 'Berbintang' : ($activeTab === 'trash' ? 'Sampah' : 'Drive Saya'))) ?>
-                        </h1>
-                        <p class="text-xs text-slate-500 mt-0.5">
-                            <?= $activeTab === 'shared_with_me' ? 'Berkas yang dibagikan pengguna lain kepada Anda' : 'Kelola file dan folder Anda' ?>
-                        </p>
-                    </div>
-
-                    <!-- 4 Summary Metric Cards -->
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 w-full xl:w-auto">
-                        
-                        <!-- Card 1: Kapasitas Storage with mini bar & hover breakdown -->
-                        <div class="relative group bg-white border border-slate-200/80 rounded-2xl p-3 shadow-xs flex items-center space-x-3 cursor-help">
-                            <div class="h-9 w-9 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center flex-shrink-0">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2 1.5 3 3.5 3h9c2 0 3.5-1 3.5-3V7c0-2-1.5-3-3.5-3h-9C5.5 4 4 5 4 7z"></path>
-                                </svg>
-                            </div>
-                            <div class="min-w-0 flex-1">
-                                <div class="text-[11px] font-bold text-slate-700 truncate">Kapasitas Storage</div>
-                                <div class="text-[10px] text-slate-500 font-mono truncate">
-                                    <?= StorageService::formatBytes($storageUsed) ?> / <?= StorageService::formatBytes($storageQuota) ?>
-                                </div>
-                                <div class="w-full bg-slate-100 rounded-full h-1.5 mt-1 overflow-hidden">
-                                    <div class="storage-bar-glow h-1.5 rounded-full transition-all duration-500" style="width: <?= $quotaPercentage ?>%"></div>
-                                </div>
-                            </div>
-
-                            <!-- Hover Tooltip -->
-                            <div class="hidden group-hover:block absolute left-0 top-full mt-2 w-64 bg-slate-900 text-white rounded-xl p-3 shadow-2xl z-40 text-xs border border-slate-700 animate-item-in pointer-events-none">
-                                <div class="font-bold border-b border-slate-800 pb-1.5 mb-1.5 flex justify-between">
-                                    <span>Rincian Storage</span>
-                                    <span class="text-brand-300 font-mono"><?= $quotaPercentage ?>%</span>
-                                </div>
-                                <div class="space-y-1 font-mono text-[10px]">
-                                    <?php foreach (($storageBreakdown ?? []) as $catKey => $catData): ?>
-                                        <?php if ($catData['count'] > 0): ?>
-                                            <div class="flex items-center justify-between">
-                                                <span><?= $catData['label'] ?>:</span>
-                                                <span class="text-slate-300"><?= StorageService::formatBytes($catData['size']) ?></span>
-                                            </div>
-                                        <?php endif; ?>
-                                    <?php endforeach; ?>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Card 2: Berkas Count -->
-                        <div class="bg-white border border-slate-200/80 rounded-2xl p-3 shadow-xs flex items-center space-x-3">
-                            <div class="h-9 w-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
-                                </svg>
-                            </div>
-                            <div>
-                                <div class="text-base font-extrabold text-slate-900 leading-none"><?= $totalFiles ?></div>
-                                <div class="text-[11px] text-slate-500 font-semibold mt-0.5">Berkas</div>
-                            </div>
-                        </div>
-
-                        <!-- Card 3: Folder Count -->
-                        <div class="bg-white border border-slate-200/80 rounded-2xl p-3 shadow-xs flex items-center space-x-3">
-                            <div class="h-9 w-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
-                                </svg>
-                            </div>
-                            <div>
-                                <div class="text-base font-extrabold text-slate-900 leading-none"><?= $totalFolders ?></div>
-                                <div class="text-[11px] text-slate-500 font-semibold mt-0.5">Folder</div>
-                            </div>
-                        </div>
-
-                        <!-- Card 4: Dibagikan Count -->
-                        <div class="bg-white border border-slate-200/80 rounded-2xl p-3 shadow-xs flex items-center space-x-3">
-                            <div class="h-9 w-9 rounded-xl bg-indigo-50 text-brand-600 flex items-center justify-center flex-shrink-0">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
-                                </svg>
-                            </div>
-                            <div>
-                                <div class="text-base font-extrabold text-slate-900 leading-none"><?= $totalShared ?></div>
-                                <div class="text-[11px] text-slate-500 font-semibold mt-0.5">Dibagikan</div>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>                <!-- Action Bar (Search, Filter Chips, Sort, Grid/List Switcher, Folder Baru, Upload) -->
-                <div class="space-y-3 pt-2">
-                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                        
-                        <!-- Search Input -->
-                        <div class="relative flex-1 max-w-md">
-                            <input type="text" id="searchInput" placeholder="Cari berkas atau folder..." 
-                                   class="w-full h-10 pl-9 pr-8 text-xs rounded-xl border border-slate-200 bg-white placeholder:text-slate-400 focus:border-brand-600 focus:ring-1 focus:ring-brand-600 shadow-xs transition-all">
-                            <svg class="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                            </svg>
-                            <span class="hidden sm:inline-block absolute right-2.5 top-2.5 px-1.5 py-0.5 text-[9px] text-slate-400 bg-slate-100 border border-slate-200 rounded font-mono pointer-events-none" title="Tekan / untuk mencari">/</span>
-                        </div>
-
-                        <!-- Right Controls: Sort, View Switcher, Folder Baru, Upload Berkas -->
-                        <div class="flex flex-wrap items-center gap-2">
-                            
-                            <!-- Sort Dropdown -->
-                            <div class="relative">
-                                <select id="sortSelect" onchange="sortFiles(this.value)" 
-                                        class="h-10 pl-8 pr-7 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-700 hover:border-slate-300 focus:border-brand-600 focus:ring-1 focus:ring-brand-600 cursor-pointer appearance-none shadow-xs">
-                                    <option value="created_desc">Terbaru</option>
-                                    <option value="created_asc">Terlama</option>
-                                    <option value="name_asc">Nama (A - Z)</option>
-                                    <option value="name_desc">Nama (Z - A)</option>
-                                    <option value="size_desc">Ukuran (Besar)</option>
-                                    <option value="size_asc">Ukuran (Kecil)</option>
-                                </select>
-                                <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-3.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"></path>
-                                </svg>
-                                <svg class="w-3 h-3 text-slate-400 absolute right-2.5 top-3.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                </svg>
-                            </div>
-
-                            <!-- View Mode Switcher (Grid vs List) -->
-                            <div class="inline-flex p-0.5 bg-slate-100 rounded-xl border border-slate-200 shadow-xs">
-                                <button type="button" id="btnViewGrid" onclick="setViewMode('grid')" 
-                                        class="h-9 px-2.5 rounded-lg text-xs font-semibold flex items-center transition-all bg-white text-brand-600 shadow-xs" title="Tampilan Kartu / Grid">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
-                                    </svg>
-                                </button>
-                                <button type="button" id="btnViewList" onclick="setViewMode('list')" 
-                                        class="h-9 px-2.5 rounded-lg text-xs font-semibold flex items-center transition-all text-slate-500 hover:text-slate-800" title="Tampilan Daftar / Tabel">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                                    </svg>
-                                </button>
-                            </div>
-
-                            <?php if ($activeTab === 'my_drive'): ?>
-                                <!-- Folder Baru Button -->
-                                <button type="button" id="btnNewFolderModal" 
-                                        class="inline-flex items-center h-10 px-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold shadow-xs hover:border-slate-300 transition-all">
-                                    <svg class="w-4 h-4 mr-1.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path>
-                                    </svg>
-                                    Folder Baru
-                                </button>
-
-                                <!-- Upload Berkas Button (Primary Indigo) -->
-                                <label for="fileUploadInput" 
-                                       class="inline-flex items-center h-10 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white text-xs font-bold shadow-md shadow-brand-500/20 transition-all cursor-pointer">
-                                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
-                                    </svg>
-                                    Upload Berkas
-                                </label>
-                                <input type="file" id="fileUploadInput" class="hidden" multiple>
+                <!-- ROW 1: Clean Header (Breadcrumbs as Title + Action Buttons) -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-200/80">
+                    <!-- Interactive Breadcrumbs & Subfolder ZIP -->
+                    <div class="flex items-center space-x-2 truncate min-w-0">
+                        <nav class="flex items-center space-x-1.5 text-xs text-slate-500 truncate" aria-label="Breadcrumb">
+                            <?php if (!empty($breadcrumbs)): ?>
+                                <?php foreach ($breadcrumbs as $index => $crumb): ?>
+                                    <?php if ($index > 0): ?>
+                                        <svg class="w-3.5 h-3.5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                    <?php endif; ?>
+                                    <?php if ($index === count($breadcrumbs) - 1): ?>
+                                        <h1 class="text-base sm:text-lg font-bold text-slate-900 truncate">
+                                            <?= htmlspecialchars($crumb['name']) ?>
+                                        </h1>
+                                    <?php else: ?>
+                                        <a href="?action=drive<?= $crumb['id'] !== null ? '&folder=' . $crumb['id'] : '' ?>" 
+                                           class="folder-drop-zone hover:text-brand-600 font-semibold px-1.5 py-0.5 rounded hover:bg-slate-100 transition-all truncate"
+                                           data-folder-id="<?= $crumb['id'] !== null ? $crumb['id'] : 'root' ?>"
+                                           data-folder-name="<?= htmlspecialchars($crumb['name']) ?>">
+                                            <?= htmlspecialchars($crumb['name']) ?>
+                                        </a>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <h1 class="text-base sm:text-lg font-bold text-slate-900">
+                                    <?= $activeTab === 'shared_with_me' ? 'Dibagikan ke Saya' : ($activeTab === 'recent' ? 'Terbaru' : ($activeTab === 'starred' ? 'Berbintang' : ($activeTab === 'trash' ? 'Keranjang Sampah' : 'Drive Saya'))) ?>
+                                </h1>
                             <?php endif; ?>
+                        </nav>
 
-                        </div>
-                    </div>
-
-                    <!-- Instant Filter Chips -->
-                    <div class="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
-                        <button type="button" onclick="setFilterCategory('all', this)" class="filter-chip active px-3 py-1.5 rounded-xl font-bold bg-brand-600 text-white shadow-xs transition-all" data-category="all">Semua</button>
-                        <button type="button" onclick="setFilterCategory('image', this)" class="filter-chip px-3 py-1.5 rounded-xl font-semibold bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 transition-all" data-category="image">🖼️ Gambar</button>
-                        <button type="button" onclick="setFilterCategory('document', this)" class="filter-chip px-3 py-1.5 rounded-xl font-semibold bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 transition-all" data-category="document">📄 Dokumen</button>
-                        <button type="button" onclick="setFilterCategory('media', this)" class="filter-chip px-3 py-1.5 rounded-xl font-semibold bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 transition-all" data-category="media">🎬 Video & Audio</button>
-                        <button type="button" onclick="setFilterCategory('archive', this)" class="filter-chip px-3 py-1.5 rounded-xl font-semibold bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 transition-all" data-category="archive">📦 Arsip / ZIP</button>
-                    </div>
-                </div>
-
-                <!-- Breadcrumbs (when inside subfolders) -->
-                <?php if (!empty($breadcrumbs) && count($breadcrumbs) > 1): ?>
-                    <nav class="flex items-center justify-between text-xs text-slate-500 pt-1">
-                        <div class="flex items-center space-x-1.5">
-                            <?php foreach ($breadcrumbs as $index => $crumb): ?>
-                                <?php if ($index > 0): ?>
-                                    <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                                <?php endif; ?>
-                                <?php if ($index === count($breadcrumbs) - 1): ?>
-                                    <span class="font-bold text-slate-900 px-2 py-0.5 rounded bg-slate-200/80"><?= htmlspecialchars($crumb['name']) ?></span>
-                                <?php else: ?>
-                                    <a href="?action=drive<?= $crumb['id'] !== null ? '&folder=' . $crumb['id'] : '' ?>" 
-                                       class="folder-drop-zone hover:text-brand-600 font-semibold px-2 py-0.5 rounded hover:bg-slate-100 transition-all"
-                                       data-folder-id="<?= $crumb['id'] !== null ? $crumb['id'] : 'root' ?>"
-                                       data-folder-name="<?= htmlspecialchars($crumb['name']) ?>">
-                                        <?= htmlspecialchars($crumb['name']) ?>
-                                    </a>
-                                <?php endif; ?>
-                            <?php endforeach; ?>
-                        </div>
-                        <?php if ($folderId !== null && $activeTab === 'my_drive'): ?>
+                        <?php if (!empty($folderId) && $activeTab === 'my_drive'): ?>
                             <a href="?action=download_folder_zip&folder_id=<?= $folderId ?>" 
-                               class="inline-flex items-center h-7 px-2.5 rounded-lg text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-300 transition-all shadow-2xs" 
-                               title="Unduh seluruh folder ini sebagai berkas ZIP">
-                                <svg class="w-3.5 h-3.5 mr-1 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                               class="inline-flex items-center h-6 px-2 rounded-md text-[11px] font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 transition-all flex-shrink-0" 
+                               title="Unduh seluruh folder ini sebagai ZIP">
+                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                                 Unduh ZIP
                             </a>
                         <?php endif; ?>
-                    </nav>
+                    </div>
+
+                    <!-- Right Header Actions (Folder Baru & Upload Berkas) -->
+                    <?php if ($activeTab === 'my_drive'): ?>
+                        <div class="flex items-center space-x-2 flex-shrink-0">
+                            <button type="button" id="btnNewFolderModal" 
+                                    class="inline-flex items-center h-8 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs hover:border-slate-300 transition-all">
+                                <svg class="w-3.5 h-3.5 mr-1.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path>
+                                </svg>
+                                Folder Baru
+                            </button>
+                            <label for="fileUploadInput" 
+                                   class="inline-flex items-center h-8 px-3.5 rounded-xl bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white text-xs font-bold shadow-xs shadow-brand-500/20 transition-all cursor-pointer">
+                                <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                                </svg>
+                                Upload Berkas
+                            </label>
+                            <input type="file" id="fileUploadInput" class="hidden" multiple>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <!-- ROW 2: Unified Controls & Filter Bar (Compact 1-Card Toolbar) -->
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 bg-white p-2.5 rounded-2xl border border-slate-200/80 shadow-xs">
+                    
+                    <!-- Search Input & Quick Filter Chips -->
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-1 min-w-0">
+                        <div class="relative w-full sm:w-60 flex-shrink-0">
+                            <input type="text" id="searchInput" placeholder="Cari berkas atau folder..." 
+                                   class="w-full h-8 pl-8 pr-7 text-xs rounded-xl border border-slate-200 bg-slate-50/70 placeholder:text-slate-400 focus:bg-white focus:border-brand-600 focus:ring-1 focus:ring-brand-600 transition-all">
+                            <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                            <span class="hidden sm:inline-block absolute right-2 top-2 px-1 text-[9px] text-slate-400 bg-slate-100 border border-slate-200 rounded font-mono pointer-events-none">/</span>
+                        </div>
+
+                        <!-- Filter Chips -->
+                        <div class="flex items-center gap-1 overflow-x-auto no-scrollbar text-xs">
+                            <button type="button" onclick="setFilterCategory('all', this)" class="filter-chip active px-2.5 py-1 rounded-lg font-bold bg-brand-600 text-white shadow-xs transition-all text-[11px]" data-category="all">Semua</button>
+                            <button type="button" onclick="setFilterCategory('image', this)" class="filter-chip px-2.5 py-1 rounded-lg font-semibold bg-slate-50 text-slate-600 hover:bg-slate-100 transition-all text-[11px]" data-category="image">🖼️ Gambar</button>
+                            <button type="button" onclick="setFilterCategory('document', this)" class="filter-chip px-2.5 py-1 rounded-lg font-semibold bg-slate-50 text-slate-600 hover:bg-slate-100 transition-all text-[11px]" data-category="document">📄 Dokumen</button>
+                            <button type="button" onclick="setFilterCategory('media', this)" class="filter-chip px-2.5 py-1 rounded-lg font-semibold bg-slate-50 text-slate-600 hover:bg-slate-100 transition-all text-[11px]" data-category="media">🎬 Media</button>
+                            <button type="button" onclick="setFilterCategory('archive', this)" class="filter-chip px-2.5 py-1 rounded-lg font-semibold bg-slate-50 text-slate-600 hover:bg-slate-100 transition-all text-[11px]" data-category="archive">📦 Arsip</button>
+                        </div>
+                    </div>
+
+                    <!-- Right Controls: Sort & Grid/List View Switcher -->
+                    <div class="flex items-center space-x-2 self-end lg:self-auto flex-shrink-0">
+                        <select id="sortSelect" onchange="sortFiles(this.value)" 
+                                class="h-8 pl-2.5 pr-6 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50/70 text-slate-700 hover:border-slate-300 focus:border-brand-600 cursor-pointer appearance-none">
+                            <option value="created_desc">Terbaru</option>
+                            <option value="created_asc">Terlama</option>
+                            <option value="name_asc">Nama (A - Z)</option>
+                            <option value="name_desc">Nama (Z - A)</option>
+                            <option value="size_desc">Ukuran (Besar)</option>
+                            <option value="size_asc">Ukuran (Kecil)</option>
+                        </select>
+
+                        <div class="inline-flex p-0.5 bg-slate-100 rounded-xl border border-slate-200">
+                            <button type="button" id="btnViewGrid" onclick="setViewMode('grid')" 
+                                    class="h-7 px-2 rounded-lg text-xs font-semibold flex items-center transition-all bg-white text-brand-600 shadow-xs" title="Tampilan Kartu">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                            </button>
+                            <button type="button" id="btnViewList" onclick="setViewMode('list')" 
+                                    class="h-7 px-2 rounded-lg text-xs font-semibold flex items-center transition-all text-slate-500 hover:text-slate-800" title="Tampilan Tabel">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ROW 3: Compact Drop Strip -->
+                <?php if ($activeTab === 'my_drive'): ?>
+                    <div id="dropZone" class="border border-dashed border-slate-300 hover:border-brand-500 bg-white/70 hover:bg-brand-50/20 rounded-xl px-4 py-2 text-center transition-all cursor-pointer flex items-center justify-center space-x-2 text-xs text-slate-500 hover:text-brand-600">
+                        <svg class="w-4 h-4 text-brand-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                        <span>Tarik & jatuhkan berkas ke sini, atau <span class="text-brand-600 font-bold underline">pilih dari komputer</span></span>
+                    </div>
+
+                    <!-- Progress Bar for Uploads -->
+                    <div id="uploadProgressContainer" class="hidden bg-white border border-slate-200 rounded-xl p-3 shadow-xs animate-item-in">
+                        <div class="flex items-center justify-between text-xs mb-1 font-bold">
+                            <span id="uploadFileName" class="text-slate-800 truncate max-w-sm">Nama Berkas</span>
+                            <span id="uploadPercentage" class="text-brand-600 font-mono">0%</span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                            <div id="uploadProgressBar" class="h-1.5 rounded-full storage-bar-glow transition-all duration-200" style="width: 0%"></div>
+                        </div>
+                    </div>
                 <?php endif; ?>
 
                 <!-- Trash Notice Banner -->
                 <?php if ($activeTab === 'trash'): ?>
-                    <div class="bg-amber-50/90 border border-amber-200/90 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs animate-item-in">
+                    <div class="bg-amber-50/90 border border-amber-200 rounded-2xl p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs animate-item-in">
                         <div class="flex items-center space-x-3">
-                            <div class="h-10 w-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            <div class="h-8 w-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                             </div>
                             <div>
                                 <h3 class="text-xs font-bold text-amber-950">Keranjang Sampah</h3>
-                                <p class="text-[11px] text-amber-800 mt-0.5">Berkas dan folder di sini dapat dipulihkan atau dihapus permanen untuk mengosongkan kuota storage.</p>
+                                <p class="text-[11px] text-amber-800 mt-0.5">Berkas di sini dapat dipulihkan atau dihapus permanen untuk mengembalikan kuota penyimpanan.</p>
                             </div>
                         </div>
                         <?php if (!empty($files) || !empty($folders)): ?>
                             <button type="button" onclick="emptyTrashConfirm()" 
-                                    class="h-9 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs transition-colors whitespace-nowrap">
+                                    class="h-8 px-3.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs transition-colors whitespace-nowrap">
                                 Kosongkan Sampah
                             </button>
                         <?php endif; ?>
-                    </div>
-                <?php endif; ?>
-
-                <!-- Animated Drag & Drop Zone Area -->
-                <?php if ($activeTab === 'my_drive'): ?>
-                    <div id="dropZone" class="border-2 border-dashed border-slate-200 bg-white rounded-2xl p-5 text-center transition-all duration-300 hover:border-brand-400 hover:bg-brand-50/20 cursor-pointer">
-                        <div class="flex items-center justify-center space-x-3 pointer-events-none">
-                            <div class="h-9 w-9 bg-brand-50 text-brand-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                                </svg>
-                            </div>
-                            <div class="text-left">
-                                <span class="text-xs font-bold text-slate-800">Tarik & Jatuhkan berkas ke sini</span>
-                                <span class="text-[11px] text-slate-400 block">atau klik untuk memilih berkas dari komputer</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Progress Bar for Uploads -->
-                    <div id="uploadProgressContainer" class="hidden bg-white border border-slate-200 rounded-xl p-4 shadow-xs animate-item-in">
-                        <div class="flex items-center justify-between text-xs mb-1.5 font-bold">
-                            <span id="uploadFileName" class="text-slate-800 truncate max-w-sm">Nama Berkas</span>
-                            <span id="uploadPercentage" class="text-brand-600 font-mono">0%</span>
-                        </div>
-                        <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                            <div id="uploadProgressBar" class="h-2 rounded-full storage-bar-glow transition-all duration-200" style="width: 0%"></div>
-                        </div>
                     </div>
                 <?php endif; ?>
 
