@@ -7,8 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const driveApp = document.getElementById('driveApp');
     if (!driveApp) return;
 
-    const csrfToken = driveApp.getAttribute('data-csrf');
-    const currentFolderId = driveApp.getAttribute('data-folder-id');
+    const csrfToken = driveApp.getAttribute('data-csrf') || '';
+    const currentFolderId = driveApp.getAttribute('data-folder-id') || '';
 
     // =========================================================================
     // 1. Modal Helper Functions
@@ -46,12 +46,53 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // =========================================================================
-    // 2. New Folder Management
+    // 2. View Mode Switcher (Grid vs List View)
+    // =========================================================================
+    window.setViewMode = function (mode) {
+        const gridView = document.getElementById('filesGridView');
+        const listView = document.getElementById('filesListView');
+        const btnGrid = document.getElementById('btnViewGrid');
+        const btnList = document.getElementById('btnViewList');
+
+        if (!gridView || !listView) return;
+
+        if (mode === 'list') {
+            gridView.classList.add('hidden');
+            listView.classList.remove('hidden');
+
+            if (btnList && btnGrid) {
+                btnList.className = 'h-8 px-2.5 rounded-md text-xs font-semibold flex items-center transition-all bg-white text-brand-600 shadow-xs';
+                btnGrid.className = 'h-8 px-2.5 rounded-md text-xs font-semibold flex items-center transition-all text-slate-500 hover:text-slate-800';
+            }
+            try { localStorage.setItem('drive_view_mode', 'list'); } catch (e) {}
+        } else {
+            listView.classList.add('hidden');
+            gridView.classList.remove('hidden');
+
+            if (btnList && btnGrid) {
+                btnGrid.className = 'h-8 px-2.5 rounded-md text-xs font-semibold flex items-center transition-all bg-white text-brand-600 shadow-xs';
+                btnList.className = 'h-8 px-2.5 rounded-md text-xs font-semibold flex items-center transition-all text-slate-500 hover:text-slate-800';
+            }
+            try { localStorage.setItem('drive_view_mode', 'grid'); } catch (e) {}
+        }
+    };
+
+    // Restore saved view mode preference
+    try {
+        const savedMode = localStorage.getItem('drive_view_mode');
+        if (savedMode === 'list') {
+            setViewMode('list');
+        }
+    } catch (e) {}
+
+    // =========================================================================
+    // 3. New Folder Management
     // =========================================================================
     const btnNewFolderModal = document.getElementById('btnNewFolderModal');
     if (btnNewFolderModal) {
         btnNewFolderModal.addEventListener('click', () => {
-            document.getElementById('newFolderName').value = '';
+            const folderInput = document.getElementById('newFolderName');
+            if (folderInput) folderInput.value = '';
             openModal('newFolderModal');
         });
     }
@@ -59,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.handleCreateFolder = async function (e) {
         e.preventDefault();
         const nameInput = document.getElementById('newFolderName');
-        const folderName = nameInput.value.trim();
+        const folderName = nameInput ? nameInput.value.trim() : '';
         if (!folderName) return;
 
         const formData = new FormData();
@@ -106,121 +147,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert(result.error || 'Gagal menghapus folder.');
             }
         } catch (err) {
-            alert('Terjadi kesalahan saat menghapus folder.');
+            alert('Terjadi kesalahan jaringan saat menghapus folder.');
         }
     };
 
     // =========================================================================
-    // 3. File Upload Engine (Multi-file & Drag and Drop with Real Progress)
-    // =========================================================================
-    const fileUploadInput = document.getElementById('fileUploadInput');
-    const uploadProgressContainer = document.getElementById('uploadProgressContainer');
-    const uploadProgressBar = document.getElementById('uploadProgressBar');
-    const uploadPercentText = document.getElementById('uploadPercentText');
-    const uploadStatusText = document.getElementById('uploadStatusText');
-    const dropzoneOverlay = document.getElementById('dropzoneOverlay');
-
-    if (fileUploadInput) {
-        fileUploadInput.addEventListener('change', (e) => {
-            if (e.target.files && e.target.files.length > 0) {
-                uploadFiles(Array.from(e.target.files));
-            }
-        });
-    }
-
-    // Drag and Drop Global Listeners
-    let dragCounter = 0;
-    window.addEventListener('dragenter', (e) => {
-        e.preventDefault();
-        dragCounter++;
-        if (dropzoneOverlay) dropzoneOverlay.classList.remove('hidden');
-    });
-
-    window.addEventListener('dragleave', (e) => {
-        e.preventDefault();
-        dragCounter--;
-        if (dragCounter <= 0 && dropzoneOverlay) {
-            dropzoneOverlay.classList.add('hidden');
-        }
-    });
-
-    window.addEventListener('dragover', (e) => {
-        e.preventDefault();
-    });
-
-    window.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dragCounter = 0;
-        if (dropzoneOverlay) dropzoneOverlay.classList.add('hidden');
-        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            uploadFiles(Array.from(e.dataTransfer.files));
-        }
-    });
-
-    async function uploadFiles(files) {
-        if (!files.length) return;
-
-        uploadProgressContainer.classList.remove('hidden');
-        let completed = 0;
-        const totalFiles = files.length;
-
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i];
-            uploadStatusText.textContent = `Mengunggah (${i + 1}/${totalFiles}): ${file.name}`;
-
-            await new Promise((resolve) => {
-                const xhr = new XMLHttpRequest();
-                const formData = new FormData();
-                formData.append('csrf_token', csrfToken);
-                formData.append('file', file);
-                if (currentFolderId) {
-                    formData.append('folder_id', currentFolderId);
-                }
-
-                xhr.upload.addEventListener('progress', (e) => {
-                    if (e.lengthComputable) {
-                        const filePercent = Math.round((e.loaded / e.total) * 100);
-                        uploadProgressBar.style.width = `${filePercent}%`;
-                        uploadPercentText.textContent = `${filePercent}%`;
-                    }
-                });
-
-                xhr.addEventListener('load', () => {
-                    if (xhr.status === 200) {
-                        try {
-                            const res = JSON.parse(xhr.responseText);
-                            if (!res.success) {
-                                alert(`Gagal mengunggah ${file.name}: ${res.error}`);
-                            }
-                        } catch (e) {
-                            console.error('Server response:', xhr.responseText);
-                            alert(`Gagal mengunggah ${file.name}. Silakan cek console browser.`);
-                        }
-                    } else {
-                        alert(`Gagal mengunggah ${file.name} (Kode status ${xhr.status})`);
-                    }
-                    resolve();
-                });
-
-                xhr.addEventListener('error', () => {
-                    alert(`Kesalahan koneksi saat mengunggah ${file.name}`);
-                    resolve();
-                });
-
-                xhr.open('POST', '?action=upload');
-                xhr.send(formData);
-            });
-            completed++;
-        }
-
-        uploadStatusText.textContent = 'Semua berkas selesai diunggah. Memuat ulang...';
-        setTimeout(() => {
-            window.location.reload();
-        }, 500);
-    }
-
-    // =========================================================================
-    // 4. File Management (Delete, Search Filter)
+    // 4. File Management & Deletion
     // =========================================================================
     window.deleteFile = async function (fileId, fileName) {
         if (!confirm(`Hapus berkas "${fileName}" secara permanen?`)) {
@@ -247,58 +179,205 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Live search filter on table
+    // =========================================================================
+    // 5. Drag-and-Drop File Upload with Animated Progress
+    // =========================================================================
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const uploadProgressContainer = document.getElementById('uploadProgressContainer');
+    const uploadProgressBar = document.getElementById('uploadProgressBar');
+    const uploadPercentage = document.getElementById('uploadPercentage');
+    const uploadFileName = document.getElementById('uploadFileName');
+
+    if (dropZone && fileInput) {
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+                dropZone.classList.add('border-brand-500', 'bg-brand-50/50');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+                dropZone.classList.remove('border-brand-500', 'bg-brand-50/50');
+            }, false);
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        });
+
+        fileInput.addEventListener('change', () => {
+            handleFiles(fileInput.files);
+        });
+    }
+
+    function handleFiles(files) {
+        if (!files || files.length === 0) return;
+        uploadFile(files[0]);
+    }
+
+    function uploadFile(file) {
+        if (!uploadProgressContainer) return;
+
+        uploadProgressContainer.classList.remove('hidden');
+        uploadFileName.textContent = file.name;
+        uploadProgressBar.style.width = '0%';
+        uploadPercentage.textContent = '0%';
+
+        const formData = new FormData();
+        formData.append('csrf_token', csrfToken);
+        formData.append('file', file);
+        if (currentFolderId) {
+            formData.append('folder_id', currentFolderId);
+        }
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '?action=upload', true);
+
+        xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable) {
+                const percentComplete = Math.round((e.loaded / e.total) * 100);
+                uploadProgressBar.style.width = percentComplete + '%';
+                uploadPercentage.textContent = percentComplete + '%';
+            }
+        };
+
+        xhr.onload = () => {
+            uploadProgressContainer.classList.add('hidden');
+            if (xhr.status === 200) {
+                try {
+                    const res = JSON.parse(xhr.responseText);
+                    if (res.success) {
+                        window.location.reload();
+                    } else {
+                        alert(res.error || 'Gagal mengunggah berkas.');
+                    }
+                } catch (e) {
+                    alert('Respons server tidak valid saat upload.');
+                }
+            } else {
+                alert(`Gagal mengunggah berkas (HTTP ${xhr.status}).`);
+            }
+        };
+
+        xhr.onerror = () => {
+            uploadProgressContainer.classList.add('hidden');
+            alert('Kesalahan koneksi saat mengunggah berkas.');
+        };
+
+        xhr.send(formData);
+    }
+
+    // =========================================================================
+    // 6. Live Search Filter across Grid Cards and Table Rows
+    // =========================================================================
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
             const query = e.target.value.toLowerCase().trim();
+
+            // Filter List View rows
             const rows = document.querySelectorAll('.file-row');
             rows.forEach(row => {
-                const name = row.getAttribute('data-filename') || '';
-                if (name.includes(query)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
+                const name = (row.getAttribute('data-filename') || '').toLowerCase();
+                row.style.display = name.includes(query) ? '' : 'none';
+            });
+
+            // Filter Grid View cards
+            const cards = document.querySelectorAll('.file-card');
+            cards.forEach(card => {
+                const name = (card.getAttribute('data-filename') || '').toLowerCase();
+                card.style.display = name.includes(query) ? '' : 'none';
             });
         });
     }
 
     // =========================================================================
-    // 5. Sharing Engine Modal & Clipboard Helper
+    // 7. Sharing Engine (Dual Mode: Public Link & User-to-User Share)
     // =========================================================================
-    window.openShareModal = function (fileId, fileName, existingToken) {
-        document.getElementById('shareFileId').value = fileId;
-        document.getElementById('shareModalFileName').textContent = fileName;
-        document.getElementById('sharePassword').value = '';
-        document.getElementById('shareMaxDownloads').value = '';
-        document.getElementById('shareExpiry').value = 'never';
+    window.switchShareTab = function (tab) {
+        const tabBtnPublic = document.getElementById('tabBtnPublicShare');
+        const tabBtnUser = document.getElementById('tabBtnUserShare');
+        const panelPublic = document.getElementById('sharePanelPublic');
+        const panelUser = document.getElementById('sharePanelUser');
 
+        if (!panelPublic || !panelUser) return;
+
+        if (tab === 'user') {
+            panelPublic.classList.add('hidden');
+            panelUser.classList.remove('hidden');
+
+            if (tabBtnPublic && tabBtnUser) {
+                tabBtnUser.className = 'flex-1 py-1.5 text-xs font-bold rounded-lg transition-all bg-white text-brand-600 shadow-xs';
+                tabBtnPublic.className = 'flex-1 py-1.5 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-900';
+            }
+        } else {
+            panelUser.classList.add('hidden');
+            panelPublic.classList.remove('hidden');
+
+            if (tabBtnPublic && tabBtnUser) {
+                tabBtnPublic.className = 'flex-1 py-1.5 text-xs font-bold rounded-lg transition-all bg-white text-brand-600 shadow-xs';
+                tabBtnUser.className = 'flex-1 py-1.5 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-900';
+            }
+        }
+    };
+
+    window.openShareModal = function (fileId, fileName, existingToken) {
+        const fileIdInput = document.getElementById('shareFileId');
+        const modalFileName = document.getElementById('shareModalFileName');
+        const passwordInput = document.getElementById('sharePassword');
+        const maxDownloadsInput = document.getElementById('shareMaxDownloads');
+        const expirySelect = document.getElementById('shareExpiry');
         const resultBox = document.getElementById('shareResultBox');
         const urlInput = document.getElementById('shareGeneratedUrl');
         const submitBtn = document.getElementById('btnSubmitShare');
+
+        if (fileIdInput) fileIdInput.value = fileId;
+        if (modalFileName) modalFileName.textContent = fileName;
+        if (passwordInput) passwordInput.value = '';
+        if (maxDownloadsInput) maxDownloadsInput.value = '';
+        if (expirySelect) expirySelect.value = 'never';
+
+        // Reset to Public Tab by default
+        switchShareTab('public');
 
         if (existingToken) {
             const origin = window.location.origin + window.location.pathname;
             urlInput.value = `${origin}?action=share&token=${existingToken}`;
             resultBox.classList.remove('hidden');
-            submitBtn.textContent = 'Perbarui Tautan';
+            if (submitBtn) submitBtn.textContent = 'Perbarui Tautan Publik';
         } else {
             resultBox.classList.add('hidden');
             urlInput.value = '';
-            submitBtn.textContent = 'Buat Tautan';
+            if (submitBtn) submitBtn.textContent = 'Buat Tautan Publik';
         }
+
+        // Load existing direct user shares for this file
+        loadFileUserShares(fileId);
 
         openModal('shareModal');
     };
 
+    // Public Link Creator Form
     window.handleCreateShare = async function (e) {
         e.preventDefault();
         const fileId = document.getElementById('shareFileId').value;
         const password = document.getElementById('sharePassword').value;
         const expiry = document.getElementById('shareExpiry').value;
         const maxDownloads = document.getElementById('shareMaxDownloads').value;
-        const allowPreview = document.getElementById('shareAllowPreview').checked ? 1 : 0;
+        const allowPreview = document.getElementById('shareAllowPreview')?.checked ? 1 : 0;
 
         const formData = new FormData();
         formData.append('csrf_token', csrfToken);
@@ -319,15 +398,133 @@ document.addEventListener('DOMContentLoaded', () => {
                 const fullShareUrl = `${origin}?action=share&token=${result.share_token}`;
                 document.getElementById('shareGeneratedUrl').value = fullShareUrl;
                 document.getElementById('shareResultBox').classList.remove('hidden');
-                copyToClipboard(fullShareUrl, 'Tautan berbagi berhasil dibuat dan disalin ke clipboard!');
+                copyToClipboard(fullShareUrl, 'Tautan publik berhasil dibuat dan disalin!');
             } else {
-                alert(result.error || 'Gagal membuat tautan berbagi.');
+                alert(result.error || 'Gagal membuat tautan.');
             }
         } catch (err) {
-            alert('Terjadi kesalahan saat membuat tautan.');
+            alert('Terjadi kesalahan saat memproses tautan.');
         }
     };
 
+    // User-to-User Share Handler
+    window.handleDirectUserShare = async function (e) {
+        e.preventDefault();
+        const fileId = document.getElementById('shareFileId').value;
+        const selectUser = document.getElementById('directShareUserId');
+        const withUserId = selectUser ? selectUser.value : '';
+        const permissionRadio = document.querySelector('input[name="directPermission"]:checked');
+        const permission = permissionRadio ? permissionRadio.value : 'download';
+
+        if (!withUserId) {
+            alert('Silakan pilih pengguna tujuan.');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('csrf_token', csrfToken);
+        formData.append('file_id', fileId);
+        formData.append('with_user_id', withUserId);
+        formData.append('permission', permission);
+
+        try {
+            const response = await fetch('?action=share_with_user', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+            if (result.success) {
+                showToast('Berkas berhasil dibagikan ke pengguna!');
+                selectUser.value = '';
+                loadFileUserShares(fileId);
+            } else {
+                alert(result.error || 'Gagal membagikan ke pengguna.');
+            }
+        } catch (err) {
+            alert('Terjadi kesalahan jaringan saat membagikan.');
+        }
+    };
+
+    // Load User Shares for Current File
+    window.loadFileUserShares = async function (fileId) {
+        const container = document.getElementById('fileUserSharesList');
+        if (!container) return;
+
+        container.innerHTML = '<p class="text-xs text-slate-400">Memuat daftar...</p>';
+
+        try {
+            const response = await fetch(`?action=get_file_user_shares&file_id=${fileId}`);
+            const result = await response.json();
+
+            if (result.success && Array.isArray(result.shares)) {
+                if (result.shares.length === 0) {
+                    container.innerHTML = '<p class="text-xs text-slate-400 italic">Belum ada pengguna terdaftar yang diberi akses berkas ini.</p>';
+                    return;
+                }
+
+                let html = '';
+                result.shares.forEach(item => {
+                    const permBadge = item.permission === 'view'
+                        ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">Hanya Lihat</span>'
+                        : '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Boleh Unduh</span>';
+
+                    html += `
+                        <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-200 text-xs">
+                            <div class="flex items-center space-x-2 min-w-0">
+                                <div class="h-6 w-6 rounded-full bg-brand-100 text-brand-700 font-bold flex items-center justify-center text-[10px] uppercase flex-shrink-0">
+                                    ${escapeHtml(item.username.charAt(0))}
+                                </div>
+                                <div class="truncate">
+                                    <span class="font-bold text-slate-800">${escapeHtml(item.username)}</span>
+                                    <span class="text-[10px] text-slate-400 ml-1">(${escapeHtml(item.email)})</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2 flex-shrink-0">
+                                ${permBadge}
+                                <button type="button" onclick="revokeDirectUserShare(${fileId}, ${item.shared_with_user_id})" 
+                                        class="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition-colors" title="Cabut Akses">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = '<p class="text-xs text-red-500">Gagal memuat daftar penerima.</p>';
+            }
+        } catch (err) {
+            container.innerHTML = '<p class="text-xs text-slate-400 italic">Belum dibagikan ke pengguna mana pun.</p>';
+        }
+    };
+
+    // Revoke User Share
+    window.revokeDirectUserShare = async function (fileId, userId) {
+        if (!confirm('Cabut akses pengguna terhadap berkas ini?')) return;
+
+        const formData = new FormData();
+        formData.append('csrf_token', csrfToken);
+        formData.append('file_id', fileId);
+        formData.append('with_user_id', userId);
+
+        try {
+            const response = await fetch('?action=revoke_user_share', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+            if (result.success) {
+                showToast('Akses pengguna berhasil dicabut.');
+                loadFileUserShares(fileId);
+            } else {
+                alert(result.error || 'Gagal mencabut akses.');
+            }
+        } catch (err) {
+            alert('Terjadi kesalahan jaringan.');
+        }
+    };
+
+    // Clipboard Copy Helpers
     window.copyGeneratedShareUrl = function () {
         const input = document.getElementById('shareGeneratedUrl');
         if (input && input.value) {
@@ -363,13 +560,21 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast('Tautan berhasil disalin!');
     }
 
+    function escapeHtml(string) {
+        const div = document.createElement('div');
+        div.textContent = string;
+        return div.innerHTML;
+    }
+
     // =========================================================================
-    // 6. In-Browser File Preview Modal
+    // 8. In-Browser File Preview Modal
     // =========================================================================
     window.previewFile = function (fileId, fileName, mimeType) {
         const modal = document.getElementById('previewModal');
         const title = document.getElementById('previewModalTitle');
         const body = document.getElementById('previewModalBody');
+
+        if (!modal || !title || !body) return;
 
         title.textContent = `Pratinjau: ${fileName}`;
         body.innerHTML = '';
@@ -400,7 +605,6 @@ document.addEventListener('DOMContentLoaded', () => {
             audio.className = 'w-full max-w-md';
             body.appendChild(audio);
         } else {
-            // Text or code preview
             const iframe = document.createElement('iframe');
             iframe.src = previewUrl;
             iframe.className = 'w-full h-[70vh] bg-white rounded-lg p-4 font-mono text-xs';
@@ -411,7 +615,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // =========================================================================
-    // 7. Minimal Toast Feedback Component
+    // 9. Toast Feedback Component
     // =========================================================================
     function showToast(message) {
         let toast = document.getElementById('appToast');

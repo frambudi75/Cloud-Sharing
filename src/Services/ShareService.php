@@ -190,4 +190,102 @@ class ShareService
 
         return false;
     }
+
+    public static function shareWithUser(int $fileId, int $byUserId, int $withUserId, string $permission = 'download'): array
+    {
+        if ($byUserId === $withUserId) {
+            return ['success' => false, 'error' => 'Anda tidak dapat membagikan berkas ke diri sendiri.'];
+        }
+
+        if (!in_array($permission, ['view', 'download'], true)) {
+            $permission = 'download';
+        }
+
+        $db = Database::getConnection();
+
+        // Validasi kepemilikan berkas
+        $checkStmt = $db->prepare("SELECT id FROM files WHERE id = :id AND user_id = :user_id LIMIT 1");
+        $checkStmt->execute([':id' => $fileId, ':user_id' => $byUserId]);
+        if (!$checkStmt->fetch()) {
+            return ['success' => false, 'error' => 'Berkas tidak ditemukan atau Anda bukan pemilik berkas.'];
+        }
+
+        // Validasi user tujuan
+        $userCheck = $db->prepare("SELECT id FROM users WHERE id = :id AND status = 'active' LIMIT 1");
+        $userCheck->execute([':id' => $withUserId]);
+        if (!$userCheck->fetch()) {
+            return ['success' => false, 'error' => 'Pengguna tujuan tidak ditemukan atau tidak aktif.'];
+        }
+
+        $stmt = $db->prepare("
+            INSERT INTO user_shares (file_id, shared_by_user_id, shared_with_user_id, permission)
+            VALUES (:file_id, :by_user, :with_user, :permission)
+            ON DUPLICATE KEY UPDATE permission = :permission_update
+        ");
+        $stmt->execute([
+            ':file_id'            => $fileId,
+            ':by_user'            => $byUserId,
+            ':with_user'          => $withUserId,
+            ':permission'         => $permission,
+            ':permission_update'  => $permission,
+        ]);
+
+        return ['success' => true];
+    }
+
+    public static function getSharesForFile(int $fileId, int $byUserId): array
+    {
+        $db = Database::getConnection();
+        $stmt = $db->prepare("
+            SELECT us.id, us.permission, us.created_at, u.id as user_id, u.username, u.email 
+            FROM user_shares us
+            INNER JOIN users u ON us.shared_with_user_id = u.id
+            WHERE us.file_id = :file_id AND us.shared_by_user_id = :by_user
+            ORDER BY us.created_at DESC
+        ");
+        $stmt->execute([':file_id' => $fileId, ':by_user' => $byUserId]);
+        return $stmt->fetchAll();
+    }
+
+    public static function revokeUserShare(int $fileId, int $byUserId, int $withUserId): bool
+    {
+        $db = Database::getConnection();
+        $stmt = $db->prepare("
+            DELETE FROM user_shares 
+            WHERE file_id = :file_id AND shared_by_user_id = :by_user AND shared_with_user_id = :with_user
+        ");
+        $stmt->execute([':file_id' => $fileId, ':by_user' => $byUserId, ':with_user' => $withUserId]);
+        return $stmt->rowCount() > 0;
+    }
+
+    public static function getFilesSharedWithUser(int $userId): array
+    {
+        $db = Database::getConnection();
+        $stmt = $db->prepare("
+            SELECT 
+                f.id, f.original_name, f.mime_type, f.file_size, f.storage_filename, f.storage_path,
+                us.id as share_id, us.permission, us.created_at as shared_at,
+                u.username as shared_by_username, u.email as shared_by_email
+            FROM user_shares us
+            INNER JOIN files f ON us.file_id = f.id
+            INNER JOIN users u ON us.shared_by_user_id = u.id
+            WHERE us.shared_with_user_id = :user_id
+            ORDER BY us.created_at DESC
+        ");
+        $stmt->execute([':user_id' => $userId]);
+        return $stmt->fetchAll();
+    }
+
+    public static function getAllUsersExcept(int $excludeUserId): array
+    {
+        $db = Database::getConnection();
+        $stmt = $db->prepare("
+            SELECT id, username, email 
+            FROM users 
+            WHERE id != :id AND status = 'active' 
+            ORDER BY username ASC
+        ");
+        $stmt->execute([':id' => $excludeUserId]);
+        return $stmt->fetchAll();
+    }
 }

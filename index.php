@@ -53,6 +53,15 @@ switch ($action) {
     case 'create_share':
         (new DriveController())->createShare();
         break;
+    case 'share_with_user':
+        (new DriveController())->shareWithUser();
+        break;
+    case 'get_file_user_shares':
+        (new DriveController())->getFileUserShares();
+        break;
+    case 'revoke_user_share':
+        (new DriveController())->revokeUserShare();
+        break;
     case 'download_direct':
         (new DriveController())->downloadDirect();
         break;

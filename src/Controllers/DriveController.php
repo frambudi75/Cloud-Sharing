@@ -23,100 +23,120 @@ class DriveController
     {
         $userId = (int) AuthService::id();
         $user = AuthService::user();
+        $activeTab = $_GET['tab'] ?? 'my_drive';
         $folderId = isset($_GET['folder']) && is_numeric($_GET['folder']) ? (int) $_GET['folder'] : null;
         $search = trim($_GET['q'] ?? '');
 
         $db = Database::getConnection();
 
-        // 1. Dapatkan info folder saat ini & breadcrumbs
-        $currentFolder = null;
-        $breadcrumbs = [['id' => null, 'name' => 'Drive Saya']];
-
-        if ($folderId !== null) {
-            $folderStmt = $db->prepare("SELECT id, name, parent_id FROM folders WHERE id = :id AND user_id = :user_id");
-            $folderStmt->execute([':id' => $folderId, ':user_id' => $userId]);
-            $currentFolder = $folderStmt->fetch();
-
-            if (!$currentFolder) {
-                header('Location: ?action=drive');
-                exit;
-            }
-
-            // Bangun hierarki breadcrumb
-            $trail = [];
-            $tempFolder = $currentFolder;
-            while ($tempFolder) {
-                array_unshift($trail, ['id' => $tempFolder['id'], 'name' => $tempFolder['name']]);
-                if ($tempFolder['parent_id'] !== null) {
-                    $parentStmt = $db->prepare("SELECT id, name, parent_id FROM folders WHERE id = :id AND user_id = :user_id");
-                    $parentStmt->execute([':id' => $tempFolder['parent_id'], ':user_id' => $userId]);
-                    $tempFolder = $parentStmt->fetch();
-                } else {
-                    $tempFolder = null;
-                }
-            }
-            $breadcrumbs = array_merge($breadcrumbs, $trail);
-        }
-
-        // 2. Ambil daftar folder anak
-        if (!empty($search)) {
-            $folderQuery = "SELECT id, name, updated_at FROM folders WHERE user_id = :user_id AND name LIKE :search ORDER BY name ASC";
-            $folderParams = [':user_id' => $userId, ':search' => "%{$search}%"];
-        } else {
-            if ($folderId === null) {
-                $folderQuery = "SELECT id, name, updated_at FROM folders WHERE user_id = :user_id AND parent_id IS NULL ORDER BY name ASC";
-                $folderParams = [':user_id' => $userId];
-            } else {
-                $folderQuery = "SELECT id, name, updated_at FROM folders WHERE user_id = :user_id AND parent_id = :parent_id ORDER BY name ASC";
-                $folderParams = [':user_id' => $userId, ':parent_id' => $folderId];
-            }
-        }
-        $foldersStmt = $db->prepare($folderQuery);
-        $foldersStmt->execute($folderParams);
-        $folders = $foldersStmt->fetchAll();
-
-        // 3. Ambil daftar berkas
-        if (!empty($search)) {
-            $fileQuery = "
-                SELECT f.id, f.original_name, f.storage_filename, f.storage_path, f.mime_type, f.file_size, f.created_at,
-                       s.share_token, s.is_active as is_shared, s.expires_at, s.download_count, s.max_downloads
-                FROM files f
-                LEFT JOIN share_links s ON f.id = s.file_id AND s.is_active = 1
-                WHERE f.user_id = :user_id AND f.original_name LIKE :search
-                ORDER BY f.created_at DESC
-            ";
-            $fileParams = [':user_id' => $userId, ':search' => "%{$search}%"];
-        } else {
-            if ($folderId === null) {
-                $fileQuery = "
-                    SELECT f.id, f.original_name, f.storage_filename, f.storage_path, f.mime_type, f.file_size, f.created_at,
-                           s.share_token, s.is_active as is_shared, s.expires_at, s.download_count, s.max_downloads
-                    FROM files f
-                    LEFT JOIN share_links s ON f.id = s.file_id AND s.is_active = 1
-                    WHERE f.user_id = :user_id AND f.folder_id IS NULL
-                    ORDER BY f.created_at DESC
-                ";
-                $fileParams = [':user_id' => $userId];
-            } else {
-                $fileQuery = "
-                    SELECT f.id, f.original_name, f.storage_filename, f.storage_path, f.mime_type, f.file_size, f.created_at,
-                           s.share_token, s.is_active as is_shared, s.expires_at, s.download_count, s.max_downloads
-                    FROM files f
-                    LEFT JOIN share_links s ON f.id = s.file_id AND s.is_active = 1
-                    WHERE f.user_id = :user_id AND f.folder_id = :folder_id
-                    ORDER BY f.created_at DESC
-                ";
-                $fileParams = [':user_id' => $userId, ':folder_id' => $folderId];
-            }
-        }
-        $filesStmt = $db->prepare($fileQuery);
-        $filesStmt->execute($fileParams);
-        $files = $filesStmt->fetchAll();
-
-        // 4. Hitung persentase kuota
+        // 1. Info storage quota
         $storageUsed = (int) ($user['storage_used'] ?? 0);
         $storageQuota = (int) ($user['storage_quota'] ?? 5368709120);
         $quotaPercentage = $storageQuota > 0 ? min(100, round(($storageUsed / $storageQuota) * 100, 1)) : 0;
+
+        // 2. Daftar user lain untuk modal direct share
+        $allOtherUsers = ShareService::getAllUsersExcept($userId);
+
+        $folders = [];
+        $files = [];
+        $sharedWithMeFiles = [];
+        $breadcrumbs = [['id' => null, 'name' => 'Drive Saya']];
+
+        if ($activeTab === 'shared_with_me') {
+            // Tab Dibagikan ke Saya
+            $sharedWithMeFiles = ShareService::getFilesSharedWithUser($userId);
+            if (!empty($search)) {
+                $sharedWithMeFiles = array_filter($sharedWithMeFiles, function ($item) use ($search) {
+                    return stripos($item['original_name'], $search) !== false || stripos($item['shared_by_username'], $search) !== false;
+                });
+            }
+        } else {
+            // Tab Drive Saya
+            $currentFolder = null;
+            if ($folderId !== null) {
+                $folderStmt = $db->prepare("SELECT id, name, parent_id FROM folders WHERE id = :id AND user_id = :user_id");
+                $folderStmt->execute([':id' => $folderId, ':user_id' => $userId]);
+                $currentFolder = $folderStmt->fetch();
+
+                if (!$currentFolder) {
+                    header('Location: ?action=drive');
+                    exit;
+                }
+
+                // Bangun hierarki breadcrumb
+                $trail = [];
+                $tempFolder = $currentFolder;
+                while ($tempFolder) {
+                    array_unshift($trail, ['id' => $tempFolder['id'], 'name' => $tempFolder['name']]);
+                    if ($tempFolder['parent_id'] !== null) {
+                        $parentStmt = $db->prepare("SELECT id, name, parent_id FROM folders WHERE id = :id AND user_id = :user_id");
+                        $parentStmt->execute([':id' => $tempFolder['parent_id'], ':user_id' => $userId]);
+                        $tempFolder = $parentStmt->fetch();
+                    } else {
+                        $tempFolder = null;
+                    }
+                }
+                $breadcrumbs = array_merge($breadcrumbs, $trail);
+            }
+
+            // Ambil subfolder
+            if (!empty($search)) {
+                $folderQuery = "SELECT id, name, updated_at FROM folders WHERE user_id = :user_id AND name LIKE :search ORDER BY name ASC";
+                $folderParams = [':user_id' => $userId, ':search' => "%{$search}%"];
+            } else {
+                if ($folderId === null) {
+                    $folderQuery = "SELECT id, name, updated_at FROM folders WHERE user_id = :user_id AND parent_id IS NULL ORDER BY name ASC";
+                    $folderParams = [':user_id' => $userId];
+                } else {
+                    $folderQuery = "SELECT id, name, updated_at FROM folders WHERE user_id = :user_id AND parent_id = :parent_id ORDER BY name ASC";
+                    $folderParams = [':user_id' => $userId, ':parent_id' => $folderId];
+                }
+            }
+            $foldersStmt = $db->prepare($folderQuery);
+            $foldersStmt->execute($folderParams);
+            $folders = $foldersStmt->fetchAll();
+
+            // Ambil file
+            if (!empty($search)) {
+                $fileQuery = "
+                    SELECT f.id, f.original_name, f.storage_filename, f.storage_path, f.mime_type, f.file_size, f.created_at,
+                           s.share_token, s.is_active as is_shared, s.expires_at, s.download_count, s.max_downloads,
+                           (SELECT COUNT(*) FROM user_shares us WHERE us.file_id = f.id) as user_shares_count
+                    FROM files f
+                    LEFT JOIN share_links s ON f.id = s.file_id AND s.is_active = 1
+                    WHERE f.user_id = :user_id AND f.original_name LIKE :search
+                    ORDER BY f.created_at DESC
+                ";
+                $fileParams = [':user_id' => $userId, ':search' => "%{$search}%"];
+            } else {
+                if ($folderId === null) {
+                    $fileQuery = "
+                        SELECT f.id, f.original_name, f.storage_filename, f.storage_path, f.mime_type, f.file_size, f.created_at,
+                               s.share_token, s.is_active as is_shared, s.expires_at, s.download_count, s.max_downloads,
+                               (SELECT COUNT(*) FROM user_shares us WHERE us.file_id = f.id) as user_shares_count
+                        FROM files f
+                        LEFT JOIN share_links s ON f.id = s.file_id AND s.is_active = 1
+                        WHERE f.user_id = :user_id AND f.folder_id IS NULL
+                        ORDER BY f.created_at DESC
+                    ";
+                    $fileParams = [':user_id' => $userId];
+                } else {
+                    $fileQuery = "
+                        SELECT f.id, f.original_name, f.storage_filename, f.storage_path, f.mime_type, f.file_size, f.created_at,
+                               s.share_token, s.is_active as is_shared, s.expires_at, s.download_count, s.max_downloads,
+                               (SELECT COUNT(*) FROM user_shares us WHERE us.file_id = f.id) as user_shares_count
+                        FROM files f
+                        LEFT JOIN share_links s ON f.id = s.file_id AND s.is_active = 1
+                        WHERE f.user_id = :user_id AND f.folder_id = :folder_id
+                        ORDER BY f.created_at DESC
+                    ";
+                    $fileParams = [':user_id' => $userId, ':folder_id' => $folderId];
+                }
+            }
+            $filesStmt = $db->prepare($fileQuery);
+            $filesStmt->execute($fileParams);
+            $files = $filesStmt->fetchAll();
+        }
 
         $csrfToken = AuthService::csrfToken();
 
@@ -136,7 +156,6 @@ class DriveController
         }
 
         $db = Database::getConnection();
-        // Cek duplikasi di level yang sama
         if ($parentId === null) {
             $checkStmt = $db->prepare("SELECT id FROM folders WHERE user_id = :user_id AND parent_id IS NULL AND name = :name");
             $checkStmt->execute([':user_id' => $userId, ':name' => $name]);
@@ -188,7 +207,6 @@ class DriveController
         $folderId = (int) ($_POST['folder_id'] ?? 0);
 
         $db = Database::getConnection();
-        // Hapus folder beserta subfolder dan berkasnya (Cascade diatur di DB)
         $stmt = $db->prepare("DELETE FROM folders WHERE id = :id AND user_id = :user_id");
         $stmt->execute([':id' => $folderId, ':user_id' => $userId]);
 
@@ -209,25 +227,87 @@ class DriveController
         $this->respondJson($result);
     }
 
+    // Direct User-to-User Sharing Endpoints
+    public function shareWithUser(): void
+    {
+        $this->validateCsrf();
+        $byUserId = (int) AuthService::id();
+        $fileId = (int) ($_POST['file_id'] ?? 0);
+        $withUserId = (int) ($_POST['with_user_id'] ?? 0);
+        $permission = trim($_POST['permission'] ?? 'download');
+
+        $result = ShareService::shareWithUser($fileId, $byUserId, $withUserId, $permission);
+        $this->respondJson($result);
+    }
+
+    public function getFileUserShares(): void
+    {
+        $byUserId = (int) AuthService::id();
+        $fileId = (int) ($_GET['file_id'] ?? 0);
+
+        $shares = ShareService::getSharesForFile($fileId, $byUserId);
+        $this->respondJson(['success' => true, 'shares' => $shares]);
+    }
+
+    public function revokeUserShare(): void
+    {
+        $this->validateCsrf();
+        $byUserId = (int) AuthService::id();
+        $fileId = (int) ($_POST['file_id'] ?? 0);
+        $withUserId = (int) ($_POST['with_user_id'] ?? 0);
+
+        $result = ShareService::revokeUserShare($fileId, $byUserId, $withUserId);
+        $this->respondJson(['success' => $result]);
+    }
+
     public function downloadDirect(): void
     {
         $userId = (int) AuthService::id();
         $fileId = (int) ($_GET['file_id'] ?? 0);
 
         $db = Database::getConnection();
+
+        // 1. Cek apakah berkas milik user sendiri
         $stmt = $db->prepare("SELECT * FROM files WHERE id = :id AND user_id = :user_id LIMIT 1");
         $stmt->execute([':id' => $fileId, ':user_id' => $userId]);
         $file = $stmt->fetch();
 
+        // 2. Jika bukan milik sendiri, cek apakah dibagikan langsung ke user ini
+        $isSharedWithMe = false;
+        $permission = 'download';
+        if (!$file) {
+            $shareStmt = $db->prepare("
+                SELECT f.*, us.permission 
+                FROM user_shares us
+                INNER JOIN files f ON us.file_id = f.id
+                WHERE us.file_id = :file_id AND us.shared_with_user_id = :user_id
+                LIMIT 1
+            ");
+            $shareStmt->execute([':file_id' => $fileId, ':user_id' => $userId]);
+            $sharedRow = $shareStmt->fetch();
+            if ($sharedRow) {
+                $file = $sharedRow;
+                $isSharedWithMe = true;
+                $permission = $sharedRow['permission'];
+            }
+        }
+
         if (!$file) {
             http_response_code(404);
-            echo "Berkas tidak ditemukan.";
+            echo "Berkas tidak ditemukan atau Anda tidak memiliki akses.";
+            exit;
+        }
+
+        $forceDownload = !isset($_GET['preview']) || (int) $_GET['preview'] !== 1;
+
+        // Jika permission hanya 'view' dan mencoba download langsung, cegah!
+        if ($isSharedWithMe && $permission === 'view' && $forceDownload) {
+            http_response_code(403);
+            echo "Pemilik berkas hanya memberikan izin pratinjau (view only).";
             exit;
         }
 
         $fullPath = StorageService::getPhysicalPath($file['storage_path'], $file['storage_filename']);
-        $forceDownload = !isset($_GET['preview']) || (int) $_GET['preview'] !== 1;
-
         DownloadService::stream($fullPath, $file['original_name'], $file['mime_type'], $forceDownload);
     }
 

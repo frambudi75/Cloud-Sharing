@@ -93,6 +93,22 @@ CREATE TABLE IF NOT EXISTS `download_logs` (
     INDEX `idx_logs_downloaded` (`downloaded_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 6. Tabel User Shares (Berbagi Antar Pengguna Terdaftar)
+CREATE TABLE IF NOT EXISTS `user_shares` (
+    `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `file_id` BIGINT UNSIGNED NOT NULL,
+    `shared_by_user_id` BIGINT UNSIGNED NOT NULL,
+    `shared_with_user_id` BIGINT UNSIGNED NOT NULL,
+    `permission` ENUM('view', 'download') NOT NULL DEFAULT 'download',
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT `fk_user_shares_file` FOREIGN KEY (`file_id`) REFERENCES `files` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_user_shares_by` FOREIGN KEY (`shared_by_user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_user_shares_with` FOREIGN KEY (`shared_with_user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+    UNIQUE KEY `uk_file_user` (`file_id`, `shared_with_user_id`),
+    INDEX `idx_shared_with` (`shared_with_user_id`),
+    INDEX `idx_shared_by` (`shared_by_user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Default Admin Account:
 INSERT INTO `users` (`username`, `email`, `password_hash`, `role`, `storage_quota`, `storage_used`, `status`)
 VALUES (
