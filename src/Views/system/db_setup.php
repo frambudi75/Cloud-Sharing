@@ -40,13 +40,20 @@ require_once dirname(__DIR__) . '/layouts/header.php';
                 </ol>
             </div>
 
-            <div class="mt-8 pt-4 border-t border-slate-100 flex justify-center">
+            <div class="mt-8 pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-center gap-3">
+                <a href="?action=repair_db" 
+                   class="w-full sm:w-auto inline-flex items-center justify-center h-11 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-sm transition-colors">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    Perbaiki & Inisialisasi Database Otomatis
+                </a>
                 <a href="index.php" 
-                   class="inline-flex items-center justify-center h-11 px-5 rounded-xl bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white font-bold text-sm shadow-sm transition-colors">
+                   class="w-full sm:w-auto inline-flex items-center justify-center h-11 px-5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-sm shadow-sm transition-colors">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                     </svg>
-                    Cek Ulang Koneksi Sekarang
+                    Cek Ulang Koneksi
                 </a>
             </div>
         </div>

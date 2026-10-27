@@ -17,11 +17,8 @@ $canPreview = !empty($share['allow_preview']) && ($isImage || $isPdf || $isVideo
         
         <!-- Header Brand Icon -->
         <div class="flex justify-center mb-6">
-            <div class="h-14 w-14 rounded-2xl bg-brand-600 flex items-center justify-center text-white shadow-sm">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
-                </svg>
-            </div>
+            <img src="assets/img/favicon.svg" alt="Cloud Sharing Logo" 
+                 class="h-14 w-14 rounded-2xl shadow-md shadow-brand-500/20">
         </div>
 
         <div class="bg-white py-8 px-6 shadow-sm border border-slate-200 rounded-2xl sm:px-10">

@@ -91,6 +91,17 @@ switch ($action) {
         (new UserController())->deleteUser();
         break;
 
+    // Database Self-Healing / Auto-Repair
+    case 'repair_db':
+        $repairResult = Database::repairSchema();
+        if (isset($_GET['format']) && $_GET['format'] === 'json') {
+            header('Content-Type: application/json');
+            echo json_encode($repairResult);
+            exit;
+        }
+        header('Location: index.php?action=drive&repaired=1');
+        exit;
+
     default:
         if (AuthService::check()) {
             (new DriveController())->index();

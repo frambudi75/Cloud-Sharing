@@ -47,11 +47,8 @@ require_once dirname(__DIR__) . '/layouts/header.php';
         
         <!-- Brand Header with Logo -->
         <div class="text-center mb-8">
-            <div class="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-brand-600 text-white shadow-md shadow-brand-500/20 mb-4 transition-transform hover:scale-105 duration-300">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
-                </svg>
-            </div>
+            <img src="assets/img/favicon.svg" alt="Cloud Sharing Logo" 
+                 class="inline-block h-16 w-16 rounded-2xl shadow-lg shadow-brand-500/25 mb-4 transition-transform hover:scale-105 duration-300">
             <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
                 Cloud Sharing
             </h1>
