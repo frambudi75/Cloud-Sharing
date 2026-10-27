@@ -41,13 +41,34 @@ $totalShared = $totalSharedCount ?? 0;
         font-weight: 700;
     }
 
-    /* Dragover active animation */
+    /* Dragover active animation in dark & light */
     .dragover-active {
         animation: pulseBorder 1.5s infinite;
         background-color: #f5f3ff !important;
         border-color: #6366f1 !important;
         border-style: dashed !important;
         box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.2) !important;
+    }
+    html.dark .dragover-active {
+        background-color: rgba(99, 102, 241, 0.15) !important;
+        border-color: #818cf8 !important;
+        box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.35) !important;
+    }
+
+    /* Dark mode explicit override for dropzone */
+    html.dark #dropZone {
+        background-color: rgba(17, 24, 39, 0.8) !important;
+        border-color: #374151 !important;
+        color: #94a3b8 !important;
+    }
+    html.dark #dropZone:hover {
+        background-color: rgba(30, 27, 75, 0.5) !important;
+        border-color: #6366f1 !important;
+        color: #c7d2fe !important;
+    }
+    html.dark #uploadProgressContainer {
+        background-color: #111827 !important;
+        border-color: #1f2937 !important;
     }
 
     /* Card & Folder hover micro-interactions (Anti-Slop Modern Feel) */
@@ -423,9 +444,9 @@ $totalShared = $totalSharedCount ?? 0;
 
                 <!-- ROW 3: Compact Drop Strip -->
                 <?php if ($activeTab === 'my_drive'): ?>
-                    <div id="dropZone" class="border border-dashed border-slate-300 hover:border-brand-500 bg-white/70 hover:bg-brand-50/20 rounded-xl px-4 py-2 text-center transition-all cursor-pointer flex items-center justify-center space-x-2 text-xs text-slate-500 hover:text-brand-600">
-                        <svg class="w-4 h-4 text-brand-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-                        <span>Tarik & jatuhkan berkas ke sini, atau <span class="text-brand-600 font-bold underline">pilih dari komputer</span></span>
+                    <div id="dropZone" class="group border border-dashed border-slate-300/90 dark:border-slate-800 hover:border-brand-500 dark:hover:border-brand-400 bg-white/70 dark:bg-slate-900/60 hover:bg-brand-50/30 dark:hover:bg-brand-950/40 rounded-xl px-4 py-2.5 text-center transition-all duration-200 cursor-pointer flex items-center justify-center space-x-2 text-xs text-slate-500 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-300">
+                        <svg class="w-4 h-4 text-brand-600 dark:text-brand-400 flex-shrink-0 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                        <span>Tarik & jatuhkan berkas ke sini, atau <span class="text-brand-600 dark:text-brand-400 font-bold underline">pilih dari komputer</span></span>
                     </div>
 
                     <!-- Progress Bar for Uploads -->
