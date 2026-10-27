@@ -91,7 +91,7 @@ require_once dirname(__DIR__) . '/layouts/header.php';
                         </div>
                         <input id="username" name="username" type="text" autocomplete="username" required autofocus
                             class="block w-full h-11 pl-10 pr-3.5 rounded-xl border border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-brand-600 focus:ring-2 focus:ring-brand-500/20 text-sm transition-all"
-                            placeholder="Masukkan nama pengguna">
+                            placeholder="admin">
                     </div>
                 </div>
 
@@ -110,7 +110,7 @@ require_once dirname(__DIR__) . '/layouts/header.php';
                         </div>
                         <input id="password" name="password" type="password" autocomplete="current-password" required
                             class="block w-full h-11 pl-10 pr-11 rounded-xl border border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-brand-600 focus:ring-2 focus:ring-brand-500/20 text-sm transition-all"
-                            placeholder="Masukkan kata sandi">
+                            placeholder="••••••••">
                         <button type="button" onclick="togglePasswordVisibility()" 
                                 class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition-colors focus:outline-none"
                                 title="Tampilkan atau sembunyikan kata sandi">
@@ -129,7 +129,7 @@ require_once dirname(__DIR__) . '/layouts/header.php';
                 <div class="pt-2">
                     <button type="submit" id="submitBtn"
                         class="relative flex w-full justify-center items-center h-12 rounded-xl bg-brand-600 hover:bg-brand-700 active:bg-brand-800 active:scale-[0.99] text-sm font-bold text-white shadow-md shadow-brand-500/25 transition-all duration-150">
-                        <span id="btnText">Masuk ke Drive</span>
+                        <span id="btnText">Masuk ke Drive &rarr;</span>
                         <svg id="btnSpinner" class="hidden animate-spin ml-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -140,8 +140,8 @@ require_once dirname(__DIR__) . '/layouts/header.php';
 
         </div>
 
-        <p class="text-center text-xs text-slate-400 mt-6">
-            Sistem File Sharing Cloud Mandiri. Akses terlindungi dan terenkripsi.
+        <p class="text-center text-xs text-slate-400 mt-6 font-medium">
+            Sistem File Sharing Cloud Mandiri
         </p>
 
     </div>

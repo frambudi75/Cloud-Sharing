@@ -50,8 +50,24 @@ class DriveController
                     return stripos($item['original_name'], $search) !== false || stripos($item['shared_by_username'], $search) !== false;
                 });
             }
+        } elseif ($activeTab === 'recent') {
+            // Tab Terbaru (50 berkas terbaru)
+            $recentQuery = "
+                SELECT f.id, f.original_name, f.storage_filename, f.storage_path, f.mime_type, f.file_size, f.created_at,
+                       s.share_token, s.is_active as is_shared, s.expires_at, s.download_count, s.max_downloads,
+                       (SELECT COUNT(*) FROM user_shares us WHERE us.file_id = f.id) as user_shares_count
+                FROM files f
+                LEFT JOIN share_links s ON f.id = s.file_id AND s.is_active = 1
+                WHERE f.user_id = :user_id
+                ORDER BY f.created_at DESC
+                LIMIT 50
+            ";
+            $recentStmt = $db->prepare($recentQuery);
+            $recentStmt->execute([':user_id' => $userId]);
+            $files = $recentStmt->fetchAll();
+            $folders = [];
         } else {
-            // Tab Drive Saya
+            // Tab Drive Saya (Default)
             $currentFolder = null;
             if ($folderId !== null) {
                 $folderStmt = $db->prepare("SELECT id, name, parent_id FROM folders WHERE id = :id AND user_id = :user_id");
@@ -137,6 +153,16 @@ class DriveController
             $filesStmt->execute($fileParams);
             $files = $filesStmt->fetchAll();
         }
+
+        // Summary Counts for Modern Dashboard Overview
+        $totalFilesCount = (int) $db->query("SELECT COUNT(*) FROM files WHERE user_id = {$userId}")->fetchColumn();
+        $totalFoldersCount = (int) $db->query("SELECT COUNT(*) FROM folders WHERE user_id = {$userId}")->fetchColumn();
+        $totalSharedCount = (int) $db->query("
+            SELECT (
+                (SELECT COUNT(*) FROM share_links WHERE user_id = {$userId} AND is_active = 1) +
+                (SELECT COUNT(*) FROM user_shares WHERE shared_by_user_id = {$userId})
+            )
+        ")->fetchColumn();
 
         $storageBreakdown = StorageService::getStorageCategoryBreakdown($userId);
         $csrfToken = AuthService::csrfToken();

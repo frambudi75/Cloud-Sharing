@@ -234,9 +234,33 @@ document.addEventListener('DOMContentLoaded', () => {
         if (contextMenu && !contextMenu.contains(e.target)) {
             closeContextMenu();
         }
+        if (!e.target.closest('.card-action-menu')) {
+            document.querySelectorAll('.card-action-menu').forEach(menu => menu.classList.add('hidden'));
+        }
     });
 
-    window.addEventListener('scroll', closeContextMenu, true);
+    window.addEventListener('scroll', () => {
+        closeContextMenu();
+        document.querySelectorAll('.card-action-menu').forEach(menu => menu.classList.add('hidden'));
+    }, true);
+
+    // In-Card Action Dropdown (Mockup Three-Dot Menu)
+    window.toggleCardMenu = function (e, menuId) {
+        e.stopPropagation();
+        closeContextMenu();
+        const targetMenu = document.getElementById(menuId);
+        const allMenus = document.querySelectorAll('.card-action-menu');
+
+        allMenus.forEach(menu => {
+            if (menu !== targetMenu) {
+                menu.classList.add('hidden');
+            }
+        });
+
+        if (targetMenu) {
+            targetMenu.classList.toggle('hidden');
+        }
+    };
 
     // =========================================================================
     // 5. Bulk Selection & Multi-Delete Actions
@@ -880,20 +904,69 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // =========================================================================
-    // 12. Toast Feedback Component
+    // 12. Toast Feedback & Clipboard Utilities (Mockup Aligned)
     // =========================================================================
-    function showToast(message) {
+    window.showToast = function (message) {
         let toast = document.getElementById('appToast');
         if (!toast) {
             toast = document.createElement('div');
             toast.id = 'appToast';
-            toast.className = 'fixed bottom-5 right-5 z-50 bg-slate-900 text-white text-xs font-semibold px-4 py-3 rounded-xl shadow-lg flex items-center space-x-2 transition-opacity duration-300 pointer-events-none';
+            toast.className = 'fixed bottom-5 right-5 z-50 bg-slate-900 text-white text-xs font-semibold px-4 py-3 rounded-xl shadow-xl flex items-center space-x-2 transition-all duration-300 pointer-events-auto';
+            toast.innerHTML = `
+                <svg class="w-4 h-4 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span id="appToastMsg"></span>
+                <button type="button" onclick="this.parentElement.style.opacity='0'" class="ml-2 text-slate-400 hover:text-white">&times;</button>
+            `;
             document.body.appendChild(toast);
         }
-        toast.textContent = message;
+        const msgEl = toast.querySelector('#appToastMsg') || toast;
+        msgEl.textContent = message;
+        toast.style.display = 'flex';
         toast.style.opacity = '1';
-        setTimeout(() => {
+        toast.style.transform = 'translateY(0)';
+        clearTimeout(window.__toastTimeout);
+        window.__toastTimeout = setTimeout(() => {
             toast.style.opacity = '0';
+            toast.style.transform = 'translateY(8px)';
+            setTimeout(() => { if (toast.style.opacity === '0') toast.style.display = 'none'; }, 300);
         }, 3000);
-    }
+    };
+
+    window.copyToClipboard = async function (text, message = 'Tautan berhasil disalin!') {
+        if (!text) {
+            window.showToast('Tautan tidak tersedia.');
+            return;
+        }
+        try {
+            await navigator.clipboard.writeText(text);
+            window.showToast(message);
+        } catch (err) {
+            // Fallback for non-HTTPS/legacy
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-9999px';
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                window.showToast(message);
+            } catch (e) {
+                alert('Gagal menyalin tautan: ' + text);
+            }
+            document.body.removeChild(textArea);
+        }
+    };
+
+    window.copyShareUrl = function (token, btnElement) {
+        if (!token) {
+            window.showToast('Belum ada tautan publik untuk berkas ini.');
+            return;
+        }
+        const origin = window.location.origin + window.location.pathname;
+        const fullShareUrl = `${origin}?action=share&token=${token}`;
+        window.copyToClipboard(fullShareUrl, 'Tautan publik berhasil disalin!');
+    };
 });
