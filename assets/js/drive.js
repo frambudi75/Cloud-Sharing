@@ -453,7 +453,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // =========================================================================
-    // 8. Drag-and-Drop File Upload with Pulse Animation
+    // 8. Drag-and-Drop File Upload with Pulse Animation & Multi-File Support
     // =========================================================================
     const dropZone = document.getElementById('dropZone');
     const fileUploadInput = document.getElementById('fileUploadInput');
@@ -462,97 +462,133 @@ document.addEventListener('DOMContentLoaded', () => {
     const uploadPercentage = document.getElementById('uploadPercentage');
     const uploadFileName = document.getElementById('uploadFileName');
 
-    if (dropZone && fileUploadInput) {
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, preventDefaults, false);
-            document.body.addEventListener(eventName, preventDefaults, false);
+    if (fileUploadInput) {
+        fileUploadInput.addEventListener('change', () => {
+            if (fileUploadInput.files && fileUploadInput.files.length > 0) {
+                handleFiles(fileUploadInput.files);
+            }
+            fileUploadInput.value = '';
+        });
+    }
+
+    if (dropZone) {
+        dropZone.style.cursor = 'pointer';
+        dropZone.addEventListener('click', (e) => {
+            if (fileUploadInput) fileUploadInput.click();
         });
 
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-
         ['dragenter', 'dragover'].forEach(eventName => {
-            dropZone.addEventListener(eventName, () => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 dropZone.classList.add('dragover-active');
             }, false);
         });
 
         ['dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, () => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 dropZone.classList.remove('dragover-active');
             }, false);
         });
 
         dropZone.addEventListener('drop', (e) => {
-            const dt = e.dataTransfer;
-            const files = dt.files;
-            handleFiles(files);
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.remove('dragover-active');
+            if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                handleFiles(e.dataTransfer.files);
+            }
         });
 
-        fileUploadInput.addEventListener('change', () => {
-            handleFiles(fileUploadInput.files);
+        // Window-wide drag and drop support
+        window.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover-active');
+        });
+
+        window.addEventListener('dragleave', (e) => {
+            if (e.clientX <= 0 || e.clientY <= 0) {
+                dropZone.classList.remove('dragover-active');
+            }
+        });
+
+        window.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover-active');
+            if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                handleFiles(e.dataTransfer.files);
+            }
         });
     }
 
-    function handleFiles(files) {
-        if (!files || files.length === 0) return;
-        uploadFile(files[0]);
-    }
-
-    function uploadFile(file) {
-        if (!uploadProgressContainer) return;
-
-        uploadProgressContainer.classList.remove('hidden');
-        uploadFileName.textContent = file.name;
-        uploadProgressBar.style.width = '0%';
-        uploadPercentage.textContent = '0%';
-
-        const formData = new FormData();
-        formData.append('csrf_token', csrfToken);
-        formData.append('file', file);
-        if (currentFolderId) {
-            formData.append('folder_id', currentFolderId);
+    async function handleFiles(fileList) {
+        if (!fileList || fileList.length === 0) return;
+        const files = Array.from(fileList);
+        for (let i = 0; i < files.length; i++) {
+            await uploadSingleFile(files[i], i + 1, files.length);
         }
+        window.location.reload();
+    }
 
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', '?action=upload', true);
-
-        xhr.upload.onprogress = (e) => {
-            if (e.lengthComputable) {
-                const percentComplete = Math.round((e.loaded / e.total) * 100);
-                uploadProgressBar.style.width = percentComplete + '%';
-                uploadPercentage.textContent = percentComplete + '%';
+    function uploadSingleFile(file, currentIndex, totalFiles) {
+        return new Promise((resolve) => {
+            if (!uploadProgressContainer) {
+                resolve();
+                return;
             }
-        };
 
-        xhr.onload = () => {
-            uploadProgressContainer.classList.add('hidden');
-            if (xhr.status === 200) {
-                try {
-                    const res = JSON.parse(xhr.responseText);
-                    if (res.success) {
-                        window.location.reload();
-                    } else {
-                        alert(res.error || 'Gagal mengunggah berkas.');
-                    }
-                } catch (e) {
-                    console.error('Non-JSON response:', xhr.responseText);
-                    const snippet = xhr.responseText ? xhr.responseText.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 150) : '';
-                    alert('Respons server: ' + (snippet || 'Format respons tidak dikenali.'));
+            uploadProgressContainer.classList.remove('hidden');
+            const prefix = totalFiles > 1 ? `(${currentIndex}/${totalFiles}) ` : '';
+            uploadFileName.textContent = prefix + file.name;
+            uploadProgressBar.style.width = '0%';
+            uploadPercentage.textContent = '0%';
+
+            const formData = new FormData();
+            formData.append('csrf_token', csrfToken);
+            formData.append('file', file);
+            if (currentFolderId) {
+                formData.append('folder_id', currentFolderId);
+            }
+
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '?action=upload', true);
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+
+            xhr.upload.onprogress = (e) => {
+                if (e.lengthComputable) {
+                    const percentComplete = Math.round((e.loaded / e.total) * 100);
+                    uploadProgressBar.style.width = percentComplete + '%';
+                    uploadPercentage.textContent = percentComplete + '%';
                 }
-            } else {
-                alert(`Gagal mengunggah berkas (HTTP ${xhr.status}).`);
-            }
-        };
+            };
 
-        xhr.onerror = () => {
-            uploadProgressContainer.classList.add('hidden');
-            alert('Kesalahan koneksi saat mengunggah berkas.');
-        };
+            xhr.onload = () => {
+                if (xhr.status === 200) {
+                    try {
+                        const res = JSON.parse(xhr.responseText);
+                        if (!res.success) {
+                            alert(res.error || `Gagal mengunggah ${file.name}`);
+                        }
+                    } catch (e) {
+                        console.error('Non-JSON response:', xhr.responseText);
+                        const snippet = xhr.responseText ? xhr.responseText.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 150) : '';
+                        alert('Respons server: ' + (snippet || 'Format respons tidak dikenali.'));
+                    }
+                } else {
+                    alert(`Gagal mengunggah berkas ${file.name} (HTTP ${xhr.status}).`);
+                }
+                resolve();
+            };
 
-        xhr.send(formData);
+            xhr.onerror = () => {
+                alert(`Kesalahan koneksi saat mengunggah berkas ${file.name}.`);
+                resolve();
+            };
+
+            xhr.send(formData);
+        });
     }
 
     // =========================================================================

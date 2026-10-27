@@ -263,7 +263,7 @@ class ShareService
         $db = Database::getConnection();
         $stmt = $db->prepare("
             SELECT 
-                f.id, f.original_name, f.mime_type, f.file_size, f.storage_filename, f.storage_path,
+                f.id, f.original_name, f.mime_type, f.file_size, f.storage_filename, f.storage_path, f.created_at,
                 us.id as share_id, us.permission, us.created_at as shared_at,
                 u.username as shared_by_username, u.email as shared_by_email
             FROM user_shares us

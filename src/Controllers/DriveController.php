@@ -39,17 +39,20 @@ class DriveController
 
         $folders = [];
         $files = [];
-        $sharedWithMeFiles = [];
+        $sharedWithMeFiles = ShareService::getFilesSharedWithUser($userId);
+        $sharedWithMeCount = count($sharedWithMeFiles);
         $breadcrumbs = [['id' => null, 'name' => 'Drive Saya']];
 
         if ($activeTab === 'shared_with_me') {
             // Tab Dibagikan ke Saya
-            $sharedWithMeFiles = ShareService::getFilesSharedWithUser($userId);
+            $breadcrumbs = [['id' => null, 'name' => 'Dibagikan ke Saya']];
             if (!empty($search)) {
                 $sharedWithMeFiles = array_filter($sharedWithMeFiles, function ($item) use ($search) {
                     return stripos($item['original_name'], $search) !== false || stripos($item['shared_by_username'], $search) !== false;
                 });
             }
+            $files = array_values($sharedWithMeFiles);
+            $folders = [];
         } elseif ($activeTab === 'recent') {
             // Tab Terbaru (50 berkas terbaru)
             $recentQuery = "
@@ -160,7 +163,7 @@ class DriveController
         $totalSharedCount = (int) $db->query("
             SELECT (
                 (SELECT COUNT(*) FROM share_links WHERE user_id = {$userId} AND is_active = 1) +
-                (SELECT COUNT(*) FROM user_shares WHERE shared_by_user_id = {$userId})
+                (SELECT COUNT(*) FROM user_shares WHERE shared_by_user_id = {$userId} OR shared_with_user_id = {$userId})
             )
         ")->fetchColumn();
 

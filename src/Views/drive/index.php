@@ -365,7 +365,7 @@ $totalShared = $totalSharedCount ?? 0;
                                 </svg>
                                 Upload Berkas
                             </label>
-                            <input type="file" id="fileUploadInput" class="hidden">
+                            <input type="file" id="fileUploadInput" class="hidden" multiple>
                         <?php endif; ?>
 
                     </div>
@@ -391,8 +391,8 @@ $totalShared = $totalSharedCount ?? 0;
 
                 <!-- Animated Drag & Drop Zone Area -->
                 <?php if ($activeTab === 'my_drive'): ?>
-                    <div id="dropZone" class="border-2 border-dashed border-slate-200 bg-white rounded-2xl p-5 text-center transition-all duration-300 hover:border-brand-400 hover:bg-brand-50/20">
-                        <div class="flex items-center justify-center space-x-3">
+                    <div id="dropZone" class="border-2 border-dashed border-slate-200 bg-white rounded-2xl p-5 text-center transition-all duration-300 hover:border-brand-400 hover:bg-brand-50/20 cursor-pointer">
+                        <div class="flex items-center justify-center space-x-3 pointer-events-none">
                             <div class="h-9 w-9 bg-brand-50 text-brand-600 rounded-xl flex items-center justify-center flex-shrink-0">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
@@ -400,7 +400,7 @@ $totalShared = $totalSharedCount ?? 0;
                             </div>
                             <div class="text-left">
                                 <span class="text-xs font-bold text-slate-800">Tarik & Jatuhkan berkas ke sini</span>
-                                <span class="text-[11px] text-slate-400 block">atau gunakan tombol Upload Berkas</span>
+                                <span class="text-[11px] text-slate-400 block">atau klik untuk memilih berkas dari komputer</span>
                             </div>
                         </div>
                     </div>
@@ -505,6 +505,24 @@ $totalShared = $totalSharedCount ?? 0;
                 <!-- CONTENT 2: TAB DRIVE SAYA / RECENT                        -->
                 <!-- ========================================================= -->
                 <?php else: ?>
+
+                    <!-- Notification if there are files shared to this user -->
+                    <?php if ($activeTab === 'my_drive' && !empty($sharedWithMeFiles) && count($sharedWithMeFiles) > 0): ?>
+                        <div class="p-4 rounded-2xl bg-gradient-to-r from-brand-50 to-indigo-50 border border-brand-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs animate-item-in">
+                            <div class="flex items-center space-x-3">
+                                <div class="h-10 w-10 rounded-xl bg-brand-600 text-white flex items-center justify-center flex-shrink-0 shadow-sm">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                                </div>
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-900">Anda memiliki <?= count($sharedWithMeFiles) ?> berkas yang dibagikan kepada Anda</h4>
+                                    <p class="text-[11px] text-slate-500">Berkas dibagikan oleh <?= htmlspecialchars($sharedWithMeFiles[0]['shared_by_username'] ?? 'pengguna lain') ?>. Anda dapat mengaksesnya langsung.</p>
+                                </div>
+                            </div>
+                            <a href="?action=drive&tab=shared_with_me" class="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 active:scale-[0.98] text-white text-xs font-bold shadow-xs transition-all whitespace-nowrap">
+                                Buka Berkas Dibagikan →
+                            </a>
+                        </div>
+                    <?php endif; ?>
 
                     <!-- Empty State -->
                     <?php if (empty($files) && empty($folders)): ?>
@@ -984,6 +1002,6 @@ $totalShared = $totalSharedCount ?? 0;
 </div>
 
 <!-- Script Drive Client Interactivity -->
-<script src="assets/js/drive.js"></script>
+<script src="assets/js/drive.js?v=<?= time() ?>"></script>
 
 <?php require_once dirname(__DIR__) . '/layouts/footer.php'; ?>
