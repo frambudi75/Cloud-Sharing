@@ -39,6 +39,17 @@ class StorageService
         return self::$resolvedUploadDir;
     }
 
+    public static function getAvatarDir(): string
+    {
+        $uploadDir = self::getUploadDir();
+        $baseDir = dirname($uploadDir);
+        $avatarDir = $baseDir . DIRECTORY_SEPARATOR . 'avatars';
+        if (!is_dir($avatarDir)) {
+            @mkdir($avatarDir, 0775, true);
+        }
+        return realpath($avatarDir) ?: $avatarDir;
+    }
+
     public static function storeUploadedFile(array $uploadedFile, int $userId, ?int $folderId = null): array
     {
         if ($uploadedFile['error'] !== UPLOAD_ERR_OK) {

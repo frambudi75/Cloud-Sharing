@@ -91,6 +91,15 @@ class Database
                 return self::repairSchema();
             }
 
+            // Pastikan kolom avatar_path ada di tabel users (self-healing migration)
+            try {
+                $colsStmt = $pdo->query("SHOW COLUMNS FROM users LIKE 'avatar_path'");
+                if ($colsStmt && $colsStmt->rowCount() === 0) {
+                    $pdo->exec("ALTER TABLE users ADD COLUMN avatar_path VARCHAR(255) NULL AFTER email");
+                }
+            } catch (\Throwable $ignored) {
+            }
+
             self::$schemaVerified = true;
             return ['status' => true, 'repaired' => false, 'message' => 'Seluruh tabel lengkap'];
         } catch (PDOException $e) {
@@ -127,6 +136,7 @@ class Database
                     `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
                     `username` VARCHAR(50) NOT NULL UNIQUE,
                     `email` VARCHAR(100) NOT NULL UNIQUE,
+                    `avatar_path` VARCHAR(255) NULL DEFAULT NULL,
                     `password_hash` VARCHAR(255) NOT NULL,
                     `role` ENUM('admin', 'user') NOT NULL DEFAULT 'user',
                     `storage_quota` BIGINT UNSIGNED NOT NULL DEFAULT 5368709120,
@@ -137,6 +147,14 @@ class Database
                     INDEX `idx_users_status_role` (`status`, `role`)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
             ");
+
+            try {
+                $colsStmt = $pdo->query("SHOW COLUMNS FROM users LIKE 'avatar_path'");
+                if ($colsStmt && $colsStmt->rowCount() === 0) {
+                    $pdo->exec("ALTER TABLE users ADD COLUMN avatar_path VARCHAR(255) NULL AFTER email");
+                }
+            } catch (\Throwable $ignored) {
+            }
 
             // 2. Tabel folders
             $pdo->exec("

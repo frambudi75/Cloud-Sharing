@@ -7,6 +7,7 @@ use App\Config\Database;
 use App\Controllers\AuthController;
 use App\Controllers\DriveController;
 use App\Controllers\GuestController;
+use App\Controllers\ProfileController;
 use App\Controllers\UserController;
 use App\Services\AuthService;
 
@@ -32,6 +33,20 @@ switch ($action) {
         break;
     case 'logout':
         (new AuthController())->handleLogout();
+        break;
+
+    // Profil Pengguna (Edit Foto, Nama, Email, Password)
+    case 'profile':
+        (new ProfileController())->index();
+        break;
+    case 'update_profile':
+        (new ProfileController())->updateProfile();
+        break;
+    case 'update_password':
+        (new ProfileController())->updatePassword();
+        break;
+    case 'avatar':
+        (new ProfileController())->getAvatar();
         break;
 
     // File Manager / Drive

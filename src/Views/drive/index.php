@@ -98,15 +98,21 @@ $totalShared = $totalSharedCount ?? 0;
                 <?php endif; ?>
 
                 <!-- User Profile & Avatar -->
-                <div class="flex items-center space-x-2.5 pl-2">
-                    <div class="h-9 w-9 rounded-full bg-gradient-to-tr from-brand-600 to-indigo-500 text-white font-bold flex items-center justify-center text-xs shadow-xs ring-2 ring-white">
-                        <?= strtoupper(substr($user['username'] ?? 'U', 0, 1)) ?>
-                    </div>
+                <a href="?action=profile" class="flex items-center space-x-2.5 pl-2 group p-1.5 rounded-xl hover:bg-slate-100 transition-colors" title="Kelola Profil Saya">
+                    <?php if (!empty($user['avatar_path'])): ?>
+                        <img src="?action=avatar&user_id=<?= $user['id'] ?>&t=<?= !empty($user['updated_at']) ? strtotime($user['updated_at']) : time() ?>" 
+                             alt="Avatar" 
+                             class="h-9 w-9 rounded-xl object-cover shadow-xs ring-2 ring-white group-hover:ring-brand-400 transition-all">
+                    <?php else: ?>
+                        <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-500 text-white font-bold flex items-center justify-center text-xs shadow-xs ring-2 ring-white group-hover:ring-brand-400 transition-all">
+                            <?= strtoupper(substr($user['username'] ?? 'U', 0, 1)) ?>
+                        </div>
+                    <?php endif; ?>
                     <div class="hidden sm:flex flex-col text-left leading-tight">
-                        <span class="text-xs font-bold text-slate-800"><?= htmlspecialchars($user['username'] ?? 'User') ?></span>
+                        <span class="text-xs font-bold text-slate-800 group-hover:text-brand-600 transition-colors"><?= htmlspecialchars($user['username'] ?? 'User') ?></span>
                         <span class="text-[10px] text-slate-400 font-semibold uppercase"><?= htmlspecialchars($user['role'] ?? 'Member') ?></span>
                     </div>
-                </div>
+                </a>
 
                 <!-- Logout Button -->
                 <a href="?action=logout" 
@@ -179,6 +185,17 @@ $totalShared = $totalSharedCount ?? 0;
                         </svg>
                         Sampah
                     </a>
+
+                    <!-- Profil Saya -->
+                    <div class="pt-2 mt-2 border-t border-slate-100">
+                        <a href="?action=profile" 
+                           class="flex items-center px-3.5 py-2.5 text-xs font-semibold rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all">
+                            <svg class="w-4 h-4 mr-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                            </svg>
+                            Profil Saya
+                        </a>
+                    </div>
                 </nav>
             </aside>
 

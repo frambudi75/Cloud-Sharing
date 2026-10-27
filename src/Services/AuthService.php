@@ -24,7 +24,7 @@ class AuthService
         $db = Database::getConnection();
 
         $stmt = $db->prepare("
-            SELECT id, username, email, password_hash, role, storage_quota, storage_used, status 
+            SELECT id, username, email, avatar_path, password_hash, role, storage_quota, storage_used, status 
             FROM users 
             WHERE username = :username OR email = :email 
             LIMIT 1
@@ -59,6 +59,7 @@ class AuthService
         $_SESSION['user_id'] = (int) $user['id'];
         $_SESSION['username'] = $user['username'];
         $_SESSION['email'] = $user['email'];
+        $_SESSION['avatar_path'] = $user['avatar_path'] ?? null;
         $_SESSION['role'] = $user['role'];
 
         return ['success' => true, 'error' => null];
@@ -97,7 +98,7 @@ class AuthService
 
         $db = Database::getConnection();
         $stmt = $db->prepare("
-            SELECT id, username, email, role, storage_quota, storage_used, status, created_at 
+            SELECT id, username, email, avatar_path, role, storage_quota, storage_used, status, created_at 
             FROM users 
             WHERE id = :id 
             LIMIT 1
