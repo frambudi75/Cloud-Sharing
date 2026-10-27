@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Services\AuthService;
+use App\Services\CacheService;
 
 class AuthController
 {
@@ -25,6 +26,15 @@ class AuthController
             return;
         }
 
+        $clientIp = $_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+        $rateKey = 'login_rate:' . md5($clientIp);
+        $attempts = (int) (CacheService::get($rateKey) ?? 0);
+
+        if ($attempts >= 5) {
+            $this->showLogin('Terlalu banyak percobaan masuk yang gagal. Akses dibatasi selama 15 menit.');
+            return;
+        }
+
         $username = trim($_POST['username'] ?? '');
         $password = trim($_POST['password'] ?? '');
 
@@ -35,10 +45,12 @@ class AuthController
 
         $result = AuthService::login($username, $password);
         if ($result['success']) {
+            CacheService::delete($rateKey);
             header('Location: ?action=drive');
             exit;
         }
 
+        CacheService::set($rateKey, $attempts + 1, 900); // 15 menit
         $this->showLogin($result['error']);
     }
 

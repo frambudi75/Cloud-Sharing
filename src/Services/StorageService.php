@@ -90,9 +90,17 @@ class StorageService
                 }
             }
         } catch (\Throwable $e) {
-            // Silently ignore to prevent disruption
+            // Silently ignore
         }
     }
+
+    public static function isDangerousExtension(string $filename): bool
+    {
+        $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        $blocked = ['php', 'phtml', 'php3', 'php4', 'php5', 'php7', 'php8', 'phar', 'inc'];
+        return in_array($ext, $blocked, true);
+    }
+
 
     public static function storeUploadedFile(array $uploadedFile, int $userId, ?int $folderId = null): array
     {
@@ -103,6 +111,10 @@ class StorageService
         $fileSize = (int) $uploadedFile['size'];
         $originalName = basename($uploadedFile['name']);
         $tmpPath = $uploadedFile['tmp_name'];
+
+        if (self::isDangerousExtension($originalName)) {
+            return ['success' => false, 'error' => 'Berkas dengan ekstensi skrip server (.php, .phar) dilarang demi keamanan sistem.'];
+        }
 
         // Cek Kuota Pengguna
         $user = AuthService::user();
@@ -191,6 +203,11 @@ class StorageService
     {
         if (!file_exists($tempFilePath)) {
             return ['success' => false, 'error' => 'Berkas hasil penggabungan tidak ditemukan.'];
+        }
+
+        if (self::isDangerousExtension($originalName)) {
+            @unlink($tempFilePath);
+            return ['success' => false, 'error' => 'Berkas dengan ekstensi skrip server (.php, .phar) dilarang demi keamanan sistem.'];
         }
 
         $fileSize = filesize($tempFilePath);

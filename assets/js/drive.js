@@ -551,6 +551,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    let currentUploadXhr = null;
+    let isUploadCancelled = false;
+
     function getOrCreateUploadDock() {
         let dock = document.getElementById('uploadDock');
         if (!dock) {
@@ -560,7 +563,10 @@ document.addEventListener('DOMContentLoaded', () => {
             dock.innerHTML = `
                 <div class="h-11 px-4 bg-slate-900 text-white flex items-center justify-between text-xs font-semibold">
                     <span id="uploadDockTitle">Mengunggah berkas...</span>
-                    <button type="button" onclick="this.closest('#uploadDock').remove()" class="text-slate-400 hover:text-white">&times;</button>
+                    <div class="flex items-center gap-2">
+                        <button type="button" id="uploadDockCancelBtn" class="px-2 py-0.5 rounded text-[11px] bg-rose-500/20 text-rose-300 hover:bg-rose-500 hover:text-white transition-colors">Batal</button>
+                        <button type="button" onclick="this.closest('#uploadDock').remove()" class="text-slate-400 hover:text-white text-base leading-none">&times;</button>
+                    </div>
                 </div>
                 <div class="p-4 space-y-2.5">
                     <div class="flex items-center justify-between text-xs">
@@ -573,12 +579,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `;
             document.body.appendChild(dock);
+
+            const cancelBtn = dock.querySelector('#uploadDockCancelBtn');
+            if (cancelBtn) {
+                cancelBtn.onclick = () => {
+                    isUploadCancelled = true;
+                    if (currentUploadXhr) {
+                        try { currentUploadXhr.abort(); } catch (e) {}
+                    }
+                    dock.remove();
+                    showToast('Unggahan dibatalkan.');
+                };
+            }
         }
         return dock;
     }
 
     function uploadSingleFile(file, currentIndex, totalFiles) {
         return new Promise(async (resolve) => {
+            isUploadCancelled = false;
             const dock = getOrCreateUploadDock();
             dock.classList.remove('hidden');
 
@@ -606,6 +625,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 const xhr = new XMLHttpRequest();
+                currentUploadXhr = xhr;
                 xhr.open('POST', '?action=upload', true);
                 xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
                 xhr.setRequestHeader('X-CSRF-TOKEN', csrfToken);
@@ -619,6 +639,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
 
                 xhr.onload = () => {
+                    if (isUploadCancelled) {
+                        resolve(false);
+                        return;
+                    }
                     if (xhr.status === 200) {
                         try {
                             const res = JSON.parse(xhr.responseText);
@@ -641,19 +665,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
 
                 xhr.onerror = () => {
-                    alert(`Kesalahan koneksi saat mengunggah berkas ${file.name}.`);
+                    if (!isUploadCancelled) {
+                        alert(`Kesalahan koneksi saat mengunggah berkas ${file.name}.`);
+                    }
+                    resolve(false);
+                };
+
+                xhr.onabort = () => {
                     resolve(false);
                 };
 
                 xhr.send(formData);
             } else {
-                // Berkas besar (> 8MB, misal aplikasi/installer > 100MB): Chunked Upload via ?action=upload_chunk
+                // Berkas besar (> 8MB, misal aplikasi/installer > 100MB): Chunked Upload via ?action=upload_chunk dengan Auto-Retry
                 const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
                 const uploadId = 'up_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
                 let uploadedBytes = 0;
 
                 try {
                     for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+                        if (isUploadCancelled) {
+                            resolve(false);
+                            return;
+                        }
+
                         const start = chunkIndex * CHUNK_SIZE;
                         const end = Math.min(start + CHUNK_SIZE, file.size);
                         const chunkBlob = file.slice(start, end);
@@ -670,45 +705,84 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                         formData.append('file', chunkBlob, file.name);
 
-                        // Upload bagian ini
-                        await new Promise((chunkResolve, chunkReject) => {
-                            const chunkXhr = new XMLHttpRequest();
-                            chunkXhr.open('POST', '?action=upload_chunk', true);
-                            chunkXhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-                            chunkXhr.setRequestHeader('X-CSRF-TOKEN', csrfToken);
+                        // Upload bagian ini dengan Auto-Retry (hingga 3 kali percobaan jika ada gangguan jaringan)
+                        let chunkSuccess = false;
+                        let attempt = 0;
+                        const maxRetries = 3;
 
-                            chunkXhr.upload.onprogress = (e) => {
-                                if (e.lengthComputable) {
-                                    const currentLoaded = uploadedBytes + e.loaded;
-                                    const percentComplete = Math.min(99, Math.round((currentLoaded / file.size) * 100));
-                                    if (barEl) barEl.style.width = percentComplete + '%';
-                                    if (percentEl) percentEl.textContent = `${percentComplete}% (${chunkIndex + 1}/${totalChunks})`;
-                                }
-                            };
+                        while (attempt < maxRetries && !chunkSuccess) {
+                            if (isUploadCancelled) {
+                                resolve(false);
+                                return;
+                            }
 
-                            chunkXhr.onload = () => {
-                                if (chunkXhr.status === 200) {
-                                    try {
-                                        const res = JSON.parse(chunkXhr.responseText);
-                                        if (!res.success) {
-                                            chunkReject(new Error(res.error || `Gagal mengunggah bagian ke-${chunkIndex + 1}`));
+                            try {
+                                await new Promise((chunkResolve, chunkReject) => {
+                                    const chunkXhr = new XMLHttpRequest();
+                                    currentUploadXhr = chunkXhr;
+                                    chunkXhr.open('POST', '?action=upload_chunk', true);
+                                    chunkXhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                                    chunkXhr.setRequestHeader('X-CSRF-TOKEN', csrfToken);
+
+                                    chunkXhr.upload.onprogress = (e) => {
+                                        if (e.lengthComputable) {
+                                            const currentLoaded = uploadedBytes + e.loaded;
+                                            const percentComplete = Math.min(99, Math.round((currentLoaded / file.size) * 100));
+                                            if (barEl) barEl.style.width = percentComplete + '%';
+                                            if (percentEl) percentEl.textContent = `${percentComplete}% (${chunkIndex + 1}/${totalChunks})`;
+                                        }
+                                    };
+
+                                    chunkXhr.onload = () => {
+                                        if (isUploadCancelled) {
+                                            chunkReject(new Error('Unggahan dibatalkan.'));
                                             return;
                                         }
-                                        chunkResolve(res);
-                                    } catch (e) {
-                                        chunkReject(new Error('Format respons server tidak dikenali saat mengunggah bagian berkas.'));
-                                    }
-                                } else {
-                                    chunkReject(new Error(`Server error HTTP ${chunkXhr.status} pada bagian ke-${chunkIndex + 1}`));
+                                        if (chunkXhr.status === 200) {
+                                            try {
+                                                const res = JSON.parse(chunkXhr.responseText);
+                                                if (!res.success) {
+                                                    chunkReject(new Error(res.error || `Gagal mengunggah bagian ke-${chunkIndex + 1}`));
+                                                    return;
+                                                }
+                                                chunkResolve(res);
+                                            } catch (e) {
+                                                chunkReject(new Error('Format respons server tidak dikenali saat mengunggah bagian berkas.'));
+                                            }
+                                        } else {
+                                            chunkReject(new Error(`Server error HTTP ${chunkXhr.status} pada bagian ke-${chunkIndex + 1}`));
+                                        }
+                                    };
+
+                                    chunkXhr.onerror = () => {
+                                        chunkReject(new Error(`Koneksi terputus saat mengunggah bagian ke-${chunkIndex + 1}.`));
+                                    };
+
+                                    chunkXhr.onabort = () => {
+                                        chunkReject(new Error('Unggahan dibatalkan.'));
+                                    };
+
+                                    chunkXhr.send(formData);
+                                });
+
+                                chunkSuccess = true;
+                            } catch (err) {
+                                if (isUploadCancelled) {
+                                    resolve(false);
+                                    return;
                                 }
-                            };
 
-                            chunkXhr.onerror = () => {
-                                chunkReject(new Error(`Koneksi terputus saat mengunggah bagian ke-${chunkIndex + 1}.`));
-                            };
+                                attempt++;
+                                if (attempt >= maxRetries) {
+                                    throw err;
+                                }
 
-                            chunkXhr.send(formData);
-                        });
+                                if (percentEl) {
+                                    percentEl.textContent = `Koneksi tersendat, mencoba ulang bagian ${chunkIndex + 1} (${attempt}/${maxRetries})...`;
+                                }
+                                await new Promise(r => setTimeout(r, 1200 * attempt));
+                            }
+                        }
 
                         uploadedBytes += (end - start);
                     }
@@ -717,7 +791,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (percentEl) percentEl.textContent = '100%';
                     resolve(true);
                 } catch (err) {
-                    alert(err.message || `Gagal mengunggah berkas ${file.name}`);
+                    if (!isUploadCancelled) {
+                        alert(err.message || `Gagal mengunggah berkas ${file.name}`);
+                    }
                     resolve(false);
                 }
             }
