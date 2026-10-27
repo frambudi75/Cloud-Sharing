@@ -226,12 +226,39 @@ $totalShared = $totalSharedCount ?? 0;
                         </span>
                         <span class="text-[10px] font-mono text-brand-600 font-bold"><?= $quotaPercentage ?>%</span>
                     </div>
-                    <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden mb-1.5">
-                        <div class="storage-bar-glow h-1.5 rounded-full transition-all duration-500" style="width: <?= $quotaPercentage ?>%"></div>
+                    <!-- Multi-Color Segmented Storage Bar (Apple iCloud style) -->
+                    <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden mb-1.5 flex">
+                        <?php if ($storageUsed > 0 && !empty($storageBreakdown)): ?>
+                            <?php foreach ($storageBreakdown as $key => $cat): ?>
+                                <?php if ($cat['size'] > 0): ?>
+                                    <?php $segPercent = ($cat['size'] / $storageQuota) * 100; ?>
+                                    <div class="h-full transition-all duration-300" 
+                                         style="width: <?= max(1, $segPercent) ?>%; background-color: <?= $cat['color'] ?>;" 
+                                         title="<?= $cat['label'] ?>: <?= StorageService::formatBytes($cat['size']) ?>"></div>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <div class="storage-bar-glow h-full rounded-full transition-all duration-500" style="width: <?= $quotaPercentage ?>%"></div>
+                        <?php endif; ?>
                     </div>
-                    <div class="text-[10px] text-slate-500 font-mono">
-                        <?= StorageService::formatBytes($storageUsed) ?> / <?= StorageService::formatBytes($storageQuota) ?>
+                    <div class="flex items-center justify-between text-[10px] text-slate-500 font-mono">
+                        <span><?= StorageService::formatBytes($storageUsed) ?> terpakai</span>
+                        <span><?= StorageService::formatBytes($storageQuota) ?></span>
                     </div>
+
+                    <!-- Mini Category Legend -->
+                    <?php if ($storageUsed > 0 && !empty($storageBreakdown)): ?>
+                        <div class="mt-2 flex flex-wrap gap-x-2 gap-y-1 text-[9px] text-slate-500 font-medium">
+                            <?php foreach (['images', 'documents', 'videos', 'archives'] as $k): ?>
+                                <?php if (!empty($storageBreakdown[$k]['size'])): ?>
+                                    <span class="inline-flex items-center">
+                                        <span class="w-1.5 h-1.5 rounded-full mr-1" style="background-color: <?= $storageBreakdown[$k]['color'] ?>"></span>
+                                        <?= $storageBreakdown[$k]['label'] ?>
+                                    </span>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
                     <div class="mt-2 pt-2 border-t border-slate-100 grid grid-cols-3 gap-1 text-center font-mono">
                         <div title="<?= $totalFiles ?> Berkas">
                             <div class="font-bold text-slate-800 text-[11px]"><?= $totalFiles ?></div>
@@ -246,6 +273,19 @@ $totalShared = $totalSharedCount ?? 0;
                             <div class="text-slate-400 text-[9px]">Berbagi</div>
                         </div>
                     </div>
+                </div>
+
+                <!-- Keyboard Shortcuts Quick Hint -->
+                <div class="px-2 pt-2 text-[10px] text-slate-400 font-medium flex items-center justify-between">
+                    <span class="flex items-center gap-1">
+                        <kbd class="px-1 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-600 font-mono text-[9px]">/</kbd> Cari
+                    </span>
+                    <span class="flex items-center gap-1">
+                        <kbd class="px-1 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-600 font-mono text-[9px]">U</kbd> Unggah
+                    </span>
+                    <span class="flex items-center gap-1">
+                        <kbd class="px-1 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-600 font-mono text-[9px]">N</kbd> Folder
+                    </span>
                 </div>
             </aside>
 
@@ -525,10 +565,17 @@ $totalShared = $totalSharedCount ?? 0;
                                 <?= $activeTab === 'trash' ? 'Tidak ada berkas yang berada di tempat sampah.' : 'Belum ada berkas yang diunggah ke direktori ini. Mulai dengan mengunggah berkas atau membuat folder.' ?>
                             </p>
                             <?php if ($activeTab === 'my_drive'): ?>
-                                <label for="fileUploadInput" class="cursor-pointer inline-flex items-center h-10 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-xs transition-colors">
-                                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                                    Upload Berkas Sekarang
-                                </label>
+                                <div class="flex flex-wrap items-center justify-center gap-2.5">
+                                    <label for="fileUploadInput" class="cursor-pointer inline-flex items-center h-10 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 active:scale-[0.98] text-white text-xs font-bold shadow-xs transition-all">
+                                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                        Upload Berkas
+                                    </label>
+                                    <button type="button" onclick="document.getElementById('btnNewFolderModal').click()" class="inline-flex items-center h-10 px-4 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 active:scale-[0.98] text-slate-700 text-xs font-bold shadow-xs transition-all">
+                                        <svg class="w-4 h-4 mr-1.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path></svg>
+                                        Folder Baru
+                                    </button>
+                                </div>
+                                <span class="block text-[11px] text-slate-400 mt-3 font-medium">atau tarik dan lepaskan (drag & drop) berkas ke layar ini</span>
                             <?php endif; ?>
                         </div>
                     <?php else: ?>

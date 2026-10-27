@@ -1824,4 +1824,32 @@ document.addEventListener('DOMContentLoaded', () => {
         const fullShareUrl = `${origin}?action=share&token=${token}`;
         window.copyToClipboard(fullShareUrl, 'Tautan publik berhasil disalin!');
     };
+
+    // Global Keyboard Shortcuts (Ponytail Lean)
+    document.addEventListener('keydown', function (e) {
+        if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
+            if (e.key === 'Escape') {
+                document.activeElement.blur();
+            }
+            return;
+        }
+
+        if (e.key === '/') {
+            e.preventDefault();
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) searchInput.focus();
+        } else if (e.key === 'u' || e.key === 'U') {
+            e.preventDefault();
+            const uploadInput = document.getElementById('fileUploadInput');
+            if (uploadInput) uploadInput.click();
+        } else if (e.key === 'n' || e.key === 'N') {
+            e.preventDefault();
+            const btnNewFolder = document.getElementById('btnNewFolderModal');
+            if (btnNewFolder) btnNewFolder.click();
+        } else if (e.key === 'Escape') {
+            if (typeof window.closeAllModals === 'function') {
+                window.closeAllModals();
+            }
+        }
+    });
 });

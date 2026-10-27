@@ -1,38 +1,60 @@
 <?php
-$pageTitle = 'Masuk ke Akun Drive';
+$pageTitle = 'Masuk ke Akun - Cloud Sharing Drive';
 require_once dirname(__DIR__) . '/layouts/header.php';
 ?>
 
-<div class="min-h-screen flex flex-col justify-center items-center py-12 px-4 sm:px-6 lg:px-8 bg-slate-50">
+<div class="min-h-screen relative flex flex-col justify-between py-8 px-4 sm:px-6 lg:px-8 bg-slate-50 dark:bg-slate-950 overflow-hidden">
 
-    <div class="w-full max-w-md">
+    <!-- Subtle Ambient Background Grid (Anti-Slop Modern Texture) -->
+    <div class="absolute inset-0 bg-[linear-gradient(to_right,#cbd5e1_1px,transparent_1px),linear-gradient(to_bottom,#cbd5e1_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_40%,#000_60%,transparent_100%)] opacity-40 pointer-events-none"></div>
 
-        <!-- Brand Header -->
-        <div class="text-center mb-8">
-            <img src="assets/img/favicon.svg" alt="Cloud Sharing Logo" 
-                 class="inline-block h-12 w-12 rounded-xl shadow-xs mb-3">
-            <h1 class="text-xl font-bold tracking-tight text-slate-900">
-                Masuk ke Cloud Drive
-            </h1>
-            <p class="mt-1 text-xs text-slate-500">
-                Sistem penyimpanan dan pengelolaan berkas mandiri
-            </p>
+    <!-- Top Floating Bar: Logo Text & Theme Toggle -->
+    <div class="relative z-10 max-w-5xl w-full mx-auto flex items-center justify-between pb-4">
+        <div class="flex items-center space-x-2.5">
+            <img src="assets/img/favicon.svg" alt="Cloud Sharing Logo" class="h-8 w-8 rounded-xl shadow-xs">
+            <span class="font-extrabold text-slate-900 dark:text-white text-base tracking-tight">Cloud Sharing</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-50 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300 border border-brand-200/60 dark:border-brand-800/40">v1.2</span>
         </div>
 
+        <!-- Dark Mode Toggle Button -->
+        <button type="button" id="themeToggleBtn" onclick="toggleDarkMode()" 
+                class="h-9 w-9 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 transition-colors shadow-xs" 
+                title="Ganti Mode Terang / Gelap">
+            <svg id="themeIconSun" class="w-4 h-4 hidden text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+            <svg id="themeIconMoon" class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+        </button>
+    </div>
+
+    <!-- Center Login Form Area -->
+    <div class="relative z-10 w-full max-w-md mx-auto my-auto py-4">
+
         <!-- Login Card -->
-        <div class="bg-white py-8 px-6 sm:px-8 rounded-2xl border border-slate-200 shadow-xs">
+        <div class="bg-white dark:bg-slate-900 py-8 px-6 sm:px-8 rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none transition-all">
+
+            <!-- Card Header -->
+            <div class="text-center mb-6">
+                <div class="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-brand-50 dark:bg-brand-950/80 text-brand-600 dark:text-brand-400 border border-brand-100 dark:border-brand-900/60 shadow-xs mb-3.5">
+                    <img src="assets/img/favicon.svg" alt="Cloud Sharing Logo" class="h-9 w-9">
+                </div>
+                <h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+                    Masuk ke Cloud Drive
+                </h1>
+                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    Penyimpanan berkas mandiri berkecepatan tinggi & aman
+                </p>
+            </div>
 
             <!-- Error Notice -->
             <?php if (!empty($error)): ?>
-                <div class="mb-5 rounded-xl bg-rose-50 p-3.5 border border-rose-200" role="alert">
+                <div class="mb-5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 p-3.5 border border-rose-200 dark:border-rose-900/60" role="alert">
                     <div class="flex items-start">
-                        <div class="flex-shrink-0 text-rose-600 mt-0.5">
+                        <div class="flex-shrink-0 text-rose-600 dark:text-rose-400 mt-0.5">
                             <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd"/>
                             </svg>
                         </div>
                         <div class="ml-2.5">
-                            <p class="text-xs font-semibold text-rose-800 leading-snug"><?= htmlspecialchars($error) ?></p>
+                            <p class="text-xs font-semibold text-rose-800 dark:text-rose-200 leading-snug"><?= htmlspecialchars($error) ?></p>
                         </div>
                     </div>
                 </div>
@@ -43,7 +65,7 @@ require_once dirname(__DIR__) . '/layouts/header.php';
 
                 <!-- Field 1: Username / Email -->
                 <div>
-                    <label for="username" class="block text-xs font-semibold text-slate-700 mb-1.5">
+                    <label for="username" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                         Nama Pengguna atau Email
                     </label>
                     <div class="relative">
@@ -53,14 +75,14 @@ require_once dirname(__DIR__) . '/layouts/header.php';
                             </svg>
                         </div>
                         <input id="username" name="username" type="text" autocomplete="username" required autofocus
-                            class="block w-full h-11 pl-10 pr-3.5 rounded-xl border border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-brand-600 focus:ring-2 focus:ring-brand-500/20 text-sm transition-colors"
+                            class="block w-full h-11 pl-10 pr-3.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-brand-600 focus:ring-2 focus:ring-brand-500/20 text-sm transition-colors"
                             placeholder="admin">
                     </div>
                 </div>
 
                 <!-- Field 2: Password with Show/Hide Toggle -->
                 <div>
-                    <label for="password" class="block text-xs font-semibold text-slate-700 mb-1.5">
+                    <label for="password" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                         Kata Sandi
                     </label>
                     <div class="relative">
@@ -70,10 +92,10 @@ require_once dirname(__DIR__) . '/layouts/header.php';
                             </svg>
                         </div>
                         <input id="password" name="password" type="password" autocomplete="current-password" required
-                            class="block w-full h-11 pl-10 pr-10 rounded-xl border border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-brand-600 focus:ring-2 focus:ring-brand-500/20 text-sm transition-colors"
+                            class="block w-full h-11 pl-10 pr-10 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-brand-600 focus:ring-2 focus:ring-brand-500/20 text-sm transition-colors"
                             placeholder="••••••••">
                         <button type="button" onclick="togglePasswordVisibility()" 
-                                class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors focus:outline-none"
+                                class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors focus:outline-none"
                                 title="Tampilkan atau sembunyikan kata sandi">
                             <svg id="eyeIconOpen" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -101,10 +123,24 @@ require_once dirname(__DIR__) . '/layouts/header.php';
 
         </div>
 
-        <p class="text-center text-xs text-slate-400 mt-6">
-            &copy; <?= date('Y') ?> Cloud Sharing Drive
-        </p>
+        <!-- System Capability Pills (Informative, Delightful) -->
+        <div class="mt-6 flex flex-wrap items-center justify-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+            <span class="inline-flex items-center px-2.5 py-1 rounded-xl bg-white/70 dark:bg-slate-900/70 border border-slate-200/60 dark:border-slate-800 shadow-2xs backdrop-blur-xs">
+                ⚡ Unggah Bertahap (Chunking)
+            </span>
+            <span class="inline-flex items-center px-2.5 py-1 rounded-xl bg-white/70 dark:bg-slate-900/70 border border-slate-200/60 dark:border-slate-800 shadow-2xs backdrop-blur-xs">
+                🔒 Tautan Proteksi Sandi
+            </span>
+            <span class="inline-flex items-center px-2.5 py-1 rounded-xl bg-white/70 dark:bg-slate-900/70 border border-slate-200/60 dark:border-slate-800 shadow-2xs backdrop-blur-xs">
+                🚀 Akselerasi Redis
+            </span>
+        </div>
 
+    </div>
+
+    <!-- Footer Copyright -->
+    <div class="relative z-10 text-center text-xs text-slate-400 dark:text-slate-500 py-2 font-mono">
+        &copy; <?= date('Y') ?> Cloud Sharing • PHP 8.4 Self-Hosted
     </div>
 
 </div>
