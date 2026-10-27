@@ -50,6 +50,17 @@ class StorageService
         return realpath($avatarDir) ?: $avatarDir;
     }
 
+    public static function getChunkDir(): string
+    {
+        $uploadDir = self::getUploadDir();
+        $baseDir = dirname($uploadDir);
+        $chunkDir = $baseDir . DIRECTORY_SEPARATOR . 'chunks';
+        if (!is_dir($chunkDir)) {
+            @mkdir($chunkDir, 0775, true);
+        }
+        return realpath($chunkDir) ?: $chunkDir;
+    }
+
     public static function storeUploadedFile(array $uploadedFile, int $userId, ?int $folderId = null): array
     {
         if ($uploadedFile['error'] !== UPLOAD_ERR_OK) {
@@ -140,6 +151,98 @@ class StorageService
                 unlink($targetFullPath);
             }
             return ['success' => false, 'error' => 'Gagal menyimpan metadata berkas: ' . $e->getMessage()];
+        }
+    }
+
+    public static function storeMergedFile(string $tempFilePath, string $originalName, int $userId, ?int $folderId = null): array
+    {
+        if (!file_exists($tempFilePath)) {
+            return ['success' => false, 'error' => 'Berkas hasil penggabungan tidak ditemukan.'];
+        }
+
+        $fileSize = filesize($tempFilePath);
+
+        // Cek Kuota Pengguna
+        $user = AuthService::user();
+        if ($user && ($user['storage_used'] + $fileSize) > $user['storage_quota']) {
+            return ['success' => false, 'error' => 'Kapasitas penyimpanan Anda tidak mencukupi untuk berkas ini.'];
+        }
+
+        // Deteksi MIME Type asli
+        $finfo = new finfo(FILEINFO_MIME_TYPE);
+        $mimeType = $finfo->file($tempFilePath) ?: 'application/octet-stream';
+
+        // Checksum SHA-256
+        $fileHash = hash_file('sha256', $tempFilePath) ?: null;
+
+        // Generate nama file acak
+        $storageFilename = bin2hex(random_bytes(16)) . '.bin';
+
+        $subDir = date('Y') . DIRECTORY_SEPARATOR . date('m');
+        $uploadBaseDir = self::getUploadDir();
+        $targetDirectory = $uploadBaseDir . DIRECTORY_SEPARATOR . $subDir;
+
+        if (!is_dir($targetDirectory)) {
+            mkdir($targetDirectory, 0755, true);
+        }
+
+        $targetFullPath = $targetDirectory . DIRECTORY_SEPARATOR . $storageFilename;
+        $relativeStoragePath = 'uploads/' . date('Y') . '/' . date('m') . '/';
+
+        // Pindahkan file hasil penggabungan
+        if (!rename($tempFilePath, $targetFullPath)) {
+            if (!copy($tempFilePath, $targetFullPath)) {
+                return ['success' => false, 'error' => 'Gagal memindahkan berkas gabungan ke storage.'];
+            }
+            @unlink($tempFilePath);
+        }
+
+        $db = Database::getConnection();
+        $db->beginTransaction();
+
+        try {
+            $stmt = $db->prepare("
+                INSERT INTO files (
+                    user_id, folder_id, original_name, storage_filename, 
+                    storage_path, mime_type, file_size, file_hash
+                ) VALUES (
+                    :user_id, :folder_id, :original_name, :storage_filename, 
+                    :storage_path, :mime_type, :file_size, :file_hash
+                )
+            ");
+
+            $stmt->execute([
+                ':user_id'          => $userId,
+                ':folder_id'        => $folderId ?: null,
+                ':original_name'    => $originalName,
+                ':storage_filename' => $storageFilename,
+                ':storage_path'     => $relativeStoragePath,
+                ':mime_type'        => $mimeType,
+                ':file_size'        => $fileSize,
+                ':file_hash'        => $fileHash,
+            ]);
+
+            $fileId = (int) $db->lastInsertId();
+
+            $updateQuotaStmt = $db->prepare("
+                UPDATE users SET storage_used = storage_used + :size WHERE id = :user_id
+            ");
+            $updateQuotaStmt->execute([':size' => $fileSize, ':user_id' => $userId]);
+
+            $db->commit();
+
+            return [
+                'success' => true,
+                'file_id' => $fileId,
+                'file_name' => $originalName,
+                'file_size' => $fileSize,
+            ];
+        } catch (\Exception $e) {
+            $db->rollBack();
+            if (file_exists($targetFullPath)) {
+                @unlink($targetFullPath);
+            }
+            return ['success' => false, 'error' => 'Gagal mencatat berkas ke database: ' . $e->getMessage()];
         }
     }
 

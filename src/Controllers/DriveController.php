@@ -227,6 +227,108 @@ class DriveController
         }
     }
 
+    public function uploadChunk(): void
+    {
+        @set_time_limit(600);
+        try {
+            $this->validateCsrf();
+            $userId = (int) AuthService::id();
+
+            $uploadId = preg_replace('/[^a-zA-Z0-9_-]/', '', $_POST['upload_id'] ?? '');
+            $chunkIndex = isset($_POST['chunk_index']) ? (int) $_POST['chunk_index'] : -1;
+            $totalChunks = isset($_POST['total_chunks']) ? (int) $_POST['total_chunks'] : -1;
+            $originalName = basename($_POST['filename'] ?? '');
+            $totalSize = isset($_POST['total_size']) ? (int) $_POST['total_size'] : 0;
+            $folderId = !empty($_POST['folder_id']) && is_numeric($_POST['folder_id']) ? (int) $_POST['folder_id'] : null;
+
+            if (empty($uploadId) || $chunkIndex < 0 || $totalChunks <= 0 || empty($originalName) || !isset($_FILES['file'])) {
+                $this->respondJson(['success' => false, 'error' => 'Parameter potongan berkas tidak lengkap.']);
+                return;
+            }
+
+            // Cek kuota pada potongan pertama
+            if ($chunkIndex === 0) {
+                $user = AuthService::user();
+                if ($user && ($user['storage_used'] + $totalSize) > $user['storage_quota']) {
+                    $this->respondJson(['success' => false, 'error' => 'Kapasitas penyimpanan Anda tidak mencukupi untuk berkas ini.']);
+                    return;
+                }
+            }
+
+            $chunkFile = $_FILES['file'];
+            if ($chunkFile['error'] !== UPLOAD_ERR_OK) {
+                $this->respondJson(['success' => false, 'error' => 'Gagal menerima potongan berkas.']);
+                return;
+            }
+
+            $chunkBaseDir = StorageService::getChunkDir();
+            $chunkDir = $chunkBaseDir . DIRECTORY_SEPARATOR . $uploadId;
+            if (!is_dir($chunkDir)) {
+                @mkdir($chunkDir, 0775, true);
+            }
+
+            $chunkPath = $chunkDir . DIRECTORY_SEPARATOR . "chunk_{$chunkIndex}.part";
+            if (!move_uploaded_file($chunkFile['tmp_name'], $chunkPath)) {
+                $this->respondJson(['success' => false, 'error' => "Gagal menyimpan potongan ke-{$chunkIndex}."]);
+                return;
+            }
+
+            // Jika masih ada potongan berikutnya
+            if ($chunkIndex < $totalChunks - 1) {
+                $this->respondJson([
+                    'success' => true,
+                    'completed' => false,
+                    'chunk_index' => $chunkIndex,
+                    'total_chunks' => $totalChunks
+                ]);
+                return;
+            }
+
+            // Seluruh potongan lengkap, verifikasi integritas
+            for ($i = 0; $i < $totalChunks; $i++) {
+                $part = $chunkDir . DIRECTORY_SEPARATOR . "chunk_{$i}.part";
+                if (!file_exists($part)) {
+                    $this->respondJson(['success' => false, 'error' => "Potongan berkas ke-{$i} tidak ditemukan."]);
+                    return;
+                }
+            }
+
+            // Gabungkan potongan
+            $mergedTempPath = $chunkDir . DIRECTORY_SEPARATOR . 'merged.tmp';
+            $out = fopen($mergedTempPath, 'wb');
+            if (!$out) {
+                $this->respondJson(['success' => false, 'error' => 'Gagal membuat berkas penggabungan di server.']);
+                return;
+            }
+
+            for ($i = 0; $i < $totalChunks; $i++) {
+                $part = $chunkDir . DIRECTORY_SEPARATOR . "chunk_{$i}.part";
+                $in = fopen($part, 'rb');
+                if ($in) {
+                    stream_copy_to_stream($in, $out);
+                    fclose($in);
+                }
+                @unlink($part);
+            }
+            fclose($out);
+
+            // Simpan berkas gabungan ke storage permanen
+            $result = StorageService::storeMergedFile($mergedTempPath, $originalName, $userId, $folderId);
+
+            // Bersihkan direktori chunk sementara
+            @unlink($mergedTempPath);
+            @rmdir($chunkDir);
+
+            $result['completed'] = true;
+            $this->respondJson($result);
+        } catch (\Throwable $e) {
+            $this->respondJson([
+                'success' => false,
+                'error' => 'Gagal memproses potongan berkas: ' . $e->getMessage()
+            ]);
+        }
+    }
+
     public function deleteFile(): void
     {
         $this->validateCsrf();

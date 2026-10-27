@@ -59,6 +59,9 @@ switch ($action) {
     case 'upload':
         (new DriveController())->upload();
         break;
+    case 'upload_chunk':
+        (new DriveController())->uploadChunk();
+        break;
     case 'delete_file':
         (new DriveController())->deleteFile();
         break;

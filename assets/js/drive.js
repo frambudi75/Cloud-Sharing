@@ -538,13 +538,17 @@ document.addEventListener('DOMContentLoaded', () => {
     async function handleFiles(fileList) {
         if (!fileList || fileList.length === 0) return;
         const files = Array.from(fileList);
+        let successCount = 0;
         for (let i = 0; i < files.length; i++) {
-            await uploadSingleFile(files[i], i + 1, files.length);
+            const ok = await uploadSingleFile(files[i], i + 1, files.length);
+            if (ok) successCount++;
         }
-        showToast('Berkas berhasil diunggah.');
-        setTimeout(() => {
-            window.location.reload();
-        }, 500);
+        if (successCount > 0) {
+            showToast(`${successCount} berkas berhasil diunggah.`);
+            setTimeout(() => {
+                window.location.reload();
+            }, 600);
+        }
     }
 
     function getOrCreateUploadDock() {
@@ -574,7 +578,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function uploadSingleFile(file, currentIndex, totalFiles) {
-        return new Promise((resolve) => {
+        return new Promise(async (resolve) => {
             const dock = getOrCreateUploadDock();
             dock.classList.remove('hidden');
 
@@ -588,50 +592,135 @@ document.addEventListener('DOMContentLoaded', () => {
             if (percentEl) percentEl.textContent = '0%';
             if (barEl) barEl.style.width = '0%';
 
-            const formData = new FormData();
-            formData.append('csrf_token', csrfToken);
-            formData.append('file', file);
-            if (currentFolderId) {
-                formData.append('folder_id', currentFolderId);
-            }
+            // Cloudflare Tunnel Free membatasi request body maksimum 100MB (HTTP 413).
+            // Potong berkas menjadi bagian kecil 8MB jika ukuran berkas > 8MB.
+            const CHUNK_SIZE = 8 * 1024 * 1024; // 8MB per chunk
 
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', '?action=upload', true);
-            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-            xhr.setRequestHeader('X-CSRF-TOKEN', csrfToken);
-
-            xhr.upload.onprogress = (e) => {
-                if (e.lengthComputable) {
-                    const percentComplete = Math.round((e.loaded / e.total) * 100);
-                    if (barEl) barEl.style.width = percentComplete + '%';
-                    if (percentEl) percentEl.textContent = percentComplete + '%';
+            if (file.size <= CHUNK_SIZE) {
+                // Berkas kecil (<= 8MB): unggah langsung via ?action=upload
+                const formData = new FormData();
+                formData.append('csrf_token', csrfToken);
+                formData.append('file', file);
+                if (currentFolderId) {
+                    formData.append('folder_id', currentFolderId);
                 }
-            };
 
-            xhr.onload = () => {
-                if (xhr.status === 200) {
-                    try {
-                        const res = JSON.parse(xhr.responseText);
-                        if (!res.success) {
-                            alert(res.error || `Gagal mengunggah ${file.name}`);
-                        }
-                    } catch (e) {
-                        console.error('Non-JSON response:', xhr.responseText);
-                        const snippet = xhr.responseText ? xhr.responseText.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 150) : '';
-                        alert('Respons server: ' + (snippet || 'Format respons tidak dikenali.'));
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', '?action=upload', true);
+                xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                xhr.setRequestHeader('X-CSRF-TOKEN', csrfToken);
+
+                xhr.upload.onprogress = (e) => {
+                    if (e.lengthComputable) {
+                        const percentComplete = Math.round((e.loaded / e.total) * 100);
+                        if (barEl) barEl.style.width = percentComplete + '%';
+                        if (percentEl) percentEl.textContent = percentComplete + '%';
                     }
-                } else {
-                    alert(`Gagal mengunggah berkas ${file.name} (HTTP ${xhr.status}).`);
+                };
+
+                xhr.onload = () => {
+                    if (xhr.status === 200) {
+                        try {
+                            const res = JSON.parse(xhr.responseText);
+                            if (!res.success) {
+                                alert(res.error || `Gagal mengunggah ${file.name}`);
+                                resolve(false);
+                                return;
+                            }
+                            resolve(true);
+                        } catch (e) {
+                            console.error('Non-JSON response:', xhr.responseText);
+                            const snippet = xhr.responseText ? xhr.responseText.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 150) : '';
+                            alert('Respons server: ' + (snippet || 'Format respons tidak dikenali.'));
+                            resolve(false);
+                        }
+                    } else {
+                        alert(`Gagal mengunggah berkas ${file.name} (HTTP ${xhr.status}).`);
+                        resolve(false);
+                    }
+                };
+
+                xhr.onerror = () => {
+                    alert(`Kesalahan koneksi saat mengunggah berkas ${file.name}.`);
+                    resolve(false);
+                };
+
+                xhr.send(formData);
+            } else {
+                // Berkas besar (> 8MB, misal aplikasi/installer > 100MB): Chunked Upload via ?action=upload_chunk
+                const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+                const uploadId = 'up_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+                let uploadedBytes = 0;
+
+                try {
+                    for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+                        const start = chunkIndex * CHUNK_SIZE;
+                        const end = Math.min(start + CHUNK_SIZE, file.size);
+                        const chunkBlob = file.slice(start, end);
+
+                        const formData = new FormData();
+                        formData.append('csrf_token', csrfToken);
+                        formData.append('upload_id', uploadId);
+                        formData.append('chunk_index', chunkIndex);
+                        formData.append('total_chunks', totalChunks);
+                        formData.append('filename', file.name);
+                        formData.append('total_size', file.size);
+                        if (currentFolderId) {
+                            formData.append('folder_id', currentFolderId);
+                        }
+                        formData.append('file', chunkBlob, file.name);
+
+                        // Upload bagian ini
+                        await new Promise((chunkResolve, chunkReject) => {
+                            const chunkXhr = new XMLHttpRequest();
+                            chunkXhr.open('POST', '?action=upload_chunk', true);
+                            chunkXhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                            chunkXhr.setRequestHeader('X-CSRF-TOKEN', csrfToken);
+
+                            chunkXhr.upload.onprogress = (e) => {
+                                if (e.lengthComputable) {
+                                    const currentLoaded = uploadedBytes + e.loaded;
+                                    const percentComplete = Math.min(99, Math.round((currentLoaded / file.size) * 100));
+                                    if (barEl) barEl.style.width = percentComplete + '%';
+                                    if (percentEl) percentEl.textContent = `${percentComplete}% (${chunkIndex + 1}/${totalChunks})`;
+                                }
+                            };
+
+                            chunkXhr.onload = () => {
+                                if (chunkXhr.status === 200) {
+                                    try {
+                                        const res = JSON.parse(chunkXhr.responseText);
+                                        if (!res.success) {
+                                            chunkReject(new Error(res.error || `Gagal mengunggah bagian ke-${chunkIndex + 1}`));
+                                            return;
+                                        }
+                                        chunkResolve(res);
+                                    } catch (e) {
+                                        chunkReject(new Error('Format respons server tidak dikenali saat mengunggah bagian berkas.'));
+                                    }
+                                } else {
+                                    chunkReject(new Error(`Server error HTTP ${chunkXhr.status} pada bagian ke-${chunkIndex + 1}`));
+                                }
+                            };
+
+                            chunkXhr.onerror = () => {
+                                chunkReject(new Error(`Koneksi terputus saat mengunggah bagian ke-${chunkIndex + 1}.`));
+                            };
+
+                            chunkXhr.send(formData);
+                        });
+
+                        uploadedBytes += (end - start);
+                    }
+
+                    if (barEl) barEl.style.width = '100%';
+                    if (percentEl) percentEl.textContent = '100%';
+                    resolve(true);
+                } catch (err) {
+                    alert(err.message || `Gagal mengunggah berkas ${file.name}`);
+                    resolve(false);
                 }
-                resolve();
-            };
-
-            xhr.onerror = () => {
-                alert(`Kesalahan koneksi saat mengunggah berkas ${file.name}.`);
-                resolve();
-            };
-
-            xhr.send(formData);
+            }
         });
     }
 
