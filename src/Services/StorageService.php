@@ -198,6 +198,188 @@ class StorageService
         return round($value, $precision) . ' ' . $units[$power];
     }
 
+    public static function bulkDeleteFiles(array $fileIds, int $userId): array
+    {
+        if (empty($fileIds)) {
+            return ['success' => false, 'error' => 'Tidak ada berkas yang dipilih.'];
+        }
+
+        $db = Database::getConnection();
+        $deletedCount = 0;
+        $freedBytes = 0;
+
+        try {
+            $db->beginTransaction();
+
+            $inPlaceholders = implode(',', array_fill(0, count($fileIds), '?'));
+            $params = array_merge([$userId], array_map('intval', $fileIds));
+
+            $stmt = $db->prepare("
+                SELECT id, storage_path, storage_filename, file_size 
+                FROM files 
+                WHERE user_id = ? AND id IN ({$inPlaceholders})
+            ");
+            $stmt->execute($params);
+            $filesToDelete = $stmt->fetchAll();
+
+            $filesPhysicallyToDelete = [];
+            foreach ($filesToDelete as $file) {
+                $fullPath = self::getPhysicalPath($file['storage_path'], $file['storage_filename']);
+                $filesPhysicallyToDelete[] = $fullPath;
+                $freedBytes += (int) $file['file_size'];
+                $deletedCount++;
+            }
+
+            if ($deletedCount > 0) {
+                $delStmt = $db->prepare("DELETE FROM files WHERE user_id = ? AND id IN ({$inPlaceholders})");
+                $delStmt->execute($params);
+
+                // Update storage pengguna
+                $updateUser = $db->prepare("
+                    UPDATE users 
+                    SET storage_used = GREATEST(0, CAST(storage_used AS SIGNED) - :freed)
+                    WHERE id = :user_id
+                ");
+                $updateUser->execute([':freed' => $freedBytes, ':user_id' => $userId]);
+            }
+
+            $db->commit();
+
+            // Hapus berkas fisik dari disk
+            foreach ($filesPhysicallyToDelete as $path) {
+                if (file_exists($path)) {
+                    @unlink($path);
+                }
+            }
+
+            return ['success' => true, 'count' => $deletedCount, 'freed_bytes' => $freedBytes];
+        } catch (\Exception $e) {
+            $db->rollBack();
+            return ['success' => false, 'error' => 'Gagal menghapus berkas: ' . $e->getMessage()];
+        }
+    }
+
+    public static function getStorageCategoryBreakdown(int $userId): array
+    {
+        $db = Database::getConnection();
+        $stmt = $db->prepare("SELECT mime_type, original_name, file_size FROM files WHERE user_id = :user_id");
+        $stmt->execute([':user_id' => $userId]);
+        $rows = $stmt->fetchAll();
+
+        $categories = [
+            'images' => ['label' => 'Gambar', 'size' => 0, 'count' => 0, 'color' => '#f43f5e'],
+            'documents' => ['label' => 'Dokumen & PDF', 'size' => 0, 'count' => 0, 'color' => '#3b82f6'],
+            'videos' => ['label' => 'Video', 'size' => 0, 'count' => 0, 'color' => '#f59e0b'],
+            'archives' => ['label' => 'Arsip & ZIP', 'size' => 0, 'count' => 0, 'color' => '#10b981'],
+            'audio' => ['label' => 'Audio', 'size' => 0, 'count' => 0, 'color' => '#6366f1'],
+            'others' => ['label' => 'Lainnya', 'size' => 0, 'count' => 0, 'color' => '#64748b'],
+        ];
+
+        foreach ($rows as $row) {
+            $mime = strtolower((string)$row['mime_type']);
+            $ext = strtolower(pathinfo((string)$row['original_name'], PATHINFO_EXTENSION));
+            $size = (int)$row['file_size'];
+
+            if (str_starts_with($mime, 'image/') || in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'ico'])) {
+                $categories['images']['size'] += $size;
+                $categories['images']['count']++;
+            } elseif ($mime === 'application/pdf' || in_array($ext, ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'csv'])) {
+                $categories['documents']['size'] += $size;
+                $categories['documents']['count']++;
+            } elseif (str_starts_with($mime, 'video/') || in_array($ext, ['mp4', 'mkv', 'avi', 'mov', 'webm'])) {
+                $categories['videos']['size'] += $size;
+                $categories['videos']['count']++;
+            } elseif (in_array($mime, ['application/zip', 'application/x-rar-compressed', 'application/x-tar', 'application/gzip', 'application/x-7z-compressed']) || in_array($ext, ['zip', 'rar', '7z', 'tar', 'gz'])) {
+                $categories['archives']['size'] += $size;
+                $categories['archives']['count']++;
+            } elseif (str_starts_with($mime, 'audio/') || in_array($ext, ['mp3', 'wav', 'ogg', 'm4a', 'flac'])) {
+                $categories['audio']['size'] += $size;
+                $categories['audio']['count']++;
+            } else {
+                $categories['others']['size'] += $size;
+                $categories['others']['count']++;
+            }
+        }
+
+        return $categories;
+    }
+
+    public static function getFileTypeInfo(string $mimeType, string $fileName): array
+    {
+        $mime = strtolower($mimeType);
+        $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+
+        if (str_starts_with($mime, 'image/') || in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'ico'])) {
+            return [
+                'type' => 'image',
+                'badge' => 'IMG',
+                'bg' => 'bg-rose-50 text-rose-600 border border-rose-200/80',
+                'icon_bg' => 'bg-rose-100/70 text-rose-600',
+            ];
+        }
+
+        if ($mime === 'application/pdf' || $ext === 'pdf') {
+            return [
+                'type' => 'pdf',
+                'badge' => 'PDF',
+                'bg' => 'bg-red-50 text-red-600 border border-red-200/80',
+                'icon_bg' => 'bg-red-100/70 text-red-600',
+            ];
+        }
+
+        if (str_starts_with($mime, 'video/') || in_array($ext, ['mp4', 'mkv', 'avi', 'mov', 'webm'])) {
+            return [
+                'type' => 'video',
+                'badge' => 'VID',
+                'bg' => 'bg-amber-50 text-amber-700 border border-amber-200/80',
+                'icon_bg' => 'bg-amber-100/70 text-amber-600',
+            ];
+        }
+
+        if (str_starts_with($mime, 'audio/') || in_array($ext, ['mp3', 'wav', 'ogg', 'm4a', 'flac'])) {
+            return [
+                'type' => 'audio',
+                'badge' => 'AUD',
+                'bg' => 'bg-indigo-50 text-indigo-600 border border-indigo-200/80',
+                'icon_bg' => 'bg-indigo-100/70 text-indigo-600',
+            ];
+        }
+
+        if (in_array($mime, ['application/zip', 'application/x-rar-compressed', 'application/x-tar', 'application/gzip', 'application/x-7z-compressed']) || in_array($ext, ['zip', 'rar', '7z', 'tar', 'gz'])) {
+            return [
+                'type' => 'archive',
+                'badge' => 'ZIP',
+                'bg' => 'bg-emerald-50 text-emerald-700 border border-emerald-200/80',
+                'icon_bg' => 'bg-emerald-100/70 text-emerald-600',
+            ];
+        }
+
+        if (in_array($ext, ['doc', 'docx', 'odt', 'rtf', 'txt', 'md', 'csv', 'xls', 'xlsx', 'ppt', 'pptx'])) {
+            return [
+                'type' => 'document',
+                'badge' => strtoupper($ext ?: 'DOC'),
+                'bg' => 'bg-sky-50 text-sky-700 border border-sky-200/80',
+                'icon_bg' => 'bg-sky-100/70 text-sky-600',
+            ];
+        }
+
+        if (in_array($ext, ['php', 'js', 'json', 'html', 'css', 'ts', 'py', 'sql', 'yml', 'yaml', 'xml'])) {
+            return [
+                'type' => 'code',
+                'badge' => strtoupper($ext),
+                'bg' => 'bg-violet-50 text-violet-700 border border-violet-200/80',
+                'icon_bg' => 'bg-violet-100/70 text-violet-600',
+            ];
+        }
+
+        return [
+            'type' => 'file',
+            'badge' => strtoupper($ext ?: 'FILE'),
+            'bg' => 'bg-slate-100 text-slate-700 border border-slate-200',
+            'icon_bg' => 'bg-slate-200/70 text-slate-600',
+        ];
+    }
+
     private static function getUploadErrorMessage(int $errorCode): string
     {
         return match ($errorCode) {

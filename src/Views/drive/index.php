@@ -16,6 +16,11 @@ use App\Services\StorageService;
         }
     }
 
+    @keyframes pulseBorder {
+        0%, 100% { border-color: #4f46e5; transform: scale(1); }
+        50% { border-color: #818cf8; transform: scale(1.005); }
+    }
+
     .animate-item-in {
         animation: slideInUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
@@ -30,6 +35,27 @@ use App\Services\StorageService;
         background-color: #ffffff;
         color: #4f46e5;
         box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Dragover active animation */
+    .dragover-active {
+        animation: pulseBorder 1.5s infinite;
+        background-color: #f5f3ff !important;
+        border-color: #6366f1 !important;
+        border-style: dashed !important;
+        box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.2) !important;
+    }
+
+    /* Card selected highlight */
+    .file-card.is-selected {
+        border-color: #6366f1 !important;
+        background-color: #faf5ff !important;
+        box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3) !important;
+    }
+
+    /* Row selected highlight */
+    .file-row.is-selected {
+        background-color: #f5f3ff !important;
     }
 </style>
 
@@ -113,8 +139,8 @@ use App\Services\StorageService;
                 </div>
             </div>
 
-            <!-- Storage Quota Status Bar (Compact & Animated) -->
-            <div class="bg-white border border-slate-200/80 rounded-xl p-3.5 shadow-xs flex items-center justify-between">
+            <!-- Storage Quota Status Bar with Interactive Breakdown Tooltip -->
+            <div class="relative group bg-white border border-slate-200/80 rounded-xl p-3.5 shadow-xs flex items-center justify-between cursor-help">
                 <div class="flex items-center space-x-3">
                     <div class="h-8 w-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center flex-shrink-0">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -122,7 +148,10 @@ use App\Services\StorageService;
                         </svg>
                     </div>
                     <div>
-                        <div class="text-xs font-bold text-slate-800">Kapasitas Storage</div>
+                        <div class="text-xs font-bold text-slate-800 flex items-center">
+                            Kapasitas Storage
+                            <span class="ml-1 text-[10px] text-brand-600 font-normal underline">(Rincian)</span>
+                        </div>
                         <div class="text-[11px] text-slate-500 font-mono">
                             <?= StorageService::formatBytes($storageUsed) ?> / <?= StorageService::formatBytes($storageQuota) ?> (<?= $quotaPercentage ?>%)
                         </div>
@@ -130,6 +159,30 @@ use App\Services\StorageService;
                 </div>
                 <div class="w-28 sm:w-36 bg-slate-100 rounded-full h-2 overflow-hidden">
                     <div class="storage-bar-glow h-2 rounded-full transition-all duration-500" style="width: <?= $quotaPercentage ?>%"></div>
+                </div>
+
+                <!-- Hover Storage Breakdown Tooltip -->
+                <div class="hidden group-hover:block absolute right-0 top-full mt-2 w-72 bg-slate-900 text-white rounded-xl p-3.5 shadow-2xl z-40 text-xs border border-slate-700 animate-item-in pointer-events-none">
+                    <div class="font-bold border-b border-slate-800 pb-2 mb-2 flex justify-between items-center">
+                        <span>Rincian Penggunaan Berkas</span>
+                        <span class="text-brand-300 font-mono"><?= StorageService::formatBytes($storageUsed) ?></span>
+                    </div>
+                    <div class="space-y-1.5 font-mono text-[11px]">
+                        <?php foreach (($storageBreakdown ?? []) as $catKey => $catData): ?>
+                            <?php if ($catData['count'] > 0): ?>
+                                <div class="flex items-center justify-between">
+                                    <span class="flex items-center">
+                                        <span class="w-2.5 h-2.5 rounded-full mr-2" style="background-color: <?= $catData['color'] ?>"></span>
+                                        <?= $catData['label'] ?> (<?= $catData['count'] ?>)
+                                    </span>
+                                    <span class="text-slate-300"><?= StorageService::formatBytes($catData['size']) ?></span>
+                                </div>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                        <?php if (empty($files) && empty($folders)): ?>
+                            <p class="text-slate-400 text-xs py-1">Belum ada berkas tersimpan.</p>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
         </div>
@@ -169,15 +222,32 @@ use App\Services\StorageService;
                 <?php endif; ?>
             </div>
 
-            <!-- Controls: Search, View Switcher (Grid/List), Actions -->
+            <!-- Controls: Search, Sort, View Switcher (Grid/List), Actions -->
             <div class="flex flex-wrap items-center gap-2">
                 
-                <!-- Search bar -->
+                <!-- Search bar with Keyboard Shortcut Hint (/) -->
                 <div class="relative w-full sm:w-56">
                     <input type="text" id="searchInput" placeholder="Cari berkas..." 
-                           class="w-full h-9 pl-8 pr-3 text-xs rounded-lg border border-slate-200 bg-white placeholder:text-slate-400 focus:border-brand-600 focus:ring-1 focus:ring-brand-600 transition-all">
+                           class="w-full h-9 pl-8 pr-8 text-xs rounded-lg border border-slate-200 bg-white placeholder:text-slate-400 focus:border-brand-600 focus:ring-1 focus:ring-brand-600 transition-all">
                     <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    <span class="hidden sm:inline-block absolute right-2 top-2 px-1.5 py-0.5 text-[9px] text-slate-400 bg-slate-100 border border-slate-200 rounded font-mono pointer-events-none" title="Pencarian cepat: tekan /">/</span >
+                </div>
+
+                <!-- Instant Client-Side Sort Selector -->
+                <div class="relative">
+                    <select id="sortSelect" onchange="sortFiles(this.value)" 
+                            class="h-9 pl-3 pr-7 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-700 hover:border-slate-300 focus:border-brand-600 focus:ring-1 focus:ring-brand-600 cursor-pointer appearance-none">
+                        <option value="created_desc">Terbaru</option>
+                        <option value="created_asc">Terlama</option>
+                        <option value="name_asc">Nama (A - Z)</option>
+                        <option value="name_desc">Nama (Z - A)</option>
+                        <option value="size_desc">Ukuran (Besar - Kecil)</option>
+                        <option value="size_asc">Ukuran (Kecil - Besar)</option>
+                    </select>
+                    <svg class="w-3 h-3 text-slate-400 absolute right-2.5 top-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                     </svg>
                 </div>
 
@@ -198,9 +268,9 @@ use App\Services\StorageService;
                 </div>
 
                 <?php if ($activeTab === 'my_drive'): ?>
-                    <!-- New Folder Button -->
+                    <!-- New Folder Button (N shortcut) -->
                     <button type="button" id="btnNewFolderModal" 
-                            class="inline-flex items-center h-9 px-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold shadow-xs hover:border-slate-300 transition-all">
+                            class="inline-flex items-center h-9 px-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold shadow-xs hover:border-slate-300 transition-all" title="Folder Baru (Shortcut: N)">
                         <svg class="w-3.5 h-3.5 mr-1.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path>
                         </svg>
@@ -209,47 +279,48 @@ use App\Services\StorageService;
 
                     <!-- Upload File Button with Micro-Animation -->
                     <label for="fileUploadInput" 
-                           class="cursor-pointer inline-flex items-center h-9 px-3.5 rounded-lg bg-brand-600 hover:bg-brand-700 active:scale-[0.98] text-white text-xs font-bold shadow-xs shadow-brand-500/20 transition-all">
+                           class="inline-flex items-center h-9 px-3.5 rounded-lg bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white text-xs font-bold shadow-xs hover:shadow-brand-500/20 transition-all cursor-pointer">
                         <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
                         </svg>
-                        Upload Berkas
+                        Unggah Berkas
                     </label>
-                    <input type="file" id="fileUploadInput" class="hidden" multiple>
+                    <input type="file" id="fileUploadInput" class="hidden">
                 <?php endif; ?>
 
             </div>
         </div>
 
-        <!-- Upload Progress Alert -->
-        <div id="uploadProgressContainer" class="hidden mt-4 bg-white border border-brand-200 rounded-xl p-4 shadow-sm animate-item-in">
-            <div class="flex items-center justify-between mb-2">
-                <span class="text-xs font-bold text-slate-800" id="uploadStatusText">Mengunggah berkas...</span>
-                <span class="text-xs font-mono font-bold text-brand-600" id="uploadPercentText">0%</span>
-            </div>
-            <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                <div id="uploadProgressBar" class="storage-bar-glow h-2 rounded-full transition-all duration-200" style="width: 0%"></div>
-            </div>
-        </div>
-
-        <!-- Drag & Drop Dropzone Notice -->
-        <div id="dropzoneOverlay" class="hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-6">
-            <div class="bg-white border-2 border-dashed border-brand-500 rounded-2xl p-10 text-center max-w-md shadow-2xl animate-item-in">
-                <div class="h-16 w-16 mx-auto mb-3 bg-brand-50 text-brand-600 rounded-2xl flex items-center justify-center animate-bounce">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <!-- Animated Drag-and-Drop Dropzone Zone -->
+        <?php if ($activeTab === 'my_drive'): ?>
+            <div id="dropZone" class="mb-6 border-2 border-dashed border-slate-200 bg-white rounded-2xl p-6 text-center transition-all duration-300 hover:border-brand-400 hover:bg-brand-50/20">
+                <div class="h-12 w-12 mx-auto mb-2 bg-brand-50 text-brand-600 rounded-xl flex items-center justify-center">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
                     </svg>
                 </div>
-                <h3 class="text-base font-bold text-slate-900 mb-1">Lepaskan Berkas di Sini</h3>
-                <p class="text-xs text-slate-500">Berkas Anda akan otomatis diunggah ke folder saat ini.</p>
+                <div class="text-xs font-bold text-slate-800">Tarik & Jatuhkan berkas ke sini</div>
+                <div class="text-[11px] text-slate-400 mt-0.5">atau gunakan tombol Unggah Berkas di atas</div>
             </div>
-        </div>
+
+            <!-- Upload Progress Bar Container (Hidden by default) -->
+            <div id="uploadProgressContainer" class="hidden mb-6 bg-white border border-slate-200 rounded-xl p-4 shadow-xs animate-item-in">
+                <div class="flex items-center justify-between text-xs mb-1.5 font-bold">
+                    <span id="uploadFileName" class="text-slate-800 truncate max-w-sm">Nama Berkas</span>
+                    <span id="uploadPercentage" class="text-brand-600 font-mono">0%</span>
+                </div>
+                <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                    <div id="uploadProgressBar" class="h-2 rounded-full storage-bar-glow transition-all duration-200" style="width: 0%"></div>
+                </div>
+            </div>
+        <?php endif; ?>
 
         <!-- ================================================================= -->
         <!-- CONTENT: TAB DIBAGIKAN KE SAYA -->
         <!-- ================================================================= -->
         <?php if ($activeTab === 'shared_with_me'): ?>
-            <div class="mt-6">
+            
+            <div class="mt-4">
                 <?php if (empty($sharedWithMeFiles)): ?>
                     <div class="bg-white border border-slate-200/80 rounded-2xl p-12 text-center shadow-xs">
                         <div class="h-16 w-16 mx-auto mb-3 bg-slate-100 text-slate-400 rounded-2xl flex items-center justify-center">
@@ -257,9 +328,9 @@ use App\Services\StorageService;
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
                             </svg>
                         </div>
-                        <h3 class="text-base font-bold text-slate-800 mb-1">Belum ada berkas yang dibagikan</h3>
+                        <h3 class="text-base font-bold text-slate-800 mb-1">Belum Ada Berkas yang Dibagikan</h3>
                         <p class="text-xs text-slate-500 max-w-sm mx-auto">
-                            Ketika pengguna lain membagikan berkas langsung ke akun Anda, berkas tersebut akan muncul di halaman ini.
+                            Pengguna terdaftar lain belum membagikan berkas mereka secara langsung ke akun Anda.
                         </p>
                     </div>
                 <?php else: ?>
@@ -270,19 +341,20 @@ use App\Services\StorageService;
                                     <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                                         <th class="py-3 px-4">Nama Berkas</th>
                                         <th class="py-3 px-4">Dibagikan Oleh</th>
-                                        <th class="py-3 px-4">Izin Akses</th>
+                                        <th class="py-3 px-4">Hak Akses</th>
                                         <th class="py-3 px-4">Ukuran</th>
-                                        <th class="py-3 px-4">Tanggal Berbagi</th>
+                                        <th class="py-3 px-4">Tanggal Terima</th>
                                         <th class="py-3 px-4 text-right">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100 text-sm">
                                     <?php foreach ($sharedWithMeFiles as $item): ?>
-                                        <tr class="hover:bg-slate-50/70 transition-colors">
-                                            <td class="py-3.5 px-4 font-semibold text-slate-900 flex items-center space-x-3">
-                                                <div class="h-9 w-9 rounded-lg bg-brand-50 flex items-center justify-center text-brand-600 flex-shrink-0">
-                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                                </div>
+                                        <?php $typeInfo = StorageService::getFileTypeInfo($item['mime_type'], $item['original_name']); ?>
+                                        <tr class="file-row hover:bg-slate-50/70 transition-colors" data-filename="<?= htmlspecialchars(strtolower($item['original_name'])) ?>">
+                                            <td class="py-3.5 px-4 font-semibold text-slate-800 flex items-center space-x-3">
+                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold <?= $typeInfo['bg'] ?>">
+                                                    <?= $typeInfo['badge'] ?>
+                                                </span>
                                                 <span class="truncate max-w-xs sm:max-w-md"><?= htmlspecialchars($item['original_name']) ?></span>
                                             </td>
                                             <td class="py-3.5 px-4 text-xs">
@@ -373,7 +445,7 @@ use App\Services\StorageService;
 
                     <?php if (empty($files) && empty($folders)): ?>
                         <div class="bg-white border border-slate-200/80 rounded-2xl p-12 text-center shadow-xs">
-                            <div class="h-16 w-16 mx-auto mb-3 bg-slate-100 text-slate-400 rounded-2xl flex items-center justify-center">
+                            <div class="h-16 w-16 mx-auto mb-3 bg-brand-50 text-brand-600 rounded-2xl flex items-center justify-center">
                                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
                             </div>
                             <h3 class="text-base font-bold text-slate-800 mb-1">Folder ini masih kosong</h3>
@@ -381,6 +453,9 @@ use App\Services\StorageService;
                                 Belum ada berkas yang diunggah ke direktori ini. Mulai dengan mengunggah berkas atau membuat folder baru.
                             </p>
                             <label for="fileUploadInput" class="cursor-pointer inline-flex items-center h-10 px-4 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-xs transition-colors">
+                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                                </svg>
                                 Upload Berkas Sekarang
                             </label>
                         </div>
@@ -390,28 +465,33 @@ use App\Services\StorageService;
                         <div id="filesGridView" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                             <?php foreach ($files as $file): ?>
                                 <?php
-                                $isImg = str_starts_with($file['mime_type'], 'image/');
-                                $isPdf = $file['mime_type'] === 'application/pdf';
-                                $isVid = str_starts_with($file['mime_type'], 'video/');
-                                $isAud = str_starts_with($file['mime_type'], 'audio/');
+                                $typeInfo = StorageService::getFileTypeInfo($file['mime_type'], $file['original_name']);
                                 $hasPublicShare = !empty($file['is_shared']) && (int)$file['is_shared'] === 1;
                                 $directShareCount = (int)($file['user_shares_count'] ?? 0);
                                 ?>
-                                <div class="file-card group bg-white border border-slate-200/80 hover:border-brand-300 hover:shadow-lg hover:-translate-y-1 rounded-2xl p-4 flex flex-col justify-between transition-all duration-200 animate-item-in"
-                                     data-filename="<?= htmlspecialchars(strtolower($file['original_name'])) ?>">
+                                <div class="file-card group relative bg-white border border-slate-200/80 hover:border-brand-300 hover:shadow-lg hover:-translate-y-1 rounded-2xl p-4 flex flex-col justify-between transition-all duration-200 animate-item-in cursor-default"
+                                     data-id="<?= $file['id'] ?>"
+                                     data-filename="<?= htmlspecialchars(strtolower($file['original_name'])) ?>"
+                                     data-rawname="<?= htmlspecialchars($file['original_name']) ?>"
+                                     data-filesize="<?= (int)$file['file_size'] ?>"
+                                     data-created="<?= strtotime($file['created_at']) ?>"
+                                     data-mimetype="<?= htmlspecialchars($file['mime_type']) ?>"
+                                     data-sharetoken="<?= htmlspecialchars($file['share_token'] ?? '') ?>"
+                                     oncontextmenu="handleFileContextMenu(event, <?= $file['id'] ?>, '<?= htmlspecialchars(addslashes($file['original_name'])) ?>', '<?= htmlspecialchars($file['mime_type']) ?>', '<?= htmlspecialchars($file['share_token'] ?? '') ?>')">
                                     
-                                    <!-- Top Card: File Type Badge & Actions -->
+                                    <!-- Top Card: Multi-select Checkbox, Type Badge & Sharing Badges -->
                                     <div class="flex items-start justify-between mb-3">
-                                        <div class="h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0 <?= $isImg ? 'bg-indigo-50 text-indigo-600' : ($isPdf ? 'bg-red-50 text-red-600' : ($isVid ? 'bg-rose-50 text-rose-600' : ($isAud ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-600'))) ?>">
-                                            <?php if ($isImg): ?>
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                            <?php elseif ($isPdf): ?>
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                                            <?php elseif ($isVid): ?>
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                                            <?php else: ?>
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                            <?php endif; ?>
+                                        <div class="flex items-center space-x-2">
+                                            <!-- Checkbox for Bulk Actions -->
+                                            <input type="checkbox" 
+                                                   class="file-select-checkbox h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer"
+                                                   data-id="<?= $file['id'] ?>" 
+                                                   onchange="onFileCheckboxChange(this)"
+                                                   onclick="event.stopPropagation()">
+                                            
+                                            <div class="h-9 w-9 rounded-xl flex items-center justify-center flex-shrink-0 <?= $typeInfo['icon_bg'] ?>">
+                                                <span class="text-[10px] font-black uppercase tracking-wider"><?= $typeInfo['badge'] ?></span>
+                                            </div>
                                         </div>
 
                                         <!-- Sharing Badges -->
@@ -473,12 +553,15 @@ use App\Services\StorageService;
                             <?php endforeach; ?>
                         </div>
 
-                        <!-- LIST / TABLE VIEW CONTAINER (Tersedia opsi switch) -->
+                        <!-- LIST / TABLE VIEW CONTAINER -->
                         <div id="filesListView" class="hidden bg-white border border-slate-200/80 rounded-xl overflow-hidden shadow-xs">
                             <div class="overflow-x-auto">
                                 <table class="w-full text-left border-collapse" id="filesTable">
                                     <thead>
                                         <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                            <th class="py-3 px-4 w-10">
+                                                <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this.checked)" class="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer">
+                                            </th>
                                             <th class="py-3 px-4">Nama Berkas</th>
                                             <th class="py-3 px-4">Ukuran</th>
                                             <th class="py-3 px-4">Status Berbagi</th>
@@ -488,8 +571,26 @@ use App\Services\StorageService;
                                     </thead>
                                     <tbody class="divide-y divide-slate-100 text-sm">
                                         <?php foreach ($files as $file): ?>
-                                            <tr class="file-row hover:bg-slate-50/70 transition-colors" data-filename="<?= htmlspecialchars(strtolower($file['original_name'])) ?>">
-                                                <td class="py-3 px-4 font-semibold text-slate-800 flex items-center space-x-3">
+                                            <?php $typeInfo = StorageService::getFileTypeInfo($file['mime_type'], $file['original_name']); ?>
+                                            <tr class="file-row hover:bg-slate-50/70 transition-colors" 
+                                                data-id="<?= $file['id'] ?>"
+                                                data-filename="<?= htmlspecialchars(strtolower($file['original_name'])) ?>"
+                                                data-rawname="<?= htmlspecialchars($file['original_name']) ?>"
+                                                data-filesize="<?= (int)$file['file_size'] ?>"
+                                                data-created="<?= strtotime($file['created_at']) ?>"
+                                                data-mimetype="<?= htmlspecialchars($file['mime_type']) ?>"
+                                                data-sharetoken="<?= htmlspecialchars($file['share_token'] ?? '') ?>"
+                                                oncontextmenu="handleFileContextMenu(event, <?= $file['id'] ?>, '<?= htmlspecialchars(addslashes($file['original_name'])) ?>', '<?= htmlspecialchars($file['mime_type']) ?>', '<?= htmlspecialchars($file['share_token'] ?? '') ?>')">
+                                                <td class="py-3 px-4">
+                                                    <input type="checkbox" class="file-select-checkbox h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer" 
+                                                           data-id="<?= $file['id'] ?>" 
+                                                           onchange="onFileCheckboxChange(this)"
+                                                           onclick="event.stopPropagation()">
+                                                </td>
+                                                <td class="py-3 px-4 font-semibold text-slate-800 flex items-center space-x-2.5">
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold <?= $typeInfo['bg'] ?>">
+                                                        <?= $typeInfo['badge'] ?>
+                                                    </span>
                                                     <span class="truncate max-w-xs sm:max-w-md"><?= htmlspecialchars($file['original_name']) ?></span>
                                                 </td>
                                                 <td class="py-3 px-4 text-xs font-mono text-slate-600">
@@ -497,8 +598,8 @@ use App\Services\StorageService;
                                                 </td>
                                                 <td class="py-3 px-4 whitespace-nowrap">
                                                     <?php if (!empty($file['is_shared']) && (int)$file['is_shared'] === 1): ?>
-                                                        <button type="button" onclick="copyShareUrl('<?= htmlspecialchars($file['share_token']) ?>')" 
-                                                                class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                        <button type="button" onclick="copyShareUrl('<?= htmlspecialchars($file['share_token']) ?>', this)" 
+                                                                class="copy-btn inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 transition-all">
                                                             Salin Link
                                                         </button>
                                                     <?php else: ?>
@@ -539,6 +640,49 @@ use App\Services\StorageService;
         <?php endif; ?>
 
     </main>
+
+    <!-- Floating Bulk Actions Bar (Sticky bottom, animated slide-up when files are selected) -->
+    <div id="bulkActionBar" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900/95 backdrop-blur-md text-white border border-slate-700/80 rounded-2xl px-5 py-3 shadow-2xl flex items-center space-x-4 transition-all duration-300 transform translate-y-24 opacity-0 pointer-events-none">
+        <div class="flex items-center space-x-2">
+            <span class="h-6 w-6 rounded-lg bg-brand-600 flex items-center justify-center text-xs font-bold font-mono" id="bulkSelectedCount">0</span>
+            <span class="text-xs font-semibold text-slate-200">berkas dipilih</span>
+        </div>
+        <div class="h-4 w-px bg-slate-700"></div>
+        <button type="button" onclick="clearBulkSelection()" class="text-xs font-semibold text-slate-400 hover:text-white transition-colors">
+            Batal
+        </button>
+        <button type="button" onclick="bulkDeleteSelected()" class="inline-flex items-center h-8 px-3 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow-xs transition-colors">
+            <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+            </svg>
+            Hapus Terpilih
+        </button>
+    </div>
+
+    <!-- Custom Right-Click Context Menu -->
+    <div id="fileContextMenu" class="hidden fixed z-50 bg-white border border-slate-200 rounded-xl shadow-xl py-1.5 w-48 text-xs font-semibold text-slate-700 animate-item-in">
+        <button type="button" id="ctxBtnPreview" class="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center text-slate-700">
+            <svg class="w-4 h-4 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+            Pratinjau
+        </button>
+        <button type="button" id="ctxBtnShare" class="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center text-slate-700">
+            <svg class="w-4 h-4 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+            Bagikan Berkas
+        </button>
+        <button type="button" id="ctxBtnCopyLink" class="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center text-slate-700">
+            <svg class="w-4 h-4 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+            Salin Link Berbagi
+        </button>
+        <a id="ctxBtnDownload" href="#" class="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center text-slate-700">
+            <svg class="w-4 h-4 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            Unduh Berkas
+        </a>
+        <div class="my-1 border-t border-slate-100"></div>
+        <button type="button" id="ctxBtnDelete" class="w-full text-left px-3.5 py-2 hover:bg-red-50 flex items-center text-red-600">
+            <svg class="w-4 h-4 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            Hapus Berkas
+        </button>
+    </div>
 
     <!-- Modal 1: Buat Folder Baru -->
     <div id="newFolderModal" class="hidden fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
@@ -627,8 +771,8 @@ use App\Services\StorageService;
                         <div class="flex gap-2">
                             <input type="text" id="shareGeneratedUrl" readonly 
                                    class="flex-1 h-9 px-3 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 text-xs font-mono">
-                            <button type="button" onclick="copyGeneratedShareUrl()" 
-                                    class="h-9 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors whitespace-nowrap">
+                            <button type="button" onclick="copyGeneratedShareUrl(this)" 
+                                    class="copy-btn h-9 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all whitespace-nowrap">
                                 Salin
                             </button>
                         </div>
@@ -650,7 +794,7 @@ use App\Services\StorageService;
                         <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">Pilih Pengguna Tujuan</label>
                         <select id="directShareUserId" required class="w-full h-10 px-3 rounded-lg border border-slate-300 text-slate-800 text-xs focus:border-brand-600 focus:ring-1 focus:ring-brand-600">
                             <option value="">-- Pilih Pengguna Terdaftar --</option>
-                            <?php foreach ($allOtherUsers as $ou): ?>
+                            <?php foreach (($allOtherUsers ?? []) as $ou): ?>
                                 <option value="<?= $ou['id'] ?>"><?= htmlspecialchars($ou['username']) ?> (<?= htmlspecialchars($ou['email']) ?>)</option>
                             <?php endforeach; ?>
                         </select>

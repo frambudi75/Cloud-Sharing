@@ -47,6 +47,9 @@ switch ($action) {
     case 'delete_file':
         (new DriveController())->deleteFile();
         break;
+    case 'bulk_delete_files':
+        (new DriveController())->bulkDeleteFiles();
+        break;
     case 'delete_folder':
         (new DriveController())->deleteFolder();
         break;

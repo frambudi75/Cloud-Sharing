@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. Modal Helper Functions
     // =========================================================================
     window.openModal = function (modalId) {
+        closeContextMenu();
         const modal = document.getElementById(modalId);
         if (modal) {
             modal.classList.remove('hidden');
@@ -29,10 +30,34 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Close modal on Escape key
+    // Close modal & context menu on Escape key
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
+            closeContextMenu();
             document.querySelectorAll('[id$="Modal"]').forEach(m => m.classList.add('hidden'));
+            if (document.querySelectorAll('.file-select-checkbox:checked').length > 0) {
+                clearBulkSelection();
+            }
+        }
+
+        // Global Shortcut: / to focus search
+        if (e.key === '/' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
+            e.preventDefault();
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.focus();
+                searchInput.select();
+            }
+        }
+
+        // Global Shortcut: N to create new folder
+        if ((e.key === 'n' || e.key === 'N') && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
+            const btnNewFolderModal = document.getElementById('btnNewFolderModal');
+            if (btnNewFolderModal) {
+                e.preventDefault();
+                document.getElementById('newFolderName').value = '';
+                openModal('newFolderModal');
+            }
         }
     });
 
@@ -86,7 +111,231 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) {}
 
     // =========================================================================
-    // 3. New Folder Management
+    // 3. Client-Side Sorting Engine (Name, Size, Date)
+    // =========================================================================
+    window.sortFiles = function (criteria) {
+        const gridContainer = document.getElementById('filesGridView');
+        const listTbody = document.querySelector('#filesTable tbody');
+
+        const sortItems = (elements, isTable = false) => {
+            return Array.from(elements).sort((a, b) => {
+                const nameA = a.getAttribute('data-rawname') || '';
+                const nameB = b.getAttribute('data-rawname') || '';
+                const sizeA = parseInt(a.getAttribute('data-filesize') || '0', 10);
+                const sizeB = parseInt(b.getAttribute('data-filesize') || '0', 10);
+                const dateA = parseInt(a.getAttribute('data-created') || '0', 10);
+                const dateB = parseInt(b.getAttribute('data-created') || '0', 10);
+
+                switch (criteria) {
+                    case 'name_asc':
+                        return nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: 'base' });
+                    case 'name_desc':
+                        return nameB.localeCompare(nameA, undefined, { numeric: true, sensitivity: 'base' });
+                    case 'size_desc':
+                        return sizeB - sizeA;
+                    case 'size_asc':
+                        return sizeA - sizeB;
+                    case 'created_asc':
+                        return dateA - dateB;
+                    case 'created_desc':
+                    default:
+                        return dateB - dateA;
+                }
+            });
+        };
+
+        if (gridContainer) {
+            const cards = gridContainer.querySelectorAll('.file-card');
+            if (cards.length > 0) {
+                const sortedCards = sortItems(cards);
+                sortedCards.forEach(card => gridContainer.appendChild(card));
+            }
+        }
+
+        if (listTbody) {
+            const rows = listTbody.querySelectorAll('.file-row');
+            if (rows.length > 0) {
+                const sortedRows = sortItems(rows, true);
+                sortedRows.forEach(row => listTbody.appendChild(row));
+            }
+        }
+
+        showToast('Urutan berkas diperbarui.');
+    };
+
+    // =========================================================================
+    // 4. Custom Right-Click Context Menu
+    // =========================================================================
+    const contextMenu = document.getElementById('fileContextMenu');
+
+    window.handleFileContextMenu = function (e, fileId, rawName, mime, shareToken) {
+        e.preventDefault();
+        if (!contextMenu) return;
+
+        const x = Math.min(e.clientX, window.innerWidth - 210);
+        const y = Math.min(e.clientY, window.innerHeight - 220);
+
+        contextMenu.style.left = `${x}px`;
+        contextMenu.style.top = `${y}px`;
+        contextMenu.classList.remove('hidden');
+
+        // Wire context menu action buttons
+        const btnPreview = document.getElementById('ctxBtnPreview');
+        const btnShare = document.getElementById('ctxBtnShare');
+        const btnCopyLink = document.getElementById('ctxBtnCopyLink');
+        const btnDownload = document.getElementById('ctxBtnDownload');
+        const btnDelete = document.getElementById('ctxBtnDelete');
+
+        if (btnPreview) {
+            btnPreview.onclick = () => {
+                closeContextMenu();
+                previewFile(fileId, rawName, mime);
+            };
+        }
+
+        if (btnShare) {
+            btnShare.onclick = () => {
+                closeContextMenu();
+                openShareModal(fileId, rawName, shareToken);
+            };
+        }
+
+        if (btnCopyLink) {
+            btnCopyLink.onclick = () => {
+                closeContextMenu();
+                if (shareToken) {
+                    copyShareUrl(shareToken);
+                } else {
+                    openShareModal(fileId, rawName, '');
+                }
+            };
+        }
+
+        if (btnDownload) {
+            btnDownload.href = `?action=download_direct&file_id=${fileId}`;
+            btnDownload.onclick = () => closeContextMenu();
+        }
+
+        if (btnDelete) {
+            btnDelete.onclick = () => {
+                closeContextMenu();
+                deleteFile(fileId, rawName);
+            };
+        }
+    };
+
+    function closeContextMenu() {
+        if (contextMenu) {
+            contextMenu.classList.add('hidden');
+        }
+    }
+
+    document.addEventListener('click', (e) => {
+        if (contextMenu && !contextMenu.contains(e.target)) {
+            closeContextMenu();
+        }
+    });
+
+    window.addEventListener('scroll', closeContextMenu, true);
+
+    // =========================================================================
+    // 5. Bulk Selection & Multi-Delete Actions
+    // =========================================================================
+    const bulkActionBar = document.getElementById('bulkActionBar');
+    const bulkSelectedCount = document.getElementById('bulkSelectedCount');
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+
+    window.onFileCheckboxChange = function (checkbox) {
+        const fileId = checkbox.getAttribute('data-id');
+        const isChecked = checkbox.checked;
+
+        // Synchronize corresponding checkboxes in both grid and list view
+        document.querySelectorAll(`.file-select-checkbox[data-id="${fileId}"]`).forEach(cb => {
+            cb.checked = isChecked;
+            const parentCard = cb.closest('.file-card');
+            if (parentCard) parentCard.classList.toggle('is-selected', isChecked);
+            const parentRow = cb.closest('.file-row');
+            if (parentRow) parentRow.classList.toggle('is-selected', isChecked);
+        });
+
+        updateBulkActionBar();
+    };
+
+    window.toggleSelectAll = function (checked) {
+        document.querySelectorAll('.file-select-checkbox').forEach(cb => {
+            cb.checked = checked;
+            const parentCard = cb.closest('.file-card');
+            if (parentCard) parentCard.classList.toggle('is-selected', checked);
+            const parentRow = cb.closest('.file-row');
+            if (parentRow) parentRow.classList.toggle('is-selected', checked);
+        });
+
+        updateBulkActionBar();
+    };
+
+    window.clearBulkSelection = function () {
+        document.querySelectorAll('.file-select-checkbox').forEach(cb => {
+            cb.checked = false;
+            const parentCard = cb.closest('.file-card');
+            if (parentCard) parentCard.classList.remove('is-selected');
+            const parentRow = cb.closest('.file-row');
+            if (parentRow) parentRow.classList.remove('is-selected');
+        });
+
+        if (selectAllCheckbox) selectAllCheckbox.checked = false;
+        updateBulkActionBar();
+    };
+
+    function updateBulkActionBar() {
+        const checkedBoxes = Array.from(document.querySelectorAll('.file-select-checkbox:checked'));
+        const uniqueIds = new Set(checkedBoxes.map(cb => cb.getAttribute('data-id')));
+        const count = uniqueIds.size;
+
+        if (bulkSelectedCount) bulkSelectedCount.textContent = count;
+
+        if (bulkActionBar) {
+            if (count > 0) {
+                bulkActionBar.classList.remove('translate-y-24', 'opacity-0', 'pointer-events-none');
+                bulkActionBar.classList.add('translate-y-0', 'opacity-100', 'pointer-events-auto');
+            } else {
+                bulkActionBar.classList.remove('translate-y-0', 'opacity-100', 'pointer-events-auto');
+                bulkActionBar.classList.add('translate-y-24', 'opacity-0', 'pointer-events-none');
+            }
+        }
+    }
+
+    window.bulkDeleteSelected = async function () {
+        const checkedBoxes = Array.from(document.querySelectorAll('.file-select-checkbox:checked'));
+        const fileIds = Array.from(new Set(checkedBoxes.map(cb => parseInt(cb.getAttribute('data-id'), 10))));
+
+        if (fileIds.length === 0) return;
+
+        if (!confirm(`Hapus ${fileIds.length} berkas yang dipilih secara permanen? Tindakan ini tidak dapat dibatalkan.`)) {
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('csrf_token', csrfToken);
+        formData.append('file_ids', JSON.stringify(fileIds));
+
+        try {
+            const response = await fetch('?action=bulk_delete_files', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+            if (result.success) {
+                window.location.reload();
+            } else {
+                alert(result.error || 'Gagal menghapus berkas terpilih.');
+            }
+        } catch (err) {
+            alert('Terjadi kesalahan jaringan saat menghapus berkas.');
+        }
+    };
+
+    // =========================================================================
+    // 6. New Folder Management
     // =========================================================================
     const btnNewFolderModal = document.getElementById('btnNewFolderModal');
     if (btnNewFolderModal) {
@@ -152,7 +401,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // =========================================================================
-    // 4. File Management & Deletion
+    // 7. Single File Deletion
     // =========================================================================
     window.deleteFile = async function (fileId, fileName) {
         if (!confirm(`Hapus berkas "${fileName}" secara permanen?`)) {
@@ -180,16 +429,16 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // =========================================================================
-    // 5. Drag-and-Drop File Upload with Animated Progress
+    // 8. Drag-and-Drop File Upload with Pulse Animation
     // =========================================================================
     const dropZone = document.getElementById('dropZone');
-    const fileInput = document.getElementById('fileInput');
+    const fileUploadInput = document.getElementById('fileUploadInput');
     const uploadProgressContainer = document.getElementById('uploadProgressContainer');
     const uploadProgressBar = document.getElementById('uploadProgressBar');
     const uploadPercentage = document.getElementById('uploadPercentage');
     const uploadFileName = document.getElementById('uploadFileName');
 
-    if (dropZone && fileInput) {
+    if (dropZone && fileUploadInput) {
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
             dropZone.addEventListener(eventName, preventDefaults, false);
             document.body.addEventListener(eventName, preventDefaults, false);
@@ -202,13 +451,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         ['dragenter', 'dragover'].forEach(eventName => {
             dropZone.addEventListener(eventName, () => {
-                dropZone.classList.add('border-brand-500', 'bg-brand-50/50');
+                dropZone.classList.add('dragover-active');
             }, false);
         });
 
         ['dragleave', 'drop'].forEach(eventName => {
             dropZone.addEventListener(eventName, () => {
-                dropZone.classList.remove('border-brand-500', 'bg-brand-50/50');
+                dropZone.classList.remove('dragover-active');
             }, false);
         });
 
@@ -218,8 +467,8 @@ document.addEventListener('DOMContentLoaded', () => {
             handleFiles(files);
         });
 
-        fileInput.addEventListener('change', () => {
-            handleFiles(fileInput.files);
+        fileUploadInput.addEventListener('change', () => {
+            handleFiles(fileUploadInput.files);
         });
     }
 
@@ -281,7 +530,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // =========================================================================
-    // 6. Live Search Filter across Grid Cards and Table Rows
+    // 9. Live Search Filter across Grid Cards and Table Rows
     // =========================================================================
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
@@ -305,7 +554,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // =========================================================================
-    // 7. Sharing Engine (Dual Mode: Public Link & User-to-User Share)
+    // 10. Sharing Engine (Public Links & User-to-User Shares)
     // =========================================================================
     window.switchShareTab = function (tab) {
         const tabBtnPublic = document.getElementById('tabBtnPublicShare');
@@ -350,7 +599,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (maxDownloadsInput) maxDownloadsInput.value = '';
         if (expirySelect) expirySelect.value = 'never';
 
-        // Reset to Public Tab by default
         switchShareTab('public');
 
         if (existingToken) {
@@ -364,13 +612,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (submitBtn) submitBtn.textContent = 'Buat Tautan Publik';
         }
 
-        // Load existing direct user shares for this file
         loadFileUserShares(fileId);
-
         openModal('shareModal');
     };
 
-    // Public Link Creator Form
+    // Public Link Form
     window.handleCreateShare = async function (e) {
         e.preventDefault();
         const fileId = document.getElementById('shareFileId').value;
@@ -407,7 +653,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // User-to-User Share Handler
+    // Direct User Share Handler
     window.handleDirectUserShare = async function (e) {
         e.preventDefault();
         const fileId = document.getElementById('shareFileId').value;
@@ -498,7 +744,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Revoke User Share
     window.revokeDirectUserShare = async function (fileId, userId) {
         if (!confirm('Cabut akses pengguna terhadap berkas ini?')) return;
 
@@ -524,29 +769,50 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Clipboard Copy Helpers
-    window.copyGeneratedShareUrl = function () {
+    // Clipboard Copy with Dynamic Button Feedback
+    window.copyGeneratedShareUrl = function (btnElement) {
         const input = document.getElementById('shareGeneratedUrl');
         if (input && input.value) {
-            copyToClipboard(input.value, 'Tautan berhasil disalin ke clipboard!');
+            copyToClipboard(input.value, 'Tautan berhasil disalin ke clipboard!', btnElement);
         }
     };
 
-    window.copyShareUrl = function (token) {
+    window.copyShareUrl = function (token, btnElement) {
         const origin = window.location.origin + window.location.pathname;
         const fullUrl = `${origin}?action=share&token=${token}`;
-        copyToClipboard(fullUrl, 'Tautan berbagi berhasil disalin!');
+        copyToClipboard(fullUrl, 'Tautan berbagi berhasil disalin!', btnElement);
     };
 
-    function copyToClipboard(text, successMessage) {
+    function copyToClipboard(text, successMessage, btnElement) {
+        const executeSuccess = () => {
+            showToast(successMessage);
+            if (btnElement && btnElement instanceof HTMLElement) {
+                const originalHtml = btnElement.innerHTML;
+                const originalClass = btnElement.className;
+
+                btnElement.innerHTML = `
+                    <svg class="w-3.5 h-3.5 mr-1 text-emerald-600 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    Tersalin!
+                `;
+                btnElement.classList.add('bg-emerald-100', 'text-emerald-800', 'border-emerald-300');
+
+                setTimeout(() => {
+                    btnElement.innerHTML = originalHtml;
+                    btnElement.className = originalClass;
+                }, 2000);
+            }
+        };
+
         if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(text).then(() => {
-                showToast(successMessage);
-            }).catch(() => {
+            navigator.clipboard.writeText(text).then(executeSuccess).catch(() => {
                 fallbackCopy(text);
+                executeSuccess();
             });
         } else {
             fallbackCopy(text);
+            executeSuccess();
         }
     }
 
@@ -557,7 +823,6 @@ document.addEventListener('DOMContentLoaded', () => {
         temp.select();
         document.execCommand('copy');
         document.body.removeChild(temp);
-        showToast('Tautan berhasil disalin!');
     }
 
     function escapeHtml(string) {
@@ -567,7 +832,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // =========================================================================
-    // 8. In-Browser File Preview Modal
+    // 11. In-Browser File Preview Modal
     // =========================================================================
     window.previewFile = function (fileId, fileName, mimeType) {
         const modal = document.getElementById('previewModal');
@@ -615,7 +880,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // =========================================================================
-    // 9. Toast Feedback Component
+    // 12. Toast Feedback Component
     // =========================================================================
     function showToast(message) {
         let toast = document.getElementById('appToast');

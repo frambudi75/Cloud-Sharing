@@ -138,6 +138,7 @@ class DriveController
             $files = $filesStmt->fetchAll();
         }
 
+        $storageBreakdown = StorageService::getStorageCategoryBreakdown($userId);
         $csrfToken = AuthService::csrfToken();
 
         require_once dirname(__DIR__) . '/Views/drive/index.php';
@@ -197,6 +198,28 @@ class DriveController
         $fileId = (int) ($_POST['file_id'] ?? 0);
 
         $result = StorageService::deleteFile($fileId, $userId);
+        $this->respondJson($result);
+    }
+
+    public function bulkDeleteFiles(): void
+    {
+        $this->validateCsrf();
+        $userId = (int) AuthService::id();
+        $fileIds = $_POST['file_ids'] ?? [];
+
+        if (is_string($fileIds)) {
+            $decoded = json_decode($fileIds, true);
+            if (is_array($decoded)) {
+                $fileIds = $decoded;
+            }
+        }
+
+        if (!is_array($fileIds) || empty($fileIds)) {
+            $this->respondJson(['success' => false, 'error' => 'Tidak ada berkas yang dipilih.']);
+            return;
+        }
+
+        $result = StorageService::bulkDeleteFiles($fileIds, $userId);
         $this->respondJson($result);
     }
 
