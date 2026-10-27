@@ -50,6 +50,15 @@ $totalShared = $totalSharedCount ?? 0;
         box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.2) !important;
     }
 
+    /* Card & Folder hover micro-interactions (Anti-Slop Modern Feel) */
+    .file-card, .droppable-folder {
+        transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .file-card:hover, .droppable-folder:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04) !important;
+    }
+
     /* Card selected highlight */
     .file-card.is-selected {
         border-color: #6366f1 !important;

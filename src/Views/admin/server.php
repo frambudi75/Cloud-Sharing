@@ -9,10 +9,13 @@ $diskUsed = $metrics['disk_used'] ?? 0;
 $diskPercent = $metrics['disk_percent'] ?? 0;
 ?>
 
-<div class="min-h-full flex flex-col bg-slate-50" id="serverSettingsApp" data-csrf="<?= htmlspecialchars($csrfToken) ?>">
+<div class="min-h-screen relative flex flex-col bg-slate-50 dark:bg-slate-950 overflow-hidden" id="serverSettingsApp" data-csrf="<?= htmlspecialchars($csrfToken) ?>">
+
+    <!-- Subtle Ambient Background Grid (Anti-Slop Modern Texture) -->
+    <div class="absolute inset-0 bg-[linear-gradient(to_right,#cbd5e1_1px,transparent_1px),linear-gradient(to_bottom,#cbd5e1_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_30%,#000_60%,transparent_100%)] opacity-35 pointer-events-none"></div>
 
     <!-- Top Navigation Bar -->
-    <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
+    <header class="relative z-10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center space-x-3">
                 <a href="?action=drive" class="flex items-center space-x-2.5 group">
@@ -58,7 +61,7 @@ $diskPercent = $metrics['disk_percent'] ?? 0;
     </header>
 
     <!-- Main Container -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <main class="relative z-10 flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         
         <!-- Header Title Banner -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200">
