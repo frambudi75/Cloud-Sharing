@@ -643,7 +643,7 @@ $totalShared = $totalSharedCount ?? 0;
                                                 </button>
                                             <?php endif; ?>
                                         </div>
-                                    </div>            </div>
+                                    </div>
 
                                     <!-- Big Centered Folder Icon (Mockup Aligned) -->
                                     <a href="?action=drive&folder=<?= $folder['id'] ?>" class="my-3 flex flex-col items-center text-center">
