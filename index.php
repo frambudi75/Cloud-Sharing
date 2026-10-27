@@ -8,6 +8,7 @@ use App\Controllers\AuthController;
 use App\Controllers\DriveController;
 use App\Controllers\GuestController;
 use App\Controllers\ProfileController;
+use App\Controllers\ServerController;
 use App\Controllers\UserController;
 use App\Services\AuthService;
 
@@ -137,6 +138,17 @@ switch ($action) {
         break;
     case 'delete_user':
         (new UserController())->deleteUser();
+        break;
+
+    // Pengaturan Server & Webhook (Admin)
+    case 'server':
+        (new ServerController())->index();
+        break;
+    case 'save_webhook':
+        (new ServerController())->saveWebhook();
+        break;
+    case 'test_webhook':
+        (new ServerController())->testWebhook();
         break;
 
     // Database Self-Healing / Auto-Repair (Khusus Admin)

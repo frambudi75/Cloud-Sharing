@@ -42,4 +42,17 @@ assert(AuthService::verifyCsrf('invalid_token') === false, 'Verifikasi CSRF toke
 assert(AuthService::verifyCsrf(null) === false, 'Verifikasi CSRF null harus gagal');
 echo "[PASS] Sistem token dan verifikasi CSRF berfungsi.\n";
 
+// 5. Uji SettingService & WebhookService Safe Defaults
+use App\Services\SettingService;
+use App\Services\WebhookService;
+
+SettingService::set('test_key', 'test_val');
+assert(SettingService::get('test_key') === 'test_val', 'SettingService::get harus mengembalikan nilai yang diset');
+assert(SettingService::get('non_existent_key', 'fallback') === 'fallback', 'SettingService::get harus mengembalikan fallback untuk key kosong');
+
+// WebhookService saat disabled (default 0) harus return false tanpa melempar exception
+assert(WebhookService::trigger('upload', 'Judul', 'Deskripsi') === false, 'Webhook saat disable harus false');
+assert(WebhookService::trigger('invalid_event', 'Judul', 'Deskripsi') === false, 'Webhook dengan event tidak valid harus false');
+echo "[PASS] SettingService dan WebhookService safe execution terverifikasi.\n";
+
 echo "Semua smoke test berhasil dilewati dengan sempurna (All tests passed)!\n";

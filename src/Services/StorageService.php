@@ -197,6 +197,12 @@ class StorageService
 
             $db->commit();
 
+            WebhookService::trigger('upload', 'Berkas Baru Diunggah', "Berkas `{$originalName}` berhasil disimpan ke drive.", [
+                'Nama Berkas' => $originalName,
+                'Ukuran'      => self::formatBytes($fileSize),
+                'Tipe MIME'   => $mimeType,
+            ]);
+
             return [
                 'success' => true,
                 'file_id' => $fileId,
@@ -307,6 +313,12 @@ class StorageService
             }
 
             $db->commit();
+
+            WebhookService::trigger('upload', 'Berkas Baru Diunggah', "Berkas `{$originalName}` berhasil digabungkan dan disimpan.", [
+                'Nama Berkas' => $originalName,
+                'Ukuran'      => self::formatBytes($fileSize),
+                'Tipe MIME'   => $mimeType,
+            ]);
 
             return [
                 'success' => true,

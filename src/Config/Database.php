@@ -268,6 +268,15 @@ class Database
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
             ");
 
+            // 7. Tabel system_settings (Pengaturan Webhook & Server)
+            $pdo->exec("
+                CREATE TABLE IF NOT EXISTS `system_settings` (
+                    `setting_key` VARCHAR(64) PRIMARY KEY,
+                    `setting_value` TEXT NULL,
+                    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            ");
+
             // Seed Akun Admin Default jika belum ada admin sama sekali
             $adminCount = (int) $pdo->query("SELECT COUNT(*) FROM `users` WHERE `role` = 'admin'")->fetchColumn();
             if ($adminCount === 0) {

@@ -8,6 +8,7 @@ use App\Services\AuthService;
 use App\Services\DownloadService;
 use App\Services\ShareService;
 use App\Services\StorageService;
+use App\Services\WebhookService;
 
 class DriveController
 {
@@ -801,6 +802,22 @@ class DriveController
         }
 
         $fullPath = StorageService::getPhysicalPath($file['storage_path'], $file['storage_filename']);
+
+        if ($forceDownload) {
+            $currentUser = AuthService::user();
+            WebhookService::trigger(
+                'download',
+                'Berkas Diunduh (Langsung)',
+                "Pengguna **" . ($currentUser['username'] ?? 'User') . "** mengunduh berkas **{$file['original_name']}**.",
+                [
+                    'Berkas'    => $file['original_name'],
+                    'Ukuran'    => StorageService::formatBytes((int) $file['file_size']),
+                    'Pengunduh' => $currentUser['username'] ?? 'User',
+                    'IP'        => $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0',
+                ]
+            );
+        }
+
         DownloadService::stream($fullPath, $file['original_name'], $file['mime_type'], $forceDownload);
     }
 

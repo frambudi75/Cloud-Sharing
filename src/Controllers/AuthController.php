@@ -46,6 +46,11 @@ class AuthController
         $result = AuthService::login($username, $password);
         if ($result['success']) {
             CacheService::delete($rateKey);
+            \App\Services\WebhookService::trigger('login', 'Pengguna Masuk ke Sistem', "Pengguna `{$username}` berhasil masuk ke Cloud Drive.", [
+                'Pengguna'   => $username,
+                'IP Address' => $clientIp,
+                'Waktu'      => date('d M Y, H:i:s'),
+            ]);
             header('Location: ?action=drive');
             exit;
         }

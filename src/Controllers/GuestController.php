@@ -7,6 +7,7 @@ use App\Services\AuthService;
 use App\Services\DownloadService;
 use App\Services\ShareService;
 use App\Services\StorageService;
+use App\Services\WebhookService;
 
 class GuestController
 {
@@ -96,6 +97,20 @@ class GuestController
 
         $fullPath = StorageService::getPhysicalPath($share['storage_path'], $share['storage_filename']);
         $forceDownload = !isset($_GET['preview']) || (int) $_GET['preview'] !== 1;
+
+        if ($forceDownload) {
+            WebhookService::trigger(
+                'download',
+                'Berkas Diunduh (Tautan Tamu)',
+                "Tamu publik mengunduh berkas **{$share['original_name']}**.",
+                [
+                    'Berkas' => $share['original_name'],
+                    'Ukuran' => StorageService::formatBytes((int) $share['file_size']),
+                    'Tipe'   => 'Tautan Tamu Publik',
+                    'IP'     => $ip,
+                ]
+            );
+        }
 
         DownloadService::stream($fullPath, $share['original_name'], $share['mime_type'], $forceDownload);
     }
