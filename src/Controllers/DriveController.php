@@ -427,6 +427,99 @@ class DriveController
         $this->respondJson(['success' => true, 'count' => count($cleanIds)]);
     }
 
+    public function renameFile(): void
+    {
+        $this->validateCsrf();
+        $userId = (int) AuthService::id();
+        $fileId = (int) ($_POST['file_id'] ?? 0);
+        $newName = trim($_POST['name'] ?? '');
+
+        if ($fileId <= 0 || empty($newName)) {
+            $this->respondJson(['success' => false, 'error' => 'Nama berkas tidak boleh kosong.']);
+            return;
+        }
+
+        $newName = str_replace(["\0", '/', '\\', ':', '*', '?', '"', '<', '>', '|'], '', $newName);
+        if (empty($newName)) {
+            $this->respondJson(['success' => false, 'error' => 'Nama berkas mengandung karakter yang tidak diizinkan.']);
+            return;
+        }
+
+        if (StorageService::isDangerousExtension($newName)) {
+            $this->respondJson(['success' => false, 'error' => 'Berkas tidak boleh diubah ke ekstensi skrip (.php, .phar).']);
+            return;
+        }
+
+        $db = Database::getConnection();
+
+        $checkStmt = $db->prepare("SELECT id, original_name FROM files WHERE id = :id AND user_id = :user_id");
+        $checkStmt->execute([':id' => $fileId, ':user_id' => $userId]);
+        $file = $checkStmt->fetch();
+        if (!$file) {
+            $this->respondJson(['success' => false, 'error' => 'Berkas tidak ditemukan atau bukan milik Anda.']);
+            return;
+        }
+
+        $oldExt = pathinfo($file['original_name'], PATHINFO_EXTENSION);
+        $newExt = pathinfo($newName, PATHINFO_EXTENSION);
+
+        if (empty($newExt) && !empty($oldExt)) {
+            $newName .= '.' . $oldExt;
+        }
+
+        $stmt = $db->prepare("UPDATE files SET original_name = :name WHERE id = :id AND user_id = :user_id");
+        $stmt->execute([':name' => $newName, ':id' => $fileId, ':user_id' => $userId]);
+
+        $this->respondJson(['success' => true, 'new_name' => $newName]);
+    }
+
+    public function renameFolder(): void
+    {
+        $this->validateCsrf();
+        $userId = (int) AuthService::id();
+        $folderId = (int) ($_POST['folder_id'] ?? 0);
+        $newName = trim($_POST['name'] ?? '');
+
+        if ($folderId <= 0 || empty($newName)) {
+            $this->respondJson(['success' => false, 'error' => 'Nama folder tidak boleh kosong.']);
+            return;
+        }
+
+        $newName = str_replace(["\0", '/', '\\', ':', '*', '?', '"', '<', '>', '|'], '', $newName);
+        if (empty($newName)) {
+            $this->respondJson(['success' => false, 'error' => 'Nama folder mengandung karakter yang tidak diizinkan.']);
+            return;
+        }
+
+        $db = Database::getConnection();
+
+        $checkStmt = $db->prepare("SELECT id, parent_id FROM folders WHERE id = :id AND user_id = :user_id");
+        $checkStmt->execute([':id' => $folderId, ':user_id' => $userId]);
+        $folder = $checkStmt->fetch();
+        if (!$folder) {
+            $this->respondJson(['success' => false, 'error' => 'Folder tidak ditemukan.']);
+            return;
+        }
+
+        if ($folder['parent_id'] === null) {
+            $dupStmt = $db->prepare("SELECT id FROM folders WHERE user_id = :user_id AND parent_id IS NULL AND name = :name AND id != :id");
+            $dupStmt->execute([':user_id' => $userId, ':name' => $newName, ':id' => $folderId]);
+        } else {
+            $dupStmt = $db->prepare("SELECT id FROM folders WHERE user_id = :user_id AND parent_id = :parent_id AND name = :name AND id != :id");
+            $dupStmt->execute([':user_id' => $userId, ':parent_id' => $folder['parent_id'], ':name' => $newName, ':id' => $folderId]);
+        }
+
+        if ($dupStmt->fetch()) {
+            $this->respondJson(['success' => false, 'error' => 'Folder dengan nama ini sudah ada di lokasi yang sama.']);
+            return;
+        }
+
+        $stmt = $db->prepare("UPDATE folders SET name = :name WHERE id = :id AND user_id = :user_id");
+        $stmt->execute([':name' => $newName, ':id' => $folderId, ':user_id' => $userId]);
+
+        $this->respondJson(['success' => true, 'new_name' => $newName]);
+    }
+
     public function createShare(): void
     {
         $this->validateCsrf();

@@ -74,6 +74,12 @@ switch ($action) {
     case 'delete_folder':
         (new DriveController())->deleteFolder();
         break;
+    case 'rename_file':
+        (new DriveController())->renameFile();
+        break;
+    case 'rename_folder':
+        (new DriveController())->renameFolder();
+        break;
     case 'create_share':
         (new DriveController())->createShare();
         break;

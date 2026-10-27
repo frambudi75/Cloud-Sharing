@@ -185,6 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const btnCopyLink = document.getElementById('ctxBtnCopyLink');
         const btnDownload = document.getElementById('ctxBtnDownload');
         const btnDelete = document.getElementById('ctxBtnDelete');
+        const btnRename = document.getElementById('ctxBtnRename');
 
         if (btnPreview) {
             btnPreview.onclick = () => {
@@ -220,6 +221,13 @@ document.addEventListener('DOMContentLoaded', () => {
             btnDelete.onclick = () => {
                 closeContextMenu();
                 deleteFile(fileId, rawName);
+            };
+        }
+
+        if (btnRename) {
+            btnRename.onclick = () => {
+                closeContextMenu();
+                openRenameModal('file', fileId, rawName);
             };
         }
     };
@@ -449,6 +457,110 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (err) {
             alert('Terjadi kesalahan saat menghapus berkas.');
+        }
+    };
+
+    // =========================================================================
+    // 7b. Rename File & Folder
+    // =========================================================================
+    window.openRenameModal = function (type, id, currentName) {
+        closeContextMenu();
+        const typeInput = document.getElementById('renameType');
+        const idInput = document.getElementById('renameTargetId');
+        const nameInput = document.getElementById('renameInput');
+        const modalTitle = document.getElementById('renameModalTitle');
+        const inputLabel = document.getElementById('renameInputLabel');
+        const helpText = document.getElementById('renameInputHelp');
+
+        if (typeInput) typeInput.value = type;
+        if (idInput) idInput.value = id;
+        if (nameInput) nameInput.value = currentName;
+
+        if (type === 'folder') {
+            if (modalTitle) modalTitle.innerHTML = `
+                <svg class="w-4 h-4 mr-2 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                Ganti Nama Folder
+            `;
+            if (inputLabel) inputLabel.textContent = 'Nama Folder Baru';
+            if (helpText) helpText.textContent = 'Masukkan nama baru untuk folder ini.';
+        } else {
+            if (modalTitle) modalTitle.innerHTML = `
+                <svg class="w-4 h-4 mr-2 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                Ganti Nama Berkas
+            `;
+            if (inputLabel) inputLabel.textContent = 'Nama Berkas Baru';
+            if (helpText) helpText.textContent = 'Ekstensi berkas otomatis dipertahankan jika tidak dicantumkan.';
+        }
+
+        openModal('renameModal');
+
+        if (nameInput) {
+            nameInput.focus();
+            if (type === 'file') {
+                const lastDot = currentName.lastIndexOf('.');
+                if (lastDot > 0) {
+                    nameInput.setSelectionRange(0, lastDot);
+                } else {
+                    nameInput.select();
+                }
+            } else {
+                nameInput.select();
+            }
+        }
+    };
+
+    window.handleRenameSubmit = async function (e) {
+        e.preventDefault();
+        const type = document.getElementById('renameType').value;
+        const targetId = document.getElementById('renameTargetId').value;
+        const nameInput = document.getElementById('renameInput');
+        const newName = nameInput ? nameInput.value.trim() : '';
+        const submitBtn = document.getElementById('btnSubmitRename');
+
+        if (!newName) {
+            alert('Nama tidak boleh kosong.');
+            return;
+        }
+
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Menyimpan...';
+        }
+
+        const formData = new FormData();
+        formData.append('csrf_token', csrfToken);
+        formData.append('name', newName);
+
+        const action = type === 'folder' ? '?action=rename_folder' : '?action=rename_file';
+        if (type === 'folder') {
+            formData.append('folder_id', targetId);
+        } else {
+            formData.append('file_id', targetId);
+        }
+
+        try {
+            const response = await fetch(action, {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+            if (result.success) {
+                showToast(type === 'folder' ? 'Nama folder berhasil diubah!' : 'Nama berkas berhasil diubah!');
+                closeModal('renameModal');
+                setTimeout(() => window.location.reload(), 300);
+            } else {
+                alert(result.error || 'Gagal mengubah nama.');
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Simpan Perubahan';
+                }
+            }
+        } catch (err) {
+            alert('Terjadi kesalahan jaringan saat mengubah nama.');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Simpan Perubahan';
+            }
         }
     };
 
@@ -1341,6 +1453,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const btnDownload = document.getElementById('detailBtnDownload');
         const btnShare = document.getElementById('detailBtnShare');
         const btnDelete = document.getElementById('detailBtnDelete');
+        const btnRename = document.getElementById('detailBtnRename');
 
         if (btnDownload) {
             btnDownload.href = `?action=download_direct&file_id=${fileData.id}`;
@@ -1355,6 +1468,12 @@ document.addEventListener('DOMContentLoaded', () => {
             btnDelete.onclick = () => {
                 closeModal('fileDetailModal');
                 deleteFile(fileData.id, fileData.name);
+            };
+        }
+        if (btnRename) {
+            btnRename.onclick = () => {
+                closeModal('fileDetailModal');
+                openRenameModal('file', fileData.id, fileData.name);
             };
         }
 

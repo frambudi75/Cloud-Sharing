@@ -569,10 +569,16 @@ $totalShared = $totalSharedCount ?? 0;
                                      data-folder-name="<?= htmlspecialchars($folder['name']) ?>">
                                     <div class="flex items-center justify-between">
                                         <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Folder</span>
-                                        <button type="button" onclick="deleteFolder(<?= $folder['id'] ?>, '<?= htmlspecialchars(addslashes($folder['name'])) ?>')" 
-                                                class="text-slate-400 hover:text-red-600 transition-colors p-1 rounded-lg hover:bg-red-50" title="Hapus folder">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                        </button>
+                                        <div class="flex items-center space-x-1">
+                                            <button type="button" onclick="openRenameModal('folder', <?= $folder['id'] ?>, '<?= htmlspecialchars(addslashes($folder['name'])) ?>')"
+                                                    class="text-slate-400 hover:text-brand-600 transition-colors p-1 rounded-lg hover:bg-slate-100" title="Ganti nama folder">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                            </button>
+                                            <button type="button" onclick="deleteFolder(<?= $folder['id'] ?>, '<?= htmlspecialchars(addslashes($folder['name'])) ?>')" 
+                                                    class="text-slate-400 hover:text-red-600 transition-colors p-1 rounded-lg hover:bg-red-50" title="Hapus folder">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                            </button>
+                                        </div>
                                     </div>
 
                                     <!-- Big Centered Folder Icon (Mockup Aligned) -->
@@ -669,6 +675,11 @@ $totalShared = $totalSharedCount ?? 0;
                                                         Salin Link
                                                     </button>
                                                 <?php endif; ?>
+                                                <button type="button" onclick="openRenameModal('file', <?= $file['id'] ?>, '<?= htmlspecialchars(addslashes($file['original_name'])) ?>')" 
+                                                        class="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center text-slate-700">
+                                                    <svg class="w-4 h-4 mr-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                                    Ganti Nama
+                                                </button>
                                                 <div class="my-1 border-t border-slate-100"></div>
                                                 <button type="button" onclick="deleteFile(<?= $file['id'] ?>, '<?= htmlspecialchars(addslashes($file['original_name'])) ?>')" 
                                                         class="w-full text-left px-3.5 py-2 hover:bg-rose-50 text-rose-600 flex items-center">
@@ -819,6 +830,14 @@ $totalShared = $totalSharedCount ?? 0;
                                                             </svg>
                                                         </a>
                                                         <button type="button" 
+                                                                onclick="openRenameModal('file', <?= $file['id'] ?>, '<?= htmlspecialchars(addslashes($file['original_name'])) ?>')" 
+                                                                class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-amber-50 text-slate-600 hover:text-amber-600 border border-slate-200/80 inline-flex items-center justify-center transition-all duration-150 shadow-2xs" 
+                                                                title="Ganti Nama">
+                                                            <svg class="w-3.5 h-3.5" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                                            </svg>
+                                                        </button>
+                                                        <button type="button" 
                                                                 onclick="deleteFile(<?= $file['id'] ?>, '<?= htmlspecialchars(addslashes($file['original_name'])) ?>')" 
                                                                 class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200/80 inline-flex items-center justify-center transition-all duration-150 shadow-2xs" 
                                                                 title="Hapus">
@@ -885,6 +904,10 @@ $totalShared = $totalSharedCount ?? 0;
         <button type="button" id="ctxBtnCopyLink" class="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center text-slate-700">
             <svg class="w-4 h-4 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101"></path></svg>
             Salin Link Berbagi
+        </button>
+        <button type="button" id="ctxBtnRename" class="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center text-slate-700">
+            <svg class="w-4 h-4 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+            Ganti Nama
         </button>
         <a id="ctxBtnDownload" href="#" class="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center text-slate-700">
             <svg class="w-4 h-4 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
@@ -1095,6 +1118,10 @@ $totalShared = $totalSharedCount ?? 0;
                     Hapus
                 </button>
                 <div class="flex items-center space-x-2">
+                    <button type="button" id="detailBtnRename" class="inline-flex items-center px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition-colors">
+                        <svg class="w-4 h-4 mr-1.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        Ganti Nama
+                    </button>
                     <button type="button" id="detailBtnShare" class="inline-flex items-center px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition-colors">
                         <svg class="w-4 h-4 mr-1.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 12a3 3 0 100-6 3 3 0 000 6zM18 6a3 3 0 100-6 3 3 0 000 6zM18 20a3 3 0 100-6 3 3 0 000 6z"></path></svg>
                         Bagikan
@@ -1105,6 +1132,45 @@ $totalShared = $totalSharedCount ?? 0;
                     </a>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- RENAME MODAL (Clean & Minimalist) -->
+    <div id="renameModal" class="modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden animate-item-in">
+            <div class="h-14 px-6 border-b border-slate-100 flex items-center justify-between">
+                <h3 class="text-sm font-bold text-slate-900 flex items-center" id="renameModalTitle">
+                    <svg class="w-4 h-4 mr-2 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    Ganti Nama
+                </h3>
+                <button type="button" onclick="closeModal('renameModal')" class="text-slate-400 hover:text-slate-600 p-1">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <form id="renameForm" onsubmit="handleRenameSubmit(event)" class="p-6 space-y-4">
+                <input type="hidden" id="renameType" value="file">
+                <input type="hidden" id="renameTargetId" value="">
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5" id="renameInputLabel">
+                        Nama Baru
+                    </label>
+                    <input type="text" id="renameInput" required
+                           class="w-full h-11 px-3.5 rounded-xl border border-slate-300 text-slate-900 text-sm focus:border-brand-600 focus:ring-2 focus:ring-brand-500/20 transition-all font-medium">
+                    <p class="text-[11px] text-slate-400 mt-1.5" id="renameInputHelp">Masukkan nama baru tanpa karakter terlarang.</p>
+                </div>
+
+                <div class="flex items-center justify-end space-x-2 pt-2">
+                    <button type="button" onclick="closeModal('renameModal')" 
+                            class="h-10 px-4 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors">
+                        Batal
+                    </button>
+                    <button type="submit" id="btnSubmitRename"
+                            class="h-10 px-5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-xs transition-colors">
+                        Simpan Perubahan
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
