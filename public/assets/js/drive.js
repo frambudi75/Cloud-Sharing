@@ -502,10 +502,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // =========================================================================
-    // 8.1 Drag and Drop File to Folder (Pindahkan Berkas)
+    // 8.1 Drag and Drop File to Folder (Pindahkan Berkas Tunggal maupun Banyak)
     // =========================================================================
     let isInternalFileDrag = false;
-    let draggedFileId = null;
+    let draggedFileIds = [];
     let draggedFileEl = null;
 
     function initFileToFolderDragAndDrop() {
@@ -516,22 +516,49 @@ document.addEventListener('DOMContentLoaded', () => {
             fileEl.addEventListener('dragstart', (e) => {
                 isInternalFileDrag = true;
                 draggedFileEl = fileEl;
-                draggedFileId = fileEl.getAttribute('data-id');
-                
-                if (e.dataTransfer) {
-                    e.dataTransfer.effectAllowed = 'move';
-                    e.dataTransfer.setData('text/plain', draggedFileId || '');
+                const singleId = fileEl.getAttribute('data-id');
+
+                // Cek apakah ada checkbox yang sedang dicentang
+                const checkedBoxes = Array.from(document.querySelectorAll('.file-select-checkbox:checked'));
+                const checkedIds = Array.from(new Set(checkedBoxes.map(cb => cb.getAttribute('data-id'))));
+
+                // Jika file yang di-drag termasuk dalam file yang dicentang, pindahkan semua file yang dicentang!
+                if (checkedIds.length > 0 && checkedIds.includes(singleId)) {
+                    draggedFileIds = checkedIds;
+                } else if (checkedIds.length > 0 && !checkedIds.includes(singleId)) {
+                    // Jika file yang di-drag belum dicentang, sertakan file ini juga
+                    draggedFileIds = [singleId];
+                } else {
+                    draggedFileIds = [singleId];
                 }
 
-                fileEl.classList.add('opacity-40', 'scale-[0.98]', 'border-brand-400');
+                if (e.dataTransfer) {
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', JSON.stringify(draggedFileIds));
+                }
+
+                // Beri efek visual pada semua file yang ikut ditarik
+                draggedFileIds.forEach(id => {
+                    document.querySelectorAll(`.draggable-file[data-id="${id}"]`).forEach(el => {
+                        el.classList.add('opacity-40', 'scale-[0.98]', 'border-brand-400');
+                    });
+                });
+
+                if (draggedFileIds.length > 1) {
+                    showToast(`Menarik ${draggedFileIds.length} berkas sekaligus...`);
+                }
             });
 
             fileEl.addEventListener('dragend', () => {
                 isInternalFileDrag = false;
                 draggedFileEl = null;
-                draggedFileId = null;
 
-                fileEl.classList.remove('opacity-40', 'scale-[0.98]', 'border-brand-400');
+                // Kembalikan efek visual
+                document.querySelectorAll('.draggable-file').forEach(el => {
+                    el.classList.remove('opacity-40', 'scale-[0.98]', 'border-brand-400');
+                });
+                draggedFileIds = [];
+
                 folderDropZones.forEach(f => {
                     f.classList.remove('ring-2', 'ring-brand-500', 'bg-brand-50/70', 'scale-[1.02]');
                 });
@@ -562,18 +589,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 folderEl.classList.remove('ring-2', 'ring-brand-500', 'bg-brand-50/70', 'scale-[1.02]');
 
-                const fileId = (e.dataTransfer ? e.dataTransfer.getData('text/plain') : '') || draggedFileId;
+                let targetFileIds = [];
+                try {
+                    const rawData = e.dataTransfer ? e.dataTransfer.getData('text/plain') : '';
+                    if (rawData.startsWith('[')) {
+                        targetFileIds = JSON.parse(rawData);
+                    } else if (rawData) {
+                        targetFileIds = [rawData];
+                    }
+                } catch (err) {
+                    targetFileIds = draggedFileIds;
+                }
+
+                if (!targetFileIds || targetFileIds.length === 0) {
+                    targetFileIds = draggedFileIds;
+                }
+
                 const folderId = folderEl.getAttribute('data-folder-id');
                 const folderName = folderEl.getAttribute('data-folder-name') || 'Folder';
 
-                if (!fileId) return;
+                if (!targetFileIds || targetFileIds.length === 0) return;
 
-                showToast(`Memindahkan ke ${folderName}...`);
+                const countText = targetFileIds.length > 1 ? `${targetFileIds.length} berkas` : 'berkas';
+                showToast(`Memindahkan ${countText} ke ${folderName}...`);
 
                 try {
                     const formData = new FormData();
                     formData.append('csrf_token', csrfToken);
-                    formData.append('file_id', fileId);
+                    formData.append('file_ids', JSON.stringify(targetFileIds));
                     if (folderId && folderId !== 'root') {
                         formData.append('folder_id', folderId);
                     }
@@ -585,7 +628,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     const res = await response.json();
                     if (res.success) {
-                        showToast(`Berkas berhasil dipindahkan ke ${folderName}!`);
+                        showToast(`${targetFileIds.length} berkas berhasil dipindahkan ke ${folderName}!`);
                         setTimeout(() => {
                             window.location.reload();
                         }, 500);

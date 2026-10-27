@@ -381,24 +381,32 @@ class DriveController
     {
         $this->validateCsrf();
         $userId = (int) AuthService::id();
-        $fileId = (int) ($_POST['file_id'] ?? 0);
+
+        // Dukung pemindahan berkas tunggal maupun banyak sekaligus (bulk drag & drop)
+        $fileIds = [];
+        if (!empty($_POST['file_ids'])) {
+            $raw = $_POST['file_ids'];
+            if (is_string($raw)) {
+                $decoded = json_decode($raw, true);
+                if (is_array($decoded)) $fileIds = $decoded;
+            } elseif (is_array($raw)) {
+                $fileIds = $raw;
+            }
+        }
+        if (empty($fileIds) && !empty($_POST['file_id'])) {
+            $fileIds = [(int)$_POST['file_id']];
+        }
+
         $folderId = isset($_POST['folder_id']) && $_POST['folder_id'] !== '' && $_POST['folder_id'] !== 'root' && is_numeric($_POST['folder_id'])
             ? (int) $_POST['folder_id']
             : null;
 
-        if ($fileId <= 0) {
-            $this->respondJson(['success' => false, 'error' => 'Berkas tidak valid.']);
+        if (empty($fileIds)) {
+            $this->respondJson(['success' => false, 'error' => 'Tidak ada berkas yang dipilih.']);
             return;
         }
 
         $db = Database::getConnection();
-
-        $checkFile = $db->prepare("SELECT id, original_name FROM files WHERE id = :id AND user_id = :user_id");
-        $checkFile->execute([':id' => $fileId, ':user_id' => $userId]);
-        if (!$checkFile->fetch()) {
-            $this->respondJson(['success' => false, 'error' => 'Berkas tidak ditemukan.']);
-            return;
-        }
 
         if ($folderId !== null) {
             $checkFolder = $db->prepare("SELECT id, name FROM folders WHERE id = :id AND user_id = :user_id");
@@ -409,14 +417,14 @@ class DriveController
             }
         }
 
-        $stmt = $db->prepare("UPDATE files SET folder_id = :folder_id WHERE id = :file_id AND user_id = :user_id");
-        $stmt->execute([
-            ':folder_id' => $folderId,
-            ':file_id'   => $fileId,
-            ':user_id'   => $userId,
-        ]);
+        $cleanIds = array_map('intval', $fileIds);
+        $placeholders = implode(',', array_fill(0, count($cleanIds), '?'));
+        $sql = "UPDATE files SET folder_id = ? WHERE user_id = ? AND id IN ($placeholders)";
+        $params = array_merge([$folderId, $userId], $cleanIds);
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
 
-        $this->respondJson(['success' => true]);
+        $this->respondJson(['success' => true, 'count' => count($cleanIds)]);
     }
 
     public function createShare(): void
