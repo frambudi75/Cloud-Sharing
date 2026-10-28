@@ -121,6 +121,23 @@ CREATE TABLE IF NOT EXISTS `system_settings` (
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 8. Tabel Activity Logs (Audit Trail & Log Aktivitas)
+CREATE TABLE IF NOT EXISTS `activity_logs` (
+    `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `user_id` BIGINT UNSIGNED NULL,
+    `action` VARCHAR(50) NOT NULL,
+    `file_id` BIGINT UNSIGNED NULL,
+    `file_name` VARCHAR(255) NOT NULL,
+    `details` TEXT NULL,
+    `ip_address` VARCHAR(45) NOT NULL,
+    `user_agent` TEXT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT `fk_activity_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+    INDEX `idx_activity_user_time` (`user_id`, `created_at`),
+    INDEX `idx_activity_action` (`action`),
+    INDEX `idx_activity_file` (`file_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Default Admin Account:
 INSERT INTO `users` (`username`, `email`, `password_hash`, `role`, `storage_quota`, `storage_used`, `status`)
 VALUES (

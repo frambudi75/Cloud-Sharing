@@ -2,7 +2,15 @@
 
 Semua perubahan pada spesifikasi dan implementasi proyek file-sharing akan dicatat di dokumen ini.
 
-## [Unreleased] - 2026-10-28
+## [Unreleased] - 2026-10-29
+### Ditambahkan & Ditingkatkan
+- **Log Aktivitas & Riwayat Unduhan Lengkap (Activity & Audit Trail) (`?action=drive&tab=activity_logs`)**:
+  - Tabel dan skema baru `activity_logs` dengan migrasi *self-healing* otomatis di `Database::ensureSchema()` dan `Database::repairSchema()`.
+  - Service `ActivityLogService` untuk pencatatan otomatis seluruh peristiwa: unggah berkas (langsung & resumable chunk), unduh langsung, unduh tautan publik tamu (lengkap dengan IP dan User-Agent), buat catatan/kode teks kilat, edit teks, buat/hapus folder, duplikat berkas, ganti nama berkas/folder, pemindahan berkas (drag-and-drop), berbagi ke teman, pencabutan tautan, pembuangan ke sampah, dan pemulihan berkas.
+  - Tampilan dashboard audit trail terpadu di Drive (`?action=drive&tab=activity_logs`) dengan 4 kartu statistik KPI (*Total Aktivitas*, *Unduhan Hari Ini*, *Unggahan Hari Ini*, *Berkas Terpopuler*), filter chip interaktif per jenis aksi, pencarian berkas/IP, badge warna visual, deteksi perangkat/browser otomatis, format waktu lampau humanis, dan paginasi.
+  - Pintasan cepat di sidebar navigasi Drive, dropdown profil pengguna, dan Command Palette (`Ctrl + K`).
+
+## [2026-10-28]
 ### Ditambahkan & Ditingkatkan
 - **Halaman Tentang Aplikasi & Pengembang (`?action=about`) + Kartu Info Developer di Pengaturan Server**:
   - Halaman informasi aplikasi lengkap (`src/Views/system/about.php`) berisi spesifikasi arsitektur, daftar 8 modul fitur utama, pintasan keyboard, serta profil pengembang **Habib Frambudi** (`@frambudi75` — `https://github.com/frambudi75` & `https://github.com/frambudi75/Cloud-Sharing`).

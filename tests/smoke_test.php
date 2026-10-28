@@ -55,4 +55,17 @@ assert(WebhookService::trigger('upload', 'Judul', 'Deskripsi') === false, 'Webho
 assert(WebhookService::trigger('invalid_event', 'Judul', 'Deskripsi') === false, 'Webhook dengan event tidak valid harus false');
 echo "[PASS] SettingService dan WebhookService safe execution terverifikasi.\n";
 
+// 6. Uji ActivityLogService Metadata & Formatting
+use App\Services\ActivityLogService;
+
+$badge = ActivityLogService::getActionBadge('upload');
+assert(!empty($badge['label']) && !empty($badge['color']), 'Badge upload harus memiliki label dan color');
+
+$dev = ActivityLogService::parseDevice('Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/115.0.0.0');
+assert($dev['device'] === 'Windows PC' && $dev['browser'] === 'Google Chrome', 'Device parser harus mendeteksi Windows PC & Chrome');
+
+$timeAgo = ActivityLogService::formatTimeAgo(date('Y-m-d H:i:s'));
+assert($timeAgo === 'Baru saja', 'formatTimeAgo waktu saat ini harus Baru saja');
+echo "[PASS] ActivityLogService metadata, parser, dan formatting terverifikasi.\n";
+
 echo "Semua smoke test berhasil dilewati dengan sempurna (All tests passed)!\n";

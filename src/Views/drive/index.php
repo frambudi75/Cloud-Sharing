@@ -208,6 +208,10 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                                 </span>
                                 <span class="text-[10px] font-mono text-brand-600 font-bold"><?= $quotaPercentage ?>%</span>
                             </a>
+                            <a href="?action=drive&tab=activity_logs" class="flex items-center px-4 py-2 hover:bg-slate-50 text-slate-700">
+                                <svg class="w-4 h-4 mr-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                Log Aktivitas & Audit
+                            </a>
                             <a href="?action=about" class="flex items-center px-4 py-2 hover:bg-slate-50 text-slate-700">
                                 <svg class="w-4 h-4 mr-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                 Tentang & Info Developer
@@ -304,6 +308,17 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                             </svg>
                             Analisis Kuota
+                        </span>
+                    </a>
+
+                    <!-- Log Aktivitas & Riwayat Unduhan -->
+                    <a href="?action=drive&tab=activity_logs" 
+                       class="flex items-center justify-between px-3.5 py-2.5 text-xs font-semibold rounded-xl transition-all <?= $activeTab === 'activity_logs' ? 'sidebar-nav-active' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' ?>">
+                        <span class="flex items-center">
+                            <svg class="w-4 h-4 mr-3 <?= $activeTab === 'activity_logs' ? 'text-brand-600' : 'text-slate-400' ?>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Log Aktivitas
                         </span>
                     </a>
 
@@ -990,6 +1005,212 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                                         </tbody>
                                     </table>
                                 </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                <!-- ========================================================= -->
+                <!-- CONTENT 1C: TAB LOG AKTIVITAS & RIWAYAT UNDUHAN (AUDIT)   -->
+                <!-- ========================================================= -->
+                <?php elseif ($activeTab === 'activity_logs'): ?>
+
+                    <div class="space-y-4 animate-item-in">
+                        <!-- 4 Stat Summary Cards -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                            <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs flex items-center space-x-3.5">
+                                <div class="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center shrink-0 border border-brand-100">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Aktivitas</div>
+                                    <div class="text-xl font-extrabold text-slate-900 font-mono"><?= number_format($activityStats['total_events'] ?? 0) ?></div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs flex items-center space-x-3.5">
+                                <div class="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center shrink-0 border border-cyan-100">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Unduhan Hari Ini</div>
+                                    <div class="text-xl font-extrabold text-cyan-600 font-mono"><?= number_format($activityStats['downloads_today'] ?? 0) ?></div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs flex items-center space-x-3.5">
+                                <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Unggahan Hari Ini</div>
+                                    <div class="text-xl font-extrabold text-emerald-600 font-mono"><?= number_format($activityStats['uploads_today'] ?? 0) ?></div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs flex items-center space-x-3.5">
+                                <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 border border-purple-100">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Berkas Terpopuler</div>
+                                    <div class="text-xs font-bold text-slate-800 truncate" title="<?= htmlspecialchars($activityStats['most_active_file'] ?? '-') ?>">
+                                        <?= htmlspecialchars($activityStats['most_active_file'] ?? '-') ?>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Filter Chips & Search Toolbar -->
+                        <div class="bg-white border border-slate-200/80 rounded-2xl p-3 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+                            <div class="flex items-center space-x-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none text-xs">
+                                <?php
+                                $chips = [
+                                    'all'              => 'Semua',
+                                    'upload'           => 'Unggah',
+                                    'download'         => 'Unduh Langsung',
+                                    'public_download'  => 'Unduh Publik',
+                                    'share_public'     => 'Tautan Publik',
+                                    'share_user'       => 'Berbagi Teman',
+                                    'edit_text'        => 'Edit Berkas',
+                                    'delete'           => 'Sampah',
+                                    'restore'          => 'Pulihkan'
+                                ];
+                                ?>
+                                <?php foreach ($chips as $key => $title): ?>
+                                    <a href="?action=drive&tab=activity_logs&action_type=<?= $key ?><?= !empty($search) ? '&search=' . urlencode($search) : '' ?>"
+                                       class="px-3 py-1.5 rounded-xl font-bold transition-all shrink-0 <?= $filterAction === $key ? 'bg-brand-600 text-white shadow-xs' : 'bg-slate-100 hover:bg-slate-200 text-slate-600' ?>">
+                                        <?= $title ?>
+                                    </a>
+                                <?php endforeach; ?>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <form method="GET" action="" class="flex items-center gap-2 w-full md:w-auto">
+                                    <input type="hidden" name="action" value="drive">
+                                    <input type="hidden" name="tab" value="activity_logs">
+                                    <input type="hidden" name="action_type" value="<?= htmlspecialchars($filterAction) ?>">
+                                    <div class="relative w-full md:w-56">
+                                        <input type="text" name="search" value="<?= htmlspecialchars($search ?? '') ?>" placeholder="Cari berkas / IP..." 
+                                               class="w-full h-8 pl-8 pr-3 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:outline-none focus:ring-1 focus:ring-brand-500">
+                                        <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                    </div>
+                                    <button type="submit" class="h-8 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors">
+                                        Cari
+                                    </button>
+                                </form>
+                                <?php if (!empty($search) || $filterAction !== 'all'): ?>
+                                    <a href="?action=drive&tab=activity_logs" class="h-8 px-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold inline-flex items-center transition-colors" title="Reset Filter">
+                                        Reset
+                                    </a>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+
+                        <!-- Logs Table Card -->
+                        <div class="bg-white border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden">
+                            <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <h3 class="text-sm font-bold text-slate-900">Kronologi Aktivitas & Unduhan</h3>
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 font-mono">
+                                        <?= number_format($activityTotal) ?> Catatan
+                                    </span>
+                                </div>
+                                <div class="text-[11px] text-slate-400">
+                                    Menampilkan 50 entri per halaman
+                                </div>
+                            </div>
+
+                            <?php if (empty($activityLogs)): ?>
+                                <div class="py-16 text-center">
+                                    <div class="w-16 h-16 mx-auto rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mb-3">
+                                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    </div>
+                                    <h4 class="text-sm font-bold text-slate-800">Belum Ada Aktivitas Terekam</h4>
+                                    <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                                        Setiap tindakan seperti mengunggah, mengunduh, berbagi ke teman, atau unduhan dari tautan publik akan tercatat rapi di sini.
+                                    </p>
+                                </div>
+                            <?php else: ?>
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr class="border-b border-slate-100 bg-slate-50/70 text-[11px] font-bold uppercase text-slate-400 tracking-wider">
+                                                <th class="py-3 px-4">Tindakan</th>
+                                                <th class="py-3 px-4">Nama Berkas & Detail</th>
+                                                <th class="py-3 px-4">IP & Perangkat</th>
+                                                <th class="py-3 px-4 text-right">Waktu</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-slate-100 text-xs">
+                                            <?php foreach ($activityLogs as $log): ?>
+                                                <?php 
+                                                $badge = ActivityLogService::getActionBadge($log['action']); 
+                                                $devInfo = ActivityLogService::parseDevice($log['user_agent']);
+                                                ?>
+                                                <tr class="hover:bg-slate-50/60 transition-colors">
+                                                    <td class="py-3 px-4 whitespace-nowrap">
+                                                        <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold <?= $badge['color'] ?>">
+                                                            <span class="w-1.5 h-1.5 rounded-full mr-1.5 <?= $badge['dot'] ?>"></span>
+                                                            <?= $badge['label'] ?>
+                                                        </span>
+                                                    </td>
+                                                    <td class="py-3 px-4">
+                                                        <div class="font-bold text-slate-900 break-all max-w-md">
+                                                            <?= htmlspecialchars($log['file_name']) ?>
+                                                        </div>
+                                                        <?php if (!empty($log['details'])): ?>
+                                                            <div class="text-[11px] text-slate-500 mt-0.5">
+                                                                <?= htmlspecialchars($log['details']) ?>
+                                                            </div>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                    <td class="py-3 px-4 whitespace-nowrap">
+                                                        <div class="flex items-center space-x-1.5">
+                                                            <span class="font-mono text-[11px] font-bold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded">
+                                                                <?= htmlspecialchars($log['ip_address']) ?>
+                                                            </span>
+                                                        </div>
+                                                        <div class="text-[10px] text-slate-400 mt-0.5">
+                                                            <?= htmlspecialchars($devInfo['device']) ?> &bull; <?= htmlspecialchars($devInfo['browser']) ?>
+                                                        </div>
+                                                    </td>
+                                                    <td class="py-3 px-4 text-right whitespace-nowrap">
+                                                        <div class="font-semibold text-slate-800" title="<?= $log['created_at'] ?>">
+                                                            <?= ActivityLogService::formatTimeAgo($log['created_at']) ?>
+                                                        </div>
+                                                        <div class="text-[10px] font-mono text-slate-400 mt-0.5">
+                                                            <?= date('d M Y, H:i', strtotime($log['created_at'])) ?>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Pagination (if needed) -->
+                                <?php $totalPages = ceil($activityTotal / $logLimit); ?>
+                                <?php if ($totalPages > 1): ?>
+                                    <div class="p-3 bg-slate-50/60 border-t border-slate-100 flex items-center justify-between text-xs">
+                                        <div class="text-slate-500 text-[11px]">
+                                            Halaman <b><?= $logPage ?></b> dari <b><?= $totalPages ?></b>
+                                        </div>
+                                        <div class="flex items-center space-x-1.5">
+                                            <?php if ($logPage > 1): ?>
+                                                <a href="?action=drive&tab=activity_logs&log_page=<?= $logPage - 1 ?>&action_type=<?= htmlspecialchars($filterAction) ?><?= !empty($search) ? '&search=' . urlencode($search) : '' ?>"
+                                                   class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 font-semibold transition-colors">
+                                                    &larr; Sebelumnya
+                                                </a>
+                                            <?php endif; ?>
+                                            <?php if ($logPage < $totalPages): ?>
+                                                <a href="?action=drive&tab=activity_logs&log_page=<?= $logPage + 1 ?>&action_type=<?= htmlspecialchars($filterAction) ?><?= !empty($search) ? '&search=' . urlencode($search) : '' ?>"
+                                                   class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 font-semibold transition-colors">
+                                                    Selanjutnya &rarr;
+                                                </a>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
                             <?php endif; ?>
                         </div>
                     </div>

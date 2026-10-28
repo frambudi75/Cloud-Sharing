@@ -197,6 +197,14 @@ class StorageService
 
             $db->commit();
 
+            ActivityLogService::log(
+                $userId,
+                'upload',
+                $originalName,
+                'Ukuran: ' . self::formatBytes($fileSize) . ' | Tipe: ' . $mimeType,
+                $fileId
+            );
+
             WebhookService::trigger('upload', 'Berkas Baru Diunggah', "Berkas `{$originalName}` berhasil disimpan ke drive.", [
                 'Nama Berkas' => $originalName,
                 'Ukuran'      => self::formatBytes($fileSize),
@@ -314,6 +322,14 @@ class StorageService
 
             $db->commit();
 
+            ActivityLogService::log(
+                $userId,
+                'upload',
+                $originalName,
+                'Unggah chunk resumable (' . self::formatBytes($fileSize) . ')',
+                $fileId
+            );
+
             WebhookService::trigger('upload', 'Berkas Baru Diunggah', "Berkas `{$originalName}` berhasil digabungkan dan disimpan.", [
                 'Nama Berkas' => $originalName,
                 'Ukuran'      => self::formatBytes($fileSize),
@@ -373,6 +389,14 @@ class StorageService
             $updateQuotaStmt->execute([':size' => (int) $file['file_size'], ':user_id' => $userId]);
 
             $db->commit();
+
+            ActivityLogService::log(
+                $userId,
+                'permanent_delete',
+                $file['original_name'],
+                'Hapus permanen berkas (' . self::formatBytes((int)$file['file_size']) . ')',
+                $fileId
+            );
 
             // Hapus file fisik dari disk
             if (file_exists($fullPath)) {

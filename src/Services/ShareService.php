@@ -170,6 +170,29 @@ class ShareService
             if (!empty($token)) {
                 CacheService::delete("share:{$token}");
             }
+
+            try {
+                $shareStmt = $db->prepare("
+                    SELECT s.user_id, s.file_id, s.share_token, f.original_name, f.file_size
+                    FROM share_links s
+                    INNER JOIN files f ON s.file_id = f.id
+                    WHERE s.id = :id
+                ");
+                $shareStmt->execute([':id' => $shareId]);
+                $shareInfo = $shareStmt->fetch();
+                if ($shareInfo) {
+                    ActivityLogService::log(
+                        (int) $shareInfo['user_id'],
+                        'public_download',
+                        $shareInfo['original_name'],
+                        "Unduhan tautan publik (Token: " . substr($shareInfo['share_token'], 0, 8) . "...) dari IP " . $ip,
+                        (int) $shareInfo['file_id'],
+                        $ip,
+                        $userAgent
+                    );
+                }
+            } catch (\Throwable $ignored) {
+            }
         } catch (\Exception $e) {
             $db->rollBack();
         }

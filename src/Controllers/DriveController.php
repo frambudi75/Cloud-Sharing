@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Config\Database;
+use App\Services\ActivityLogService;
 use App\Services\AuthService;
 use App\Services\DownloadService;
 use App\Services\ShareService;
@@ -45,6 +46,12 @@ class DriveController
         $myPublicShares = ShareService::getUserPublicShares($userId);
         $myPublicSharesCount = count($myPublicShares);
         $breadcrumbs = [['id' => null, 'name' => 'Drive Saya']];
+        $activityLogs = [];
+        $activityTotal = 0;
+        $activityStats = [];
+        $filterAction = 'all';
+        $logPage = 1;
+        $logLimit = 50;
 
         if ($activeTab === 'my_shares') {
             $breadcrumbs = [['id' => null, 'name' => 'Tautan Publik Saya']];
@@ -132,6 +139,19 @@ class DriveController
             ");
             $trashFilesStmt->execute([':user_id' => $userId]);
             $files = $trashFilesStmt->fetchAll();
+        } elseif ($activeTab === 'activity_logs') {
+            // Tab Log Aktivitas & Riwayat Unduhan (Audit Trail)
+            $breadcrumbs = [['id' => null, 'name' => 'Log Aktivitas & Riwayat Unduhan']];
+            $filterAction = trim($_GET['action_type'] ?? 'all');
+            $logPage = max(1, (int) ($_GET['log_page'] ?? 1));
+            $logLimit = 50;
+            $logOffset = ($logPage - 1) * $logLimit;
+
+            $activityLogs = ActivityLogService::getUserLogs($userId, $logLimit, $logOffset, $filterAction, $search);
+            $activityTotal = ActivityLogService::countUserLogs($userId, $filterAction, $search);
+            $activityStats = ActivityLogService::getUserLogStats($userId);
+            $files = [];
+            $folders = [];
         } else {
             // Tab Drive Saya (Default)
             $currentFolder = null;
@@ -293,6 +313,8 @@ class DriveController
         $insertStmt = $db->prepare("INSERT INTO folders (user_id, parent_id, name) VALUES (:user_id, :parent_id, :name)");
         $insertStmt->execute([':user_id' => $userId, ':parent_id' => $parentId, ':name' => $name]);
 
+        ActivityLogService::log($userId, 'create_folder', $name, $parentId ? "Di dalam subfolder ID: {$parentId}" : "Di folder utama (Root)");
+
         $this->respondJson(['success' => true]);
     }
 
@@ -430,8 +452,14 @@ class DriveController
         $fileId = (int) ($_POST['file_id'] ?? 0);
 
         $db = Database::getConnection();
+        $fStmt = $db->prepare("SELECT original_name FROM files WHERE id = :id AND user_id = :user_id");
+        $fStmt->execute([':id' => $fileId, ':user_id' => $userId]);
+        $fName = $fStmt->fetchColumn() ?: "Berkas #{$fileId}";
+
         $stmt = $db->prepare("UPDATE files SET deleted_at = NOW() WHERE id = :id AND user_id = :user_id");
         $stmt->execute([':id' => $fileId, ':user_id' => $userId]);
+
+        ActivityLogService::log($userId, 'delete', $fName, 'Dipindahkan ke keranjang sampah', $fileId);
 
         $this->respondJson(['success' => true]);
     }
@@ -460,6 +488,8 @@ class DriveController
         $stmt = $db->prepare("UPDATE files SET deleted_at = NOW() WHERE user_id = ? AND id IN ($placeholders)");
         $stmt->execute(array_merge([$userId], $cleanIds));
 
+        ActivityLogService::log($userId, 'delete', count($cleanIds) . ' berkas sekaligus', 'Dipindahkan ke keranjang sampah secara massal');
+
         $this->respondJson(['success' => true, 'count' => count($cleanIds)]);
     }
 
@@ -470,8 +500,14 @@ class DriveController
         $folderId = (int) ($_POST['folder_id'] ?? 0);
 
         $db = Database::getConnection();
+        $fldStmt = $db->prepare("SELECT name FROM folders WHERE id = :id AND user_id = :user_id");
+        $fldStmt->execute([':id' => $folderId, ':user_id' => $userId]);
+        $fldName = $fldStmt->fetchColumn() ?: "Folder #{$folderId}";
+
         $stmt = $db->prepare("UPDATE folders SET deleted_at = NOW() WHERE id = :id AND user_id = :user_id");
         $stmt->execute([':id' => $folderId, ':user_id' => $userId]);
+
+        ActivityLogService::log($userId, 'delete', $fldName, 'Folder dipindahkan ke keranjang sampah');
 
         $this->respondJson(['success' => true]);
     }
@@ -483,8 +519,14 @@ class DriveController
         $fileId = (int) ($_POST['file_id'] ?? 0);
 
         $db = Database::getConnection();
+        $fStmt = $db->prepare("SELECT original_name FROM files WHERE id = :id AND user_id = :user_id");
+        $fStmt->execute([':id' => $fileId, ':user_id' => $userId]);
+        $fName = $fStmt->fetchColumn() ?: "Berkas #{$fileId}";
+
         $stmt = $db->prepare("UPDATE files SET deleted_at = NULL WHERE id = :id AND user_id = :user_id");
         $stmt->execute([':id' => $fileId, ':user_id' => $userId]);
+
+        ActivityLogService::log($userId, 'restore', $fName, 'Dipulihkan dari keranjang sampah', $fileId);
 
         $this->respondJson(['success' => true]);
     }
@@ -496,8 +538,14 @@ class DriveController
         $folderId = (int) ($_POST['folder_id'] ?? 0);
 
         $db = Database::getConnection();
+        $fldStmt = $db->prepare("SELECT name FROM folders WHERE id = :id AND user_id = :user_id");
+        $fldStmt->execute([':id' => $folderId, ':user_id' => $userId]);
+        $fldName = $fldStmt->fetchColumn() ?: "Folder #{$folderId}";
+
         $stmt = $db->prepare("UPDATE folders SET deleted_at = NULL WHERE id = :id AND user_id = :user_id");
         $stmt->execute([':id' => $folderId, ':user_id' => $userId]);
+
+        ActivityLogService::log($userId, 'restore', $fldName, 'Folder dipulihkan dari keranjang sampah');
 
         $this->respondJson(['success' => true]);
     }
@@ -638,6 +686,8 @@ class DriveController
         header('Cache-Control: private, no-transform');
         header('X-Accel-Buffering: no');
 
+        ActivityLogService::log($userId, 'download', $folder['name'] . '.zip', "Unduh seluruh folder sebagai arsip ZIP");
+
         readfile($tempZipPath);
         @unlink($tempZipPath);
         exit;
@@ -674,13 +724,16 @@ class DriveController
 
         $db = Database::getConnection();
 
+        $targetFolderName = 'Folder Utama (Root)';
         if ($folderId !== null) {
             $checkFolder = $db->prepare("SELECT id, name FROM folders WHERE id = :id AND user_id = :user_id");
             $checkFolder->execute([':id' => $folderId, ':user_id' => $userId]);
-            if (!$checkFolder->fetch()) {
+            $foundFld = $checkFolder->fetch();
+            if (!$foundFld) {
                 $this->respondJson(['success' => false, 'error' => 'Folder tujuan tidak ditemukan.']);
                 return;
             }
+            $targetFolderName = $foundFld['name'];
         }
 
         $cleanIds = array_map('intval', $fileIds);
@@ -689,6 +742,8 @@ class DriveController
         $params = array_merge([$folderId, $userId], $cleanIds);
         $stmt = $db->prepare($sql);
         $stmt->execute($params);
+
+        ActivityLogService::log($userId, 'move', count($cleanIds) . ' berkas dipindahkan', "Pindah ke {$targetFolderName}");
 
         $this->respondJson(['success' => true, 'count' => count($cleanIds)]);
     }
@@ -736,6 +791,8 @@ class DriveController
         $stmt = $db->prepare("UPDATE files SET original_name = :name WHERE id = :id AND user_id = :user_id");
         $stmt->execute([':name' => $newName, ':id' => $fileId, ':user_id' => $userId]);
 
+        ActivityLogService::log($userId, 'rename', $newName, "Nama berkas sebelumnya: {$file['original_name']}", $fileId);
+
         $this->respondJson(['success' => true, 'new_name' => $newName]);
     }
 
@@ -759,7 +816,7 @@ class DriveController
 
         $db = Database::getConnection();
 
-        $checkStmt = $db->prepare("SELECT id, parent_id FROM folders WHERE id = :id AND user_id = :user_id");
+        $checkStmt = $db->prepare("SELECT id, parent_id, name FROM folders WHERE id = :id AND user_id = :user_id");
         $checkStmt->execute([':id' => $folderId, ':user_id' => $userId]);
         $folder = $checkStmt->fetch();
         if (!$folder) {
@@ -782,6 +839,8 @@ class DriveController
 
         $stmt = $db->prepare("UPDATE folders SET name = :name WHERE id = :id AND user_id = :user_id");
         $stmt->execute([':name' => $newName, ':id' => $folderId, ':user_id' => $userId]);
+
+        ActivityLogService::log($userId, 'rename', $newName, "Nama folder sebelumnya: " . ($folder['name'] ?? ''), null);
 
         $this->respondJson(['success' => true, 'new_name' => $newName]);
     }
@@ -827,6 +886,10 @@ class DriveController
         $result = StorageService::storeMergedFile($tempCopy, $copyName, $userId, $folderId);
         if (file_exists($tempCopy)) {
             @unlink($tempCopy);
+        }
+
+        if ($result['success'] ?? false) {
+            ActivityLogService::log($userId, 'duplicate', $copyName, "Disalin dari {$source['original_name']}", $result['file_id'] ?? null);
         }
 
         $this->respondJson($result);
@@ -877,6 +940,10 @@ class DriveController
         $result = StorageService::storeMergedFile($tempFile, $cleanName, $userId, $folderId);
         if (file_exists($tempFile)) {
             @unlink($tempFile);
+        }
+
+        if ($result['success'] ?? false) {
+            ActivityLogService::log($userId, 'create_text', $cleanName, 'Berkas catatan dibuat via editor kilat', $result['file_id'] ?? null);
         }
 
         $this->respondJson($result);
@@ -951,6 +1018,8 @@ class DriveController
 
             $db->commit();
 
+            ActivityLogService::log($userId, 'edit_text', $file['original_name'], "Diperbarui via editor kilat (" . StorageService::formatBytes($newSize) . ")", $fileId);
+
             $this->respondJson([
                 'success'        => true,
                 'file_id'        => $fileId,
@@ -974,6 +1043,15 @@ class DriveController
         $allowPreview = isset($_POST['allow_preview']) && (int) $_POST['allow_preview'] === 1;
 
         $result = ShareService::createShareLink($fileId, $userId, $password ?: null, $expiry, $maxDownloads, $allowPreview);
+
+        if ($result['success'] ?? false) {
+            $db = Database::getConnection();
+            $fStmt = $db->prepare("SELECT original_name FROM files WHERE id = :id");
+            $fStmt->execute([':id' => $fileId]);
+            $fName = $fStmt->fetchColumn() ?: "Berkas #{$fileId}";
+            ActivityLogService::log($userId, 'share_public', $fName, "Tautan berbagi publik dibuat (Kedaluwarsa: {$expiry})", $fileId);
+        }
+
         $this->respondJson($result);
     }
 
@@ -989,6 +1067,10 @@ class DriveController
             $ok = ShareService::revokeShare($shareId, $userId);
         } elseif ($fileId > 0) {
             $ok = ShareService::revokeShareByFileId($fileId, $userId);
+        }
+
+        if ($ok) {
+            ActivityLogService::log($userId, 'revoke_share', "Tautan Berbagi", "Tautan berbagi publik dinonaktifkan", $fileId ?: null);
         }
 
         $this->respondJson([
@@ -1008,6 +1090,18 @@ class DriveController
         $permission = trim($_POST['permission'] ?? 'download');
 
         $result = ShareService::shareWithUser($fileId, $byUserId, $withUserId, $permission);
+
+        if ($result['success'] ?? false) {
+            $db = Database::getConnection();
+            $fStmt = $db->prepare("SELECT original_name FROM files WHERE id = :id");
+            $fStmt->execute([':id' => $fileId]);
+            $fName = $fStmt->fetchColumn() ?: "Berkas #{$fileId}";
+            $uStmt = $db->prepare("SELECT username FROM users WHERE id = :id");
+            $uStmt->execute([':id' => $withUserId]);
+            $targetUser = $uStmt->fetchColumn() ?: "User #{$withUserId}";
+            ActivityLogService::log($byUserId, 'share_user', $fName, "Dibagikan ke @{$targetUser} (Izin: {$permission})", $fileId);
+        }
+
         $this->respondJson($result);
     }
 
@@ -1028,6 +1122,15 @@ class DriveController
         $withUserId = (int) ($_POST['with_user_id'] ?? 0);
 
         $result = ShareService::revokeUserShare($fileId, $byUserId, $withUserId);
+
+        if ($result) {
+            $db = Database::getConnection();
+            $fStmt = $db->prepare("SELECT original_name FROM files WHERE id = :id");
+            $fStmt->execute([':id' => $fileId]);
+            $fName = $fStmt->fetchColumn() ?: "Berkas #{$fileId}";
+            ActivityLogService::log($byUserId, 'revoke_user_share', $fName, "Hak akses pengguna dicabut", $fileId);
+        }
+
         $this->respondJson(['success' => $result]);
     }
 
@@ -1093,6 +1196,14 @@ class DriveController
                     'Pengunduh' => $currentUser['username'] ?? 'User',
                     'IP'        => $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0',
                 ]
+            );
+
+            ActivityLogService::log(
+                $userId,
+                'download',
+                $file['original_name'],
+                $isSharedWithMe ? "Unduh berkas dibagikan (Pemilik ID: {$file['user_id']})" : "Unduh langsung dari drive",
+                (int) $file['id']
             );
         }
 

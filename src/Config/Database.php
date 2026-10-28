@@ -82,13 +82,35 @@ class Database
             }
 
             // Cek keberadaan tabel inti
-            $requiredTables = ['users', 'folders', 'files', 'share_links', 'download_logs', 'user_shares', 'system_settings'];
+            $requiredTables = ['users', 'folders', 'files', 'share_links', 'download_logs', 'user_shares', 'system_settings', 'activity_logs'];
             $stmt = $pdo->query("SHOW TABLES");
             $existingTables = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
             $missingTables = array_diff($requiredTables, $existingTables);
             if (!empty($missingTables) || $force) {
                 return self::repairSchema();
+            }
+
+            // Pastikan tabel activity_logs ada
+            try {
+                $pdo->exec("
+                    CREATE TABLE IF NOT EXISTS `activity_logs` (
+                        `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                        `user_id` BIGINT UNSIGNED NULL,
+                        `action` VARCHAR(50) NOT NULL,
+                        `file_id` BIGINT UNSIGNED NULL,
+                        `file_name` VARCHAR(255) NOT NULL,
+                        `details` TEXT NULL,
+                        `ip_address` VARCHAR(45) NOT NULL,
+                        `user_agent` TEXT NULL,
+                        `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        CONSTRAINT `fk_activity_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+                        INDEX `idx_activity_user_time` (`user_id`, `created_at`),
+                        INDEX `idx_activity_action` (`action`),
+                        INDEX `idx_activity_file` (`file_id`)
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+                ");
+            } catch (\Throwable $ignored) {
             }
 
             // Pastikan kolom avatar_path ada di tabel users (self-healing migration)
@@ -274,6 +296,25 @@ class Database
                     `setting_key` VARCHAR(64) PRIMARY KEY,
                     `setting_value` TEXT NULL,
                     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            ");
+
+            // 8. Tabel activity_logs (Audit Trail & Log Aktivitas)
+            $pdo->exec("
+                CREATE TABLE IF NOT EXISTS `activity_logs` (
+                    `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                    `user_id` BIGINT UNSIGNED NULL,
+                    `action` VARCHAR(50) NOT NULL,
+                    `file_id` BIGINT UNSIGNED NULL,
+                    `file_name` VARCHAR(255) NOT NULL,
+                    `details` TEXT NULL,
+                    `ip_address` VARCHAR(45) NOT NULL,
+                    `user_agent` TEXT NULL,
+                    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    CONSTRAINT `fk_activity_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+                    INDEX `idx_activity_user_time` (`user_id`, `created_at`),
+                    INDEX `idx_activity_action` (`action`),
+                    INDEX `idx_activity_file` (`file_id`)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
             ");
 

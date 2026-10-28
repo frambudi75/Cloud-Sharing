@@ -2407,6 +2407,7 @@ document.addEventListener('DOMContentLoaded', () => {
             { label: 'Buat Catatan / Berkas Teks Baru', sub: 'Tulis berkas .txt, .md, atau .json langsung', action: () => { closeModal('commandPaletteModal'); openNewTextFileModal(); } },
             { label: 'Buat Folder Baru', sub: 'Pintasan: N', action: () => { closeModal('commandPaletteModal'); openModal('newFolderModal'); } },
             { label: 'Analisis Penyimpanan & Berkas Terbesar', sub: 'Cek pemakaian kuota & 25 berkas terbesar', action: () => { window.location.href = '?action=drive&tab=storage_analyzer'; } },
+            { label: 'Log Aktivitas & Riwayat Unduhan', sub: 'Audit trail unggahan, unduhan publik, & tindakan berkas', action: () => { window.location.href = '?action=drive&tab=activity_logs'; } },
             { label: 'Buka Drive Saya', sub: 'Navigasi Utama', action: () => { window.location.href = '?action=drive&tab=my_drive'; } },
             { label: 'Buka Tautan Publik Saya', sub: 'Kelola Link Aktif & QR Code', action: () => { window.location.href = '?action=drive&tab=my_shares'; } },
             { label: 'Buka Dibagikan ke Saya', sub: 'Berkas dari Pengguna Lain', action: () => { window.location.href = '?action=drive&tab=shared_with_me'; } },
