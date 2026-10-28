@@ -178,9 +178,9 @@ class ProfileController
         $this->validateCsrf();
         $userId = (int) AuthService::id();
 
-        $currentPassword = $_POST['current_password'] ?? '';
-        $newPassword = $_POST['new_password'] ?? '';
-        $confirmPassword = $_POST['confirm_password'] ?? '';
+        $currentPassword = trim($_POST['current_password'] ?? '');
+        $newPassword = trim($_POST['new_password'] ?? '');
+        $confirmPassword = trim($_POST['confirm_password'] ?? '');
 
         if (empty($currentPassword)) {
             $this->respond(['success' => false, 'error' => 'Silakan masukkan kata sandi Anda saat ini.']);
@@ -214,7 +214,7 @@ class ProfileController
         $this->respond([
             'success' => true,
             'message' => 'Kata sandi Anda berhasil diperbarui.'
-        ], '?action=profile&status=password_updated');
+        ]);
     }
 
     public function getAvatar(): void
@@ -273,8 +273,8 @@ SVG;
 
     private function validateCsrf(): void
     {
-        $token = $_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
-        if (empty($token) || !hash_equals($_SESSION['csrf_token'] ?? '', $token)) {
+        $token = $_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? null;
+        if (!AuthService::verifyCsrf($token)) {
             $this->respond(['success' => false, 'error' => 'Sesi keamanan kedaluwarsa. Silakan muat ulang halaman.']);
             exit;
         }
@@ -282,22 +282,7 @@ SVG;
 
     private function respond(array $data, ?string $redirectUrl = null): void
     {
-        $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest'
-            || (isset($_GET['format']) && $_GET['format'] === 'json')
-            || (isset($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json'));
-
-        if ($isAjax) {
-            header('Content-Type: application/json');
-            echo json_encode($data);
-            exit;
-        }
-
-        if ($redirectUrl) {
-            header('Location: ' . $redirectUrl);
-            exit;
-        }
-
-        header('Content-Type: application/json');
+        header('Content-Type: application/json; charset=utf-8');
         echo json_encode($data);
         exit;
     }

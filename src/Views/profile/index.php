@@ -501,12 +501,13 @@ document.getElementById('profileForm').addEventListener('submit', async function
         const response = await fetch('?action=update_profile', {
             method: 'POST',
             headers: {
-                'X-Requested-With': 'XMLHttpRequest'
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
             },
             body: formData
         });
 
-        const result = await response.json();
+        const result = await response.json().catch(() => ({ success: false, error: 'Respons server tidak valid.' }));
         if (result.success) {
             showToast(result.message || 'Profil berhasil diperbarui!');
             msg.className = 'text-xs font-semibold p-3 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200';
@@ -527,7 +528,7 @@ document.getElementById('profileForm').addEventListener('submit', async function
         }
     } catch (err) {
         msg.className = 'text-xs font-semibold p-3 rounded-xl bg-red-50 text-red-700 border border-red-200';
-        msg.textContent = 'Terjadi kesalahan jaringan.';
+        msg.textContent = 'Terjadi kesalahan jaringan atau koneksi.';
         msg.classList.remove('hidden');
     } finally {
         btn.disabled = false;
@@ -544,8 +545,23 @@ document.getElementById('passwordForm').addEventListener('submit', async functio
     const btnText = document.getElementById('savePasswordBtnText');
     const msg = document.getElementById('passwordMsg');
 
-    const newPass = document.getElementById('newPasswordInput').value;
-    const confirmPass = document.getElementById('confirmPasswordInput').value;
+    const currentPass = document.getElementById('currentPasswordInput').value.trim();
+    const newPass = document.getElementById('newPasswordInput').value.trim();
+    const confirmPass = document.getElementById('confirmPasswordInput').value.trim();
+
+    if (!currentPass) {
+        msg.className = 'text-xs font-semibold p-3 rounded-xl bg-red-50 text-red-700 border border-red-200';
+        msg.textContent = 'Silakan masukkan kata sandi Anda saat ini.';
+        msg.classList.remove('hidden');
+        return;
+    }
+
+    if (newPass.length < 6) {
+        msg.className = 'text-xs font-semibold p-3 rounded-xl bg-red-50 text-red-700 border border-red-200';
+        msg.textContent = 'Kata sandi baru minimal harus 6 karakter.';
+        msg.classList.remove('hidden');
+        return;
+    }
 
     if (newPass !== confirmPass) {
         msg.className = 'text-xs font-semibold p-3 rounded-xl bg-red-50 text-red-700 border border-red-200';
@@ -565,12 +581,13 @@ document.getElementById('passwordForm').addEventListener('submit', async functio
         const response = await fetch('?action=update_password', {
             method: 'POST',
             headers: {
-                'X-Requested-With': 'XMLHttpRequest'
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
             },
             body: formData
         });
 
-        const result = await response.json();
+        const result = await response.json().catch(() => ({ success: false, error: 'Respons server tidak valid.' }));
         if (result.success) {
             showToast(result.message || 'Kata sandi berhasil diperbarui!');
             msg.className = 'text-xs font-semibold p-3 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200';
@@ -588,7 +605,7 @@ document.getElementById('passwordForm').addEventListener('submit', async functio
         }
     } catch (err) {
         msg.className = 'text-xs font-semibold p-3 rounded-xl bg-red-50 text-red-700 border border-red-200';
-        msg.textContent = 'Terjadi kesalahan jaringan.';
+        msg.textContent = 'Terjadi kesalahan jaringan atau koneksi.';
         msg.classList.remove('hidden');
     } finally {
         btn.disabled = false;
