@@ -4,6 +4,9 @@ Semua perubahan pada spesifikasi dan implementasi proyek file-sharing akan dicat
 
 ## [Unreleased] - 2026-10-28
 ### Ditambahkan & Ditingkatkan
+- **Halaman Tentang Aplikasi & Pengembang (`?action=about`) + Kartu Info Developer di Pengaturan Server**:
+  - Halaman informasi aplikasi lengkap (`src/Views/system/about.php`) berisi spesifikasi arsitektur, daftar 8 modul fitur utama, pintasan keyboard, serta profil pengembang **Habib Frambudi** (`@frambudi75` — `https://github.com/frambudi75` & `https://github.com/frambudi75/Cloud-Sharing`).
+  - Kartu informasi aplikasi & pengembang juga ditambahkan langsung di halaman **Pengaturan Server** (`?action=server`), sidebar Drive, menu dropdown profil, Command Palette (`Ctrl + K`), serta footer halaman Login dan Unduh Tamu.
 - **Buat & Edit Berkas Teks / Catatan / Kode Langsung di Drive (`?action=create_text_file` & `?action=save_text_file`)**:
   - Tombol **Catatan / Teks Baru** di Drive untuk membuat berkas `.txt`, `.md`, `.json`, `.csv` langsung di folder saat ini, serta tombol **✏️ Edit Teks** di dalam modal pratinjau untuk mengubah dan menyimpan berkas teks secara langsung tanpa unduh/unggah ulang.
 - **Fitur Duplikat Berkas Cepat (`?action=duplicate_file`)**:

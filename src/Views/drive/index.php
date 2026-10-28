@@ -208,6 +208,10 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                                 </span>
                                 <span class="text-[10px] font-mono text-brand-600 font-bold"><?= $quotaPercentage ?>%</span>
                             </a>
+                            <a href="?action=about" class="flex items-center px-4 py-2 hover:bg-slate-50 text-slate-700">
+                                <svg class="w-4 h-4 mr-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                Tentang & Info Developer
+                            </a>
                         </div>
 
                         <?php if (!empty($user['role']) && $user['role'] === 'admin'): ?>
@@ -317,14 +321,21 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                         <?php endif; ?>
                     </a>
 
-                    <!-- Profil Saya -->
-                    <div class="pt-2 mt-2 border-t border-slate-100">
+                    <!-- Profil Saya & Tentang Aplikasi -->
+                    <div class="pt-2 mt-2 border-t border-slate-100 space-y-1">
                         <a href="?action=profile" 
                            class="flex items-center px-3.5 py-2.5 text-xs font-semibold rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all">
                             <svg class="w-4 h-4 mr-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                             </svg>
                             Profil Saya
+                        </a>
+                        <a href="?action=about" 
+                           class="flex items-center px-3.5 py-2.5 text-xs font-semibold rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all">
+                            <svg class="w-4 h-4 mr-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Tentang Aplikasi
                         </a>
                     </div>
                 </nav>

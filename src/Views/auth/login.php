@@ -139,8 +139,12 @@ require_once dirname(__DIR__) . '/layouts/header.php';
     </div>
 
     <!-- Footer Copyright -->
-    <div class="relative z-10 text-center text-xs text-slate-400 dark:text-slate-500 py-2 font-mono">
-        &copy; <?= date('Y') ?> Cloud Sharing • PHP 8.4 Self-Hosted
+    <div class="relative z-10 text-center text-xs text-slate-400 dark:text-slate-500 py-2 font-mono space-x-2">
+        <span>&copy; <?= date('Y') ?> Cloud Sharing</span>
+        <span>•</span>
+        <a href="https://github.com/frambudi75" target="_blank" rel="noopener noreferrer" class="hover:text-brand-600 underline">Habib Frambudi (@frambudi75)</a>
+        <span>•</span>
+        <a href="?action=about" class="hover:text-brand-600 underline">Tentang Aplikasi</a>
     </div>
 
 </div>

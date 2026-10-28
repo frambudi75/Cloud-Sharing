@@ -332,7 +332,7 @@ if ($isImage) {
         <!-- Clean Footer Info -->
         <div class="text-center mt-6 space-y-1">
             <p class="text-xs text-slate-400 dark:text-slate-500 font-medium">
-                Dihosting mandiri dengan Cloud Sharing Drive • Cepat, Aman & Terenkripsi
+                Dihosting mandiri dengan Cloud Sharing Drive • Dikembangkan oleh <a href="https://github.com/frambudi75" target="_blank" rel="noopener noreferrer" class="font-semibold text-slate-600 dark:text-slate-300 hover:text-brand-600 underline">Habib Frambudi (@frambudi75)</a> • <a href="?action=about" class="hover:text-brand-600 underline">Tentang Aplikasi</a>
             </p>
         </div>
     </div>

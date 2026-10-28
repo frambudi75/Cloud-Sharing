@@ -114,6 +114,9 @@ switch ($action) {
     case 'save_text_file':
         (new DriveController())->saveTextFile();
         break;
+    case 'about':
+        require_once __DIR__ . '/src/Views/system/about.php';
+        break;
     case 'share_with_user':
         (new DriveController())->shareWithUser();
         break;

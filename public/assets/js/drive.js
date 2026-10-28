@@ -2412,7 +2412,8 @@ document.addEventListener('DOMContentLoaded', () => {
             { label: 'Buka Dibagikan ke Saya', sub: 'Berkas dari Pengguna Lain', action: () => { window.location.href = '?action=drive&tab=shared_with_me'; } },
             { label: 'Buka Keranjang Sampah', sub: 'Pulihkan atau Kosongkan Sampah', action: () => { window.location.href = '?action=drive&tab=trash'; } },
             { label: 'Ganti Tema Gelap / Terang', sub: 'Mode Tampilan', action: () => { closeModal('commandPaletteModal'); toggleDarkMode(); } },
-            { label: 'Buka Profil & Keamanan Sandi', sub: 'Pengaturan Akun', action: () => { window.location.href = '?action=profile'; } }
+            { label: 'Buka Profil & Keamanan Sandi', sub: 'Pengaturan Akun', action: () => { window.location.href = '?action=profile'; } },
+            { label: 'Tentang Aplikasi & Pengembang (Habib Frambudi)', sub: 'Info versi, fitur, & GitHub @frambudi75', action: () => { window.location.href = '?action=about'; } }
         ];
 
         commands.forEach(cmd => {
