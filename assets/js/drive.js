@@ -30,13 +30,82 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Close modal & context menu on Escape key
+    // Custom Modern Confirmation Modal (Promise-based replacement for window.confirm)
+    window.askConfirm = function ({
+        title = 'Konfirmasi Tindakan',
+        message = 'Apakah Anda yakin ingin melanjutkan?',
+        confirmText = 'Ya, Lanjutkan',
+        variant = 'danger'
+    } = {}) {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('confirmActionModal');
+            if (!modal) {
+                resolve(window.confirm(message));
+                return;
+            }
+
+            const titleEl = document.getElementById('confirmModalTitle');
+            const msgEl = document.getElementById('confirmModalMessage');
+            const okBtn = document.getElementById('confirmModalOkBtn');
+            const cancelBtn = document.getElementById('confirmModalCancelBtn');
+            const iconBox = document.getElementById('confirmModalIconBox');
+
+            if (titleEl) titleEl.textContent = title;
+            if (msgEl) msgEl.textContent = message;
+            if (okBtn) {
+                okBtn.textContent = confirmText;
+                okBtn.className = variant === 'warning'
+                    ? 'h-9 px-4 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-xs transition-colors'
+                    : 'h-9 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs transition-colors';
+            }
+            if (iconBox) {
+                iconBox.className = variant === 'warning'
+                    ? 'h-11 w-11 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200/80 flex items-center justify-center shrink-0'
+                    : 'h-11 w-11 rounded-2xl bg-rose-50 text-rose-600 border border-rose-200/80 flex items-center justify-center shrink-0';
+            }
+
+            const cleanup = (result) => {
+                modal.classList.add('hidden');
+                if (okBtn) okBtn.onclick = null;
+                if (cancelBtn) cancelBtn.onclick = null;
+                resolve(result);
+            };
+
+            if (okBtn) okBtn.onclick = () => cleanup(true);
+            if (cancelBtn) cancelBtn.onclick = () => cleanup(false);
+
+            modal.classList.remove('hidden');
+            if (okBtn) okBtn.focus();
+        });
+    };
+
+    // Close modal & context menu on Escape key + Gallery Arrow Navigation
     document.addEventListener('keydown', (e) => {
+        const detailModal = document.getElementById('fileDetailModal');
+        if (detailModal && !detailModal.classList.contains('hidden')) {
+            if (e.key === 'ArrowLeft' && typeof window.navigatePreviewGallery === 'function') {
+                e.preventDefault();
+                window.navigatePreviewGallery(-1);
+                return;
+            }
+            if (e.key === 'ArrowRight' && typeof window.navigatePreviewGallery === 'function') {
+                e.preventDefault();
+                window.navigatePreviewGallery(1);
+                return;
+            }
+        }
+
         if (e.key === 'Escape') {
             closeContextMenu();
             if (typeof window.closeInspectorDrawer === 'function') window.closeInspectorDrawer();
             const userMenu = document.getElementById('userDropdownMenu');
             if (userMenu) userMenu.classList.add('hidden');
+            const cancelBtn = document.getElementById('confirmModalCancelBtn');
+            const confirmModal = document.getElementById('confirmActionModal');
+            if (confirmModal && !confirmModal.classList.contains('hidden') && cancelBtn) {
+                cancelBtn.click();
+                return;
+            }
             document.querySelectorAll('[id$="Modal"]').forEach(m => m.classList.add('hidden'));
             if (document.querySelectorAll('.file-select-checkbox:checked').length > 0) {
                 clearBulkSelection();
@@ -465,7 +534,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (fileIds.length === 0) return;
 
-        if (!confirm(`Pindahkan ${fileIds.length} berkas yang dipilih ke Keranjang Sampah?`)) {
+        const ok = await askConfirm({
+            title: 'Pindahkan Berkas ke Sampah',
+            message: `Pindahkan ${fileIds.length} berkas yang dipilih ke Keranjang Sampah? Anda masih dapat memulihkannya nanti.`,
+            confirmText: 'Pindahkan ke Sampah',
+            variant: 'warning'
+        });
+        if (!ok) {
             return;
         }
 
@@ -531,7 +606,13 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.deleteFolder = async function (folderId, folderName) {
-        if (!confirm(`Pindahkan folder "${folderName}" beserta isinya ke Keranjang Sampah?`)) {
+        const ok = await askConfirm({
+            title: 'Pindahkan Folder ke Sampah',
+            message: `Pindahkan folder "${folderName}" beserta isinya ke Keranjang Sampah?`,
+            confirmText: 'Pindahkan ke Sampah',
+            variant: 'warning'
+        });
+        if (!ok) {
             return;
         }
 
@@ -560,7 +641,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // 7. Single File Deletion (Soft Delete to Trash)
     // =========================================================================
     window.deleteFile = async function (fileId, fileName) {
-        if (!confirm(`Pindahkan berkas "${fileName}" ke Keranjang Sampah?`)) {
+        const ok = await askConfirm({
+            title: 'Pindahkan Berkas ke Sampah',
+            message: `Pindahkan berkas "${fileName}" ke Keranjang Sampah?`,
+            confirmText: 'Pindahkan ke Sampah',
+            variant: 'warning'
+        });
+        if (!ok) {
             return;
         }
 
@@ -611,7 +698,13 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.permanentDeleteFile = async function (fileId, fileName) {
-        if (!confirm(`Hapus berkas "${fileName}" secara PERMANEN? Tindakan ini tidak dapat dibatalkan.`)) {
+        const ok = await askConfirm({
+            title: 'Hapus Berkas Secara Permanen',
+            message: `Hapus berkas "${fileName}" secara PERMANEN? Tindakan ini tidak dapat dibatalkan dan ruang kuota akan dikembalikan.`,
+            confirmText: 'Hapus Permanen',
+            variant: 'danger'
+        });
+        if (!ok) {
             return;
         }
 
@@ -659,7 +752,13 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.permanentDeleteFolder = async function (folderId, folderName) {
-        if (!confirm(`Hapus folder "${folderName}" beserta isinya secara PERMANEN? Tindakan ini tidak dapat dibatalkan.`)) {
+        const ok = await askConfirm({
+            title: 'Hapus Folder Secara Permanen',
+            message: `Hapus folder "${folderName}" beserta seluruh isinya secara PERMANEN? Tindakan ini tidak dapat dibatalkan.`,
+            confirmText: 'Hapus Permanen',
+            variant: 'danger'
+        });
+        if (!ok) {
             return;
         }
 
@@ -685,7 +784,13 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.emptyTrashConfirm = async function () {
-        if (!confirm('Kosongkan semua berkas dan folder di dalam Keranjang Sampah secara PERMANEN?')) {
+        const ok = await askConfirm({
+            title: 'Kosongkan Keranjang Sampah',
+            message: 'Kosongkan semua berkas dan folder di dalam Keranjang Sampah secara PERMANEN? Seluruh ruang penyimpanan akan dibebaskan.',
+            confirmText: 'Ya, Kosongkan Sampah',
+            variant: 'danger'
+        });
+        if (!ok) {
             return;
         }
 
@@ -1529,7 +1634,13 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.revokeDirectUserShare = async function (fileId, userId) {
-        if (!confirm('Cabut akses pengguna terhadap berkas ini?')) return;
+        const ok = await askConfirm({
+            title: 'Cabut Akses Pengguna',
+            message: 'Cabut akses pengguna ini terhadap berkas Anda?',
+            confirmText: 'Cabut Akses',
+            variant: 'warning'
+        });
+        if (!ok) return;
 
         const formData = new FormData();
         formData.append('csrf_token', csrfToken);
@@ -1616,14 +1727,73 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // =========================================================================
-    // 11. File Detail & Preview Modal
+    // 11. File Detail & Preview Modal (With Next/Prev Gallery Navigation)
     // =========================================================================
+    let currentGalleryList = [];
+    let currentGalleryIndex = -1;
+
+    function buildVisibleGalleryList() {
+        const list = [];
+        const seen = new Set();
+        document.querySelectorAll('.file-card[data-filejson]:not(.hidden), .file-row[data-filejson]:not(.hidden)').forEach(el => {
+            const id = el.getAttribute('data-id');
+            if (!id || seen.has(id)) return;
+            seen.add(id);
+            try {
+                const parsed = JSON.parse(el.getAttribute('data-filejson'));
+                if (parsed && parsed.id) list.push(parsed);
+            } catch (e) {}
+        });
+        return list;
+    }
+
+    window.navigatePreviewGallery = function (step) {
+        if (!currentGalleryList || currentGalleryList.length <= 1) return;
+        const nextIdx = (currentGalleryIndex + step + currentGalleryList.length) % currentGalleryList.length;
+        const nextItem = currentGalleryList[nextIdx];
+        if (nextItem) {
+            window.openFileDetail(nextItem);
+        }
+    };
+
     window.openFileDetail = function (fileData) {
         closeContextMenu();
         const modal = document.getElementById('fileDetailModal');
         if (!modal) {
             window.location.href = `?action=download_direct&file_id=${fileData.id}&preview=1`;
             return;
+        }
+
+        // Sync gallery navigation state
+        currentGalleryList = buildVisibleGalleryList();
+        currentGalleryIndex = currentGalleryList.findIndex(item => Number(item.id) === Number(fileData.id));
+        const btnPrev = document.getElementById('detailBtnPrev');
+        const btnNext = document.getElementById('detailBtnNext');
+        const counterEl = document.getElementById('detailGalleryCounter');
+
+        if (currentGalleryList.length > 1 && currentGalleryIndex !== -1) {
+            if (btnPrev) {
+                btnPrev.classList.remove('hidden');
+                btnPrev.classList.add('flex');
+            }
+            if (btnNext) {
+                btnNext.classList.remove('hidden');
+                btnNext.classList.add('flex');
+            }
+            if (counterEl) {
+                counterEl.textContent = `${currentGalleryIndex + 1} / ${currentGalleryList.length}`;
+                counterEl.classList.remove('hidden');
+            }
+        } else {
+            if (btnPrev) {
+                btnPrev.classList.add('hidden');
+                btnPrev.classList.remove('flex');
+            }
+            if (btnNext) {
+                btnNext.classList.add('hidden');
+                btnNext.classList.remove('flex');
+            }
+            if (counterEl) counterEl.classList.add('hidden');
         }
 
         const nameEl = document.getElementById('detailFileName');
@@ -1848,7 +2018,13 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.revokePublicShareLink = async function (shareId, fileId, fileName) {
-        if (!confirm(`Nonaktifkan dan cabut tautan publik untuk "${fileName}"?`)) {
+        const ok = await askConfirm({
+            title: 'Cabut Tautan Publik',
+            message: `Nonaktifkan dan cabut tautan publik untuk "${fileName}"? Siapa pun yang memiliki tautan lama tidak akan bisa mengunduh lagi.`,
+            confirmText: 'Cabut Tautan',
+            variant: 'danger'
+        });
+        if (!ok) {
             return;
         }
 
@@ -2038,6 +2214,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const commands = [
             { label: 'Unggah Berkas Baru', sub: 'Pintasan: U', action: () => { closeModal('commandPaletteModal'); document.getElementById('fileUploadInput')?.click(); } },
             { label: 'Buat Folder Baru', sub: 'Pintasan: N', action: () => { closeModal('commandPaletteModal'); openModal('newFolderModal'); } },
+            { label: 'Analisis Penyimpanan & Berkas Terbesar', sub: 'Cek pemakaian kuota & 25 berkas terbesar', action: () => { window.location.href = '?action=drive&tab=storage_analyzer'; } },
             { label: 'Buka Drive Saya', sub: 'Navigasi Utama', action: () => { window.location.href = '?action=drive&tab=my_drive'; } },
             { label: 'Buka Tautan Publik Saya', sub: 'Kelola Link Aktif & QR Code', action: () => { window.location.href = '?action=drive&tab=my_shares'; } },
             { label: 'Buka Dibagikan ke Saya', sub: 'Berkas dari Pengguna Lain', action: () => { window.location.href = '?action=drive&tab=shared_with_me'; } },

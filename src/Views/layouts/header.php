@@ -156,6 +156,30 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
         }
+        html.dark ::-webkit-scrollbar-track {
+            background: #0b0f19;
+        }
+        html.dark ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        html.dark ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+        /* Smooth thumbnail loading shimmer */
+        @keyframes thumbShimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .thumb-skeleton {
+            background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+            background-size: 200% 100%;
+            animation: thumbShimmer 1.6s infinite linear;
+        }
+        html.dark .thumb-skeleton {
+            background: linear-gradient(90deg, #111827 25%, #1e293b 50%, #111827 75%);
+            background-size: 200% 100%;
+        }
         /* Card & Dropzone Animations */
         @keyframes subtlePulse {
             0%, 100% { border-color: #a5b4fc; box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.15); }

@@ -56,6 +56,25 @@ class DriveController
             }
             $files = [];
             $folders = [];
+        } elseif ($activeTab === 'storage_analyzer') {
+            $breadcrumbs = [['id' => null, 'name' => 'Analisis Penyimpanan & Berkas Terbesar']];
+            $largestQuery = "
+                SELECT f.id, f.folder_id, f.original_name, f.storage_filename, f.storage_path, f.mime_type, f.file_size, f.created_at,
+                       fld.name as folder_name,
+                       s.share_token, s.is_active as is_shared, (s.password_hash IS NOT NULL AND s.password_hash != '') as has_password,
+                       s.expires_at, s.download_count, s.max_downloads,
+                       (SELECT COUNT(*) FROM user_shares us WHERE us.file_id = f.id) as user_shares_count
+                FROM files f
+                LEFT JOIN folders fld ON f.folder_id = fld.id
+                LEFT JOIN share_links s ON f.id = s.file_id AND s.is_active = 1
+                WHERE f.user_id = :user_id AND f.deleted_at IS NULL
+                ORDER BY f.file_size DESC
+                LIMIT 25
+            ";
+            $largestStmt = $db->prepare($largestQuery);
+            $largestStmt->execute([':user_id' => $userId]);
+            $files = $largestStmt->fetchAll();
+            $folders = [];
         } elseif ($activeTab === 'shared_with_me') {
             // Tab Dibagikan ke Saya
             $breadcrumbs = [['id' => null, 'name' => 'Dibagikan ke Saya']];
@@ -70,7 +89,8 @@ class DriveController
             // Tab Terbaru (50 berkas terbaru yang tidak di tempat sampah)
             $recentQuery = "
                 SELECT f.id, f.original_name, f.storage_filename, f.storage_path, f.mime_type, f.file_size, f.created_at,
-                       s.share_token, s.is_active as is_shared, s.expires_at, s.download_count, s.max_downloads,
+                       s.share_token, s.is_active as is_shared, (s.password_hash IS NOT NULL AND s.password_hash != '') as has_password,
+                       s.expires_at, s.download_count, s.max_downloads,
                        (SELECT COUNT(*) FROM user_shares us WHERE us.file_id = f.id) as user_shares_count
                 FROM files f
                 LEFT JOIN share_links s ON f.id = s.file_id AND s.is_active = 1
@@ -91,14 +111,21 @@ class DriveController
             $breadcrumbs = [['id' => null, 'name' => 'Keranjang Sampah']];
 
             // Ambil subfolder yang dihapus
-            $trashFoldersStmt = $db->prepare("SELECT id, name, updated_at, deleted_at FROM folders WHERE user_id = :user_id AND deleted_at IS NOT NULL ORDER BY deleted_at DESC");
+            $trashFoldersStmt = $db->prepare("
+                SELECT folders.id, folders.name, folders.updated_at, folders.deleted_at,
+                       (SELECT COUNT(*) FROM files f WHERE f.folder_id = folders.id) as files_count,
+                       (SELECT COUNT(*) FROM folders sub WHERE sub.parent_id = folders.id) as subfolders_count
+                FROM folders
+                WHERE folders.user_id = :user_id AND folders.deleted_at IS NOT NULL
+                ORDER BY folders.deleted_at DESC
+            ");
             $trashFoldersStmt->execute([':user_id' => $userId]);
             $folders = $trashFoldersStmt->fetchAll();
 
             // Ambil file yang dihapus
             $trashFilesStmt = $db->prepare("
                 SELECT f.id, f.original_name, f.storage_filename, f.storage_path, f.mime_type, f.file_size, f.created_at, f.deleted_at,
-                       0 as is_shared, NULL as share_token, 0 as user_shares_count
+                       0 as is_shared, 0 as has_password, NULL as share_token, 0 as user_shares_count
                 FROM files f
                 WHERE f.user_id = :user_id AND f.deleted_at IS NOT NULL
                 ORDER BY f.deleted_at DESC
@@ -134,16 +161,37 @@ class DriveController
                 $breadcrumbs = array_merge($breadcrumbs, $trail);
             }
 
-            // Ambil subfolder aktif
+            // Ambil subfolder aktif beserta jumlah isinya
             if (!empty($search)) {
-                $folderQuery = "SELECT id, name, updated_at FROM folders WHERE user_id = :user_id AND deleted_at IS NULL AND name LIKE :search ORDER BY name ASC";
+                $folderQuery = "
+                    SELECT folders.id, folders.name, folders.updated_at,
+                           (SELECT COUNT(*) FROM files f WHERE f.folder_id = folders.id AND f.deleted_at IS NULL) as files_count,
+                           (SELECT COUNT(*) FROM folders sub WHERE sub.parent_id = folders.id AND sub.deleted_at IS NULL) as subfolders_count
+                    FROM folders
+                    WHERE folders.user_id = :user_id AND folders.deleted_at IS NULL AND folders.name LIKE :search
+                    ORDER BY folders.name ASC
+                ";
                 $folderParams = [':user_id' => $userId, ':search' => "%{$search}%"];
             } else {
                 if ($folderId === null) {
-                    $folderQuery = "SELECT id, name, updated_at FROM folders WHERE user_id = :user_id AND deleted_at IS NULL AND parent_id IS NULL ORDER BY name ASC";
+                    $folderQuery = "
+                        SELECT folders.id, folders.name, folders.updated_at,
+                               (SELECT COUNT(*) FROM files f WHERE f.folder_id = folders.id AND f.deleted_at IS NULL) as files_count,
+                               (SELECT COUNT(*) FROM folders sub WHERE sub.parent_id = folders.id AND sub.deleted_at IS NULL) as subfolders_count
+                        FROM folders
+                        WHERE folders.user_id = :user_id AND folders.deleted_at IS NULL AND folders.parent_id IS NULL
+                        ORDER BY folders.name ASC
+                    ";
                     $folderParams = [':user_id' => $userId];
                 } else {
-                    $folderQuery = "SELECT id, name, updated_at FROM folders WHERE user_id = :user_id AND deleted_at IS NULL AND parent_id = :parent_id ORDER BY name ASC";
+                    $folderQuery = "
+                        SELECT folders.id, folders.name, folders.updated_at,
+                               (SELECT COUNT(*) FROM files f WHERE f.folder_id = folders.id AND f.deleted_at IS NULL) as files_count,
+                               (SELECT COUNT(*) FROM folders sub WHERE sub.parent_id = folders.id AND sub.deleted_at IS NULL) as subfolders_count
+                        FROM folders
+                        WHERE folders.user_id = :user_id AND folders.deleted_at IS NULL AND folders.parent_id = :parent_id
+                        ORDER BY folders.name ASC
+                    ";
                     $folderParams = [':user_id' => $userId, ':parent_id' => $folderId];
                 }
             }
@@ -155,7 +203,8 @@ class DriveController
             if (!empty($search)) {
                 $fileQuery = "
                     SELECT f.id, f.original_name, f.storage_filename, f.storage_path, f.mime_type, f.file_size, f.created_at,
-                           s.share_token, s.is_active as is_shared, s.expires_at, s.download_count, s.max_downloads,
+                           s.share_token, s.is_active as is_shared, (s.password_hash IS NOT NULL AND s.password_hash != '') as has_password,
+                           s.expires_at, s.download_count, s.max_downloads,
                            (SELECT COUNT(*) FROM user_shares us WHERE us.file_id = f.id) as user_shares_count
                     FROM files f
                     LEFT JOIN share_links s ON f.id = s.file_id AND s.is_active = 1
@@ -167,7 +216,8 @@ class DriveController
                 if ($folderId === null) {
                     $fileQuery = "
                         SELECT f.id, f.original_name, f.storage_filename, f.storage_path, f.mime_type, f.file_size, f.created_at,
-                               s.share_token, s.is_active as is_shared, s.expires_at, s.download_count, s.max_downloads,
+                               s.share_token, s.is_active as is_shared, (s.password_hash IS NOT NULL AND s.password_hash != '') as has_password,
+                               s.expires_at, s.download_count, s.max_downloads,
                                (SELECT COUNT(*) FROM user_shares us WHERE us.file_id = f.id) as user_shares_count
                         FROM files f
                         LEFT JOIN share_links s ON f.id = s.file_id AND s.is_active = 1
@@ -178,7 +228,8 @@ class DriveController
                 } else {
                     $fileQuery = "
                         SELECT f.id, f.original_name, f.storage_filename, f.storage_path, f.mime_type, f.file_size, f.created_at,
-                               s.share_token, s.is_active as is_shared, s.expires_at, s.download_count, s.max_downloads,
+                               s.share_token, s.is_active as is_shared, (s.password_hash IS NOT NULL AND s.password_hash != '') as has_password,
+                               s.expires_at, s.download_count, s.max_downloads,
                                (SELECT COUNT(*) FROM user_shares us WHERE us.file_id = f.id) as user_shares_count
                         FROM files f
                         LEFT JOIN share_links s ON f.id = s.file_id AND s.is_active = 1
@@ -202,6 +253,10 @@ class DriveController
                 (SELECT COUNT(*) FROM user_shares WHERE shared_by_user_id = {$userId} OR shared_with_user_id = {$userId})
             )
         ")->fetchColumn();
+
+        $trashSummaryStmt = $db->prepare("SELECT COUNT(*) as cnt, COALESCE(SUM(file_size), 0) as total_bytes FROM files WHERE user_id = :user_id AND deleted_at IS NOT NULL");
+        $trashSummaryStmt->execute([':user_id' => $userId]);
+        $trashSummary = $trashSummaryStmt->fetch() ?: ['cnt' => 0, 'total_bytes' => 0];
 
         $storageBreakdown = StorageService::getStorageCategoryBreakdown($userId);
         $csrfToken = AuthService::csrfToken();

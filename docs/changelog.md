@@ -4,6 +4,17 @@ Semua perubahan pada spesifikasi dan implementasi proyek file-sharing akan dicat
 
 ## [Unreleased] - 2026-10-28
 ### Ditambahkan & Ditingkatkan
+- **Analisis Penyimpanan & 25 Berkas Terbesar (`?action=drive&tab=storage_analyzer`)**:
+  - Dashboard rincian penggunaan kuota per kategori berkas, peringatan ruang sampah yang bisa dibebaskan, serta tabel 25 berkas terbesar lintas folder untuk pembersihan cepat.
+- **Visual Kartu Berkas & Folder Lebih Hidup**:
+  - Kartu folder menampilkan jumlah berkas & subfolder di dalamnya (`X berkas • Y folder`) dengan badge angka.
+  - Kartu berkas menampilkan ilustrasi ikon berwarna sesuai tipe berkas (Video, Audio, Arsip, PDF, Code, Dokumen), efek *skeleton shimmer* saat memuat thumbnail gambar, serta pil indikator **`🔗 Publik`** / **`🔒 Publik`** / **`👥 X`** langsung di kartu.
+- **Modal Konfirmasi Modern Custom (`#confirmActionModal`)**:
+  - Menggantikan kotak dialog `window.confirm()` bawaan browser dengan modal konfirmasi kustom yang serasi dengan mode terang dan gelap.
+- **Navigasi Galeri Pratinjau (`←` / `→`)**:
+  - Tombol Sebelumnya & Berikutnya serta dukungan tombol panah keyboard kiri/kanan pada modal pratinjau berkas (`#fileDetailModal`).
+- **Penyempurnaan Scrollbar Dark Mode**:
+  - Penyesuaian warna *scrollbar track* dan *thumb* otomatis saat mode gelap aktif di `src/Views/layouts/header.php`.
 - **Menu Pusat Kendali Tautan Publik (`?action=drive&tab=my_shares`)**:
   - Menampilkan seluruh tautan publik aktif milik pengguna beserta status proteksi kata sandi, kuota unduhan (`X / Y`), masa berlaku, tombol QR Code, Salin Link, dan pencabutan akses (`?action=revoke_public_share`).
 - **Slide-Over File Inspector Drawer**:

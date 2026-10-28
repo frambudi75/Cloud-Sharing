@@ -201,6 +201,13 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                                     <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-100 text-emerald-700 font-bold"><?= $myPublicSharesCount ?></span>
                                 <?php endif; ?>
                             </a>
+                            <a href="?action=drive&tab=storage_analyzer" class="flex items-center justify-between px-4 py-2 hover:bg-slate-50 text-slate-700">
+                                <span class="flex items-center">
+                                    <svg class="w-4 h-4 mr-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                                    Analisis Penyimpanan
+                                </span>
+                                <span class="text-[10px] font-mono text-brand-600 font-bold"><?= $quotaPercentage ?>%</span>
+                            </a>
                         </div>
 
                         <?php if (!empty($user['role']) && $user['role'] === 'admin'): ?>
@@ -285,22 +292,29 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                         Terbaru
                     </a>
 
-                    <!-- Berbintang -->
-                    <a href="?action=drive&tab=starred" 
-                       class="flex items-center px-3.5 py-2.5 text-xs font-semibold rounded-xl transition-all <?= $activeTab === 'starred' ? 'sidebar-nav-active' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' ?>">
-                        <svg class="w-4 h-4 mr-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
-                        </svg>
-                        Berbintang
+                    <!-- Analisis Penyimpanan & Berkas Terbesar -->
+                    <a href="?action=drive&tab=storage_analyzer" 
+                       class="flex items-center justify-between px-3.5 py-2.5 text-xs font-semibold rounded-xl transition-all <?= $activeTab === 'storage_analyzer' ? 'sidebar-nav-active' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' ?>">
+                        <span class="flex items-center">
+                            <svg class="w-4 h-4 mr-3 <?= $activeTab === 'storage_analyzer' ? 'text-brand-600' : 'text-slate-400' ?>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                            Analisis Kuota
+                        </span>
                     </a>
 
                     <!-- Sampah -->
                     <a href="?action=drive&tab=trash" 
-                       class="flex items-center px-3.5 py-2.5 text-xs font-semibold rounded-xl transition-all <?= $activeTab === 'trash' ? 'sidebar-nav-active' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' ?>">
-                        <svg class="w-4 h-4 mr-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                        </svg>
-                        Sampah
+                       class="flex items-center justify-between px-3.5 py-2.5 text-xs font-semibold rounded-xl transition-all <?= $activeTab === 'trash' ? 'sidebar-nav-active' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' ?>">
+                        <span class="flex items-center">
+                            <svg class="w-4 h-4 mr-3 <?= $activeTab === 'trash' ? 'text-brand-600' : 'text-slate-400' ?>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                            Sampah
+                        </span>
+                        <?php if (!empty($trashSummary['cnt']) && (int)$trashSummary['cnt'] > 0): ?>
+                            <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-100 text-amber-700 font-bold"><?= (int)$trashSummary['cnt'] ?></span>
+                        <?php endif; ?>
                     </a>
 
                     <!-- Profil Saya -->
@@ -315,10 +329,10 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                     </div>
                 </nav>
 
-                <!-- Storage Metric Card in Sidebar (Clean, Unobtrusive) -->
-                <div class="p-3.5 bg-white rounded-2xl border border-slate-200/80 shadow-xs">
+                <!-- Storage Metric Card in Sidebar (Clickable -> Opens Storage Cleaner) -->
+                <a href="?action=drive&tab=storage_analyzer" class="block p-3.5 bg-white hover:border-brand-300 rounded-2xl border border-slate-200/80 shadow-xs transition-all group">
                     <div class="flex items-center justify-between text-xs font-bold text-slate-800 mb-1.5">
-                        <span class="flex items-center text-[11px]">
+                        <span class="flex items-center text-[11px] group-hover:text-brand-600 transition-colors">
                             <svg class="w-3.5 h-3.5 mr-1.5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2 1.5 3 3.5 3h9c2 0 3.5-1 3.5-3V7c0-2-1.5-3-3.5-3h-9C5.5 4 4 5 4 7z"></path></svg>
                             Penyimpanan
                         </span>
@@ -371,7 +385,11 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                             <div class="text-slate-400 text-[9px]">Berbagi</div>
                         </div>
                     </div>
-                </div>
+                    <div class="mt-2 pt-1.5 border-t border-slate-100 flex items-center justify-between text-[10px] font-bold text-brand-600">
+                        <span>Analisis Berkas Terbesar</span>
+                        <span class="group-hover:translate-x-0.5 transition-transform">→</span>
+                    </div>
+                </a>
 
                 <!-- Keyboard Shortcuts Quick Hint -->
                 <div class="px-2 pt-2 text-[10px] text-slate-400 font-medium flex items-center justify-between">
@@ -768,6 +786,196 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                     </div>
 
                 <!-- ========================================================= -->
+                <!-- CONTENT 1B: TAB ANALISIS PENYIMPANAN & BERKAS TERBESAR    -->
+                <!-- ========================================================= -->
+                <?php elseif ($activeTab === 'storage_analyzer'): ?>
+
+                    <div class="space-y-4 animate-item-in">
+                        <!-- Storage Breakdown Overview Card -->
+                        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs space-y-4">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-900">Rincian Penggunaan Kuota Penyimpanan</h3>
+                                    <p class="text-xs text-slate-500 mt-0.5">Analisis distribusi kapasitas ruang penyimpanan Anda berdasarkan kategori berkas.</p>
+                                </div>
+                                <div class="text-left sm:text-right font-mono">
+                                    <span class="text-base font-extrabold text-brand-600"><?= StorageService::formatBytes($storageUsed) ?></span>
+                                    <span class="text-xs text-slate-400"> / <?= StorageService::formatBytes($storageQuota) ?> (<?= $quotaPercentage ?>%)</span>
+                                </div>
+                            </div>
+
+                            <!-- Large Segmented Bar -->
+                            <div class="w-full bg-slate-100 rounded-full h-3.5 overflow-hidden flex p-0.5 gap-0.5">
+                                <?php if ($storageUsed > 0 && !empty($storageBreakdown)): ?>
+                                    <?php foreach ($storageBreakdown as $cat): ?>
+                                        <?php if ($cat['size'] > 0): ?>
+                                            <?php $segPercent = ($cat['size'] / max(1, $storageQuota)) * 100; ?>
+                                            <div class="h-full first:rounded-l-full last:rounded-r-full transition-all duration-500"
+                                                 style="width: <?= max(1.5, $segPercent) ?>%; background-color: <?= $cat['color'] ?>;"
+                                                 title="<?= $cat['label'] ?>: <?= StorageService::formatBytes($cat['size']) ?> (<?= $cat['count'] ?> berkas)"></div>
+                                        <?php endif; ?>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <div class="storage-bar-glow h-full rounded-full" style="width: <?= $quotaPercentage ?>%"></div>
+                                <?php endif; ?>
+                            </div>
+
+                            <!-- Category Breakdown Cards Grid -->
+                            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 pt-1">
+                                <?php foreach ($storageBreakdown as $key => $cat): ?>
+                                    <div class="p-3 rounded-xl border border-slate-200/70 bg-slate-50/60 flex flex-col justify-between">
+                                        <div class="flex items-center justify-between mb-1.5">
+                                            <span class="inline-flex items-center text-[11px] font-bold text-slate-700">
+                                                <span class="w-2.5 h-2.5 rounded-full mr-1.5 shrink-0" style="background-color: <?= $cat['color'] ?>"></span>
+                                                <?= htmlspecialchars($cat['label']) ?>
+                                            </span>
+                                        </div>
+                                        <div class="font-mono text-xs font-bold text-slate-900"><?= StorageService::formatBytes((int)$cat['size']) ?></div>
+                                        <div class="text-[10px] text-slate-400 mt-0.5"><?= (int)$cat['count'] ?> berkas</div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+
+                        <!-- Trash Space Reclaim Notice (If Trash has files) -->
+                        <?php if (!empty($trashSummary['cnt']) && (int)$trashSummary['cnt'] > 0): ?>
+                            <div class="p-4 rounded-2xl bg-amber-50/90 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                                <div class="flex items-center space-x-3">
+                                    <div class="h-9 w-9 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-xs font-bold text-amber-950">Terdapat <?= (int)$trashSummary['cnt'] ?> berkas (<?= StorageService::formatBytes((int)$trashSummary['total_bytes']) ?>) di Keranjang Sampah</h4>
+                                        <p class="text-[11px] text-amber-800 mt-0.5">Mengosongkan keranjang sampah akan langsung membebaskan ruang penyimpanan Anda secara permanen.</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2 shrink-0">
+                                    <a href="?action=drive&tab=trash" class="h-8 px-3 rounded-xl border border-amber-300 bg-white hover:bg-amber-50 text-amber-900 text-xs font-semibold inline-flex items-center transition-colors">
+                                        Lihat Sampah
+                                    </a>
+                                    <button type="button" onclick="emptyTrashConfirm()" class="h-8 px-3.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs transition-colors">
+                                        Kosongkan Sekarang
+                                    </button>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+
+                        <!-- Top 25 Largest Files Table -->
+                        <div class="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs">
+                            <div class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
+                                <div>
+                                    <h4 class="text-xs sm:text-sm font-bold text-slate-900">25 Berkas Terbesar di Seluruh Folder</h4>
+                                    <p class="text-[11px] text-slate-400">Urutan berkas dari ukuran terbesar untuk memudahkan pembersihan ruang penyimpanan.</p>
+                                </div>
+                                <span class="text-[11px] font-mono font-bold text-slate-500"><?= count($files) ?> berkas</span>
+                            </div>
+
+                            <?php if (empty($files)): ?>
+                                <div class="p-10 text-center text-xs text-slate-400">Belum ada berkas yang tersimpan di akun Anda.</div>
+                            <?php else: ?>
+                                <?php $maxFileBytes = max(1, (int)($files[0]['file_size'] ?? 1)); ?>
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-left border-collapse" id="filesTable">
+                                        <thead>
+                                            <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                                                <th class="py-3 px-4 w-12">#</th>
+                                                <th class="py-3 px-4">Nama Berkas</th>
+                                                <th class="py-3 px-4">Lokasi Folder</th>
+                                                <th class="py-3 px-4 w-56">Proporsi Ukuran</th>
+                                                <th class="py-3 px-4">Diunggah</th>
+                                                <th class="py-3 px-4 text-right">Aksi Cepat</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-slate-100 text-sm">
+                                            <?php foreach ($files as $idx => $file): ?>
+                                                <?php
+                                                $typeInfo = StorageService::getFileTypeInfo($file['mime_type'], $file['original_name']);
+                                                $hasPublicShare = !empty($file['is_shared']) && (int)$file['is_shared'] === 1;
+                                                $directShareCount = (int)($file['user_shares_count'] ?? 0);
+                                                $relBarPercent = min(100, max(4, round(((int)$file['file_size'] / $maxFileBytes) * 100)));
+                                                $fileJson = htmlspecialchars(json_encode([
+                                                    'id' => (int)$file['id'],
+                                                    'name' => $file['original_name'],
+                                                    'size' => (int)$file['file_size'],
+                                                    'formatted_size' => StorageService::formatBytes((int)$file['file_size']),
+                                                    'mime' => $file['mime_type'],
+                                                    'type' => $typeInfo['type'],
+                                                    'badge' => $typeInfo['badge'],
+                                                    'bg' => $typeInfo['bg'],
+                                                    'created_at' => date('d M Y, H:i', strtotime($file['created_at'])),
+                                                    'is_shared' => $hasPublicShare,
+                                                    'share_token' => $file['share_token'] ?? '',
+                                                    'user_shares_count' => $directShareCount,
+                                                ]), ENT_QUOTES, 'UTF-8');
+                                                ?>
+                                                <tr class="file-row hover:bg-slate-50/70 transition-colors"
+                                                    data-id="<?= $file['id'] ?>"
+                                                    data-category="<?= htmlspecialchars($typeInfo['type']) ?>"
+                                                    data-filename="<?= htmlspecialchars(strtolower($file['original_name'])) ?>"
+                                                    data-rawname="<?= htmlspecialchars($file['original_name']) ?>"
+                                                    data-filesize="<?= (int)$file['file_size'] ?>"
+                                                    data-created="<?= strtotime($file['created_at']) ?>"
+                                                    data-mimetype="<?= htmlspecialchars($file['mime_type']) ?>">
+                                                    <td class="py-3 px-4 font-mono text-xs font-bold text-slate-400">
+                                                        #<?= $idx + 1 ?>
+                                                    </td>
+                                                    <td class="py-3 px-4">
+                                                        <div class="flex items-center space-x-2.5">
+                                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold <?= $typeInfo['bg'] ?>">
+                                                                <?= $typeInfo['badge'] ?>
+                                                            </span>
+                                                            <button type="button" onclick="openFileDetail(<?= $fileJson ?>)" class="font-semibold text-slate-800 hover:text-brand-600 truncate max-w-xs sm:max-w-sm text-left">
+                                                                <?= htmlspecialchars($file['original_name']) ?>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                    <td class="py-3 px-4 text-xs">
+                                                        <?php if (!empty($file['folder_id'])): ?>
+                                                            <a href="?action=drive&folder=<?= (int)$file['folder_id'] ?>" class="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 hover:bg-brand-50 text-slate-700 hover:text-brand-600 font-semibold transition-colors">
+                                                                📁 <?= htmlspecialchars($file['folder_name'] ?? 'Subfolder') ?>
+                                                            </a>
+                                                        <?php else: ?>
+                                                            <a href="?action=drive" class="text-slate-400 hover:text-slate-600">Drive Utama</a>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                    <td class="py-3 px-4">
+                                                        <div class="flex items-center justify-between text-xs font-mono font-bold text-slate-800 mb-1">
+                                                            <span><?= StorageService::formatBytes((int)$file['file_size']) ?></span>
+                                                            <span class="text-[10px] text-slate-400 font-normal"><?= $storageQuota > 0 ? round(((int)$file['file_size'] / $storageQuota) * 100, 1) : 0 ?>% kuota</span>
+                                                        </div>
+                                                        <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                                            <div class="h-1.5 rounded-full bg-brand-600" style="width: <?= $relBarPercent ?>%"></div>
+                                                        </div>
+                                                    </td>
+                                                    <td class="py-3 px-4 text-xs text-slate-500 whitespace-nowrap">
+                                                        <?= date('d M Y', strtotime($file['created_at'])) ?>
+                                                    </td>
+                                                    <td class="py-3 px-4 text-right whitespace-nowrap">
+                                                        <div class="inline-flex items-center space-x-1.5">
+                                                            <button type="button" onclick="openInspectorDrawer(<?= $fileJson ?>)" class="h-8 w-8 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 inline-flex items-center justify-center" title="Detail Inspektur">
+                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                                            </button>
+                                                            <button type="button" onclick="openFileDetail(<?= $fileJson ?>)" class="h-8 w-8 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 inline-flex items-center justify-center" title="Pratinjau">
+                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                                            </button>
+                                                            <a href="?action=download_direct&file_id=<?= $file['id'] ?>" class="h-8 w-8 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 inline-flex items-center justify-center" title="Unduh">
+                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                                            </a>
+                                                            <button type="button" onclick="deleteFile(<?= $file['id'] ?>, '<?= htmlspecialchars(addslashes($file['original_name'])) ?>')" class="h-8 px-2.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-bold inline-flex items-center transition-colors" title="Pindahkan ke Sampah">
+                                                                Hapus
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                <!-- ========================================================= -->
                 <!-- CONTENT 2: TAB DRIVE SAYA / RECENT                        -->
                 <!-- ========================================================= -->
                 <?php else: ?>
@@ -821,14 +1029,24 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                         <!-- GRID VIEW (Mockup Aligned: Clean Cards with Big Centered Icons) -->
                         <div id="filesGridView" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
                             
-                            <!-- 1. Folder Cards -->
+                            <!-- 1. Folder Cards (macOS Modern Layered Style with Item Counts) -->
                             <?php foreach ($folders as $folder): ?>
+                                <?php
+                                $fFilesCnt = (int)($folder['files_count'] ?? 0);
+                                $fSubCnt = (int)($folder['subfolders_count'] ?? 0);
+                                $folderSummaryParts = [];
+                                if ($fFilesCnt > 0) $folderSummaryParts[] = "{$fFilesCnt} berkas";
+                                if ($fSubCnt > 0) $folderSummaryParts[] = "{$fSubCnt} folder";
+                                $folderCountText = !empty($folderSummaryParts) ? implode(' • ', $folderSummaryParts) : 'Kosong';
+                                ?>
                                 <div class="file-card folder-drop-zone group relative bg-white border border-slate-200/80 hover:border-brand-300 hover:shadow-lg hover:-translate-y-0.5 rounded-2xl p-4 flex flex-col justify-between transition-all duration-200 animate-item-in"
                                      data-folder-id="<?= $folder['id'] ?>"
                                      data-category="all"
                                      data-folder-name="<?= htmlspecialchars(strtolower($folder['name'])) ?>">
                                     <div class="flex items-center justify-between">
-                                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Folder</span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-600 uppercase tracking-wider">
+                                            Folder
+                                        </span>
                                         <div class="flex items-center space-x-1">
                                             <?php if ($activeTab === 'trash'): ?>
                                                 <button type="button" onclick="restoreFolder(<?= $folder['id'] ?>, '<?= htmlspecialchars(addslashes($folder['name'])) ?>')" 
@@ -856,30 +1074,36 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                                         </div>
                                     </div>
 
-                                    <!-- Big Centered Folder Icon (Mockup Aligned) -->
+                                    <!-- Big Centered Folder Icon with Layered Depth -->
                                     <a href="?action=drive&folder=<?= $folder['id'] ?>" class="my-3 flex flex-col items-center text-center">
-                                        <div class="h-16 w-16 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:scale-105 transition-transform">
-                                            <svg class="w-9 h-9" fill="currentColor" viewBox="0 0 20 20">
+                                        <div class="relative h-16 w-16 rounded-2xl bg-gradient-to-br from-indigo-50 to-brand-100/70 text-brand-600 border border-indigo-200/60 flex items-center justify-center group-hover:scale-105 transition-transform shadow-2xs">
+                                            <svg class="w-10 h-10 drop-shadow-2xs" fill="currentColor" viewBox="0 0 20 20">
                                                 <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path>
                                             </svg>
+                                            <?php if ($fFilesCnt > 0): ?>
+                                                <span class="absolute -bottom-1 -right-1 px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-brand-600 text-white shadow-2xs">
+                                                    <?= $fFilesCnt ?>
+                                                </span>
+                                            <?php endif; ?>
                                         </div>
-                                        <h3 class="text-xs font-bold text-slate-900 mt-2 truncate w-full group-hover:text-brand-600" title="<?= htmlspecialchars($folder['name']) ?>">
+                                        <h3 class="text-xs font-bold text-slate-900 mt-2.5 truncate w-full group-hover:text-brand-600" title="<?= htmlspecialchars($folder['name']) ?>">
                                             <?= htmlspecialchars($folder['name']) ?>
                                         </h3>
                                     </a>
 
                                     <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400 font-mono">
-                                        <span>Folder</span>
+                                        <span class="font-semibold text-slate-500"><?= htmlspecialchars($folderCountText) ?></span>
                                         <span><?= date('d M Y', strtotime($folder['updated_at'])) ?></span>
                                     </div>
                                 </div>
                             <?php endforeach; ?>
 
-                            <!-- 2. File Cards (Clean, Accessible Cards with Thumbnails & Options) -->
+                            <!-- 2. File Cards (Rich Category Visuals, Share Status Badges & Smooth Shimmer) -->
                             <?php foreach ($files as $file): ?>
                                 <?php
                                 $typeInfo = StorageService::getFileTypeInfo($file['mime_type'], $file['original_name']);
                                 $hasPublicShare = !empty($file['is_shared']) && (int)$file['is_shared'] === 1;
+                                $hasSharePassword = !empty($file['has_password']);
                                 $directShareCount = (int)($file['user_shares_count'] ?? 0);
                                 $ext = strtolower(pathinfo($file['original_name'], PATHINFO_EXTENSION));
                                 $fileJson = htmlspecialchars(json_encode([
@@ -907,15 +1131,29 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                                      data-created="<?= strtotime($file['created_at']) ?>"
                                      data-mimetype="<?= htmlspecialchars($file['mime_type']) ?>"
                                      data-sharetoken="<?= htmlspecialchars($file['share_token'] ?? '') ?>"
+                                     data-filejson="<?= $fileJson ?>"
                                      oncontextmenu="handleFileContextMenu(event, <?= $file['id'] ?>, '<?= htmlspecialchars(addslashes($file['original_name'])) ?>', '<?= htmlspecialchars($file['mime_type']) ?>', '<?= htmlspecialchars($file['share_token'] ?? '') ?>')">
                                     
-                                    <!-- Card Header: Checkbox & Actions Dropdown -->
+                                    <!-- Card Header: Checkbox, Share Pill & Actions Dropdown -->
                                     <div class="flex items-center justify-between mb-2">
-                                        <input type="checkbox" 
-                                               class="file-select-checkbox h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer"
-                                               data-id="<?= $file['id'] ?>" 
-                                               onchange="onFileCheckboxChange(this)"
-                                               onclick="event.stopPropagation()">
+                                        <div class="flex items-center space-x-2">
+                                            <input type="checkbox" 
+                                                   class="file-select-checkbox h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer"
+                                                   data-id="<?= $file['id'] ?>" 
+                                                   onchange="onFileCheckboxChange(this)"
+                                                   onclick="event.stopPropagation()">
+                                            <?php if ($hasPublicShare): ?>
+                                                <button type="button" onclick="event.stopPropagation(); copyShareUrl('<?= htmlspecialchars($file['share_token']) ?>', this)"
+                                                        class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/90 hover:bg-emerald-100 transition-colors"
+                                                        title="Tautan publik aktif — Klik untuk salin link">
+                                                    <?= $hasSharePassword ? '🔒 Publik' : '🔗 Publik' ?>
+                                                </button>
+                                            <?php elseif ($directShareCount > 0): ?>
+                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/90" title="Dibagikan ke <?= $directShareCount ?> pengguna">
+                                                    👥 <?= $directShareCount ?>
+                                                </span>
+                                            <?php endif; ?>
+                                        </div>
 
                                         <div class="relative">
                                             <button type="button" 
@@ -984,25 +1222,63 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                                         </div>
                                     </div>
 
-                                    <!-- Card Body: Thumbnail or Icon Box -->
+                                    <!-- Card Body: Thumbnail or Category-Specific Rich Illustration -->
                                     <div class="cursor-pointer" onclick="openFileDetail(<?= $fileJson ?>)">
                                         <?php if ($typeInfo['type'] === 'image'): ?>
-                                            <div class="h-28 w-full rounded-xl bg-slate-100 overflow-hidden relative mb-2.5 flex items-center justify-center border border-slate-200/60 group/thumb">
+                                            <div class="h-28 w-full rounded-xl thumb-skeleton overflow-hidden relative mb-2.5 flex items-center justify-center border border-slate-200/60 group/thumb">
                                                 <img src="?action=download_direct&file_id=<?= $file['id'] ?>&thumb=1" 
                                                      alt="<?= htmlspecialchars($file['original_name']) ?>" 
-                                                     class="h-full w-full object-cover group-hover/thumb:scale-105 transition-transform duration-200" 
+                                                     class="h-full w-full object-cover group-hover/thumb:scale-105 transition-all duration-300" 
                                                      loading="lazy" 
-                                                     onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');">
-                                                <div class="hidden h-full w-full flex items-center justify-center bg-sky-50 text-sky-500">
-                                                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"></path></svg>
+                                                     onload="this.parentElement.classList.remove('thumb-skeleton')"
+                                                     onerror="this.style.display='none'; this.parentElement.classList.remove('thumb-skeleton'); this.nextElementSibling.classList.remove('hidden');">
+                                                <div class="hidden h-full w-full flex items-center justify-center bg-rose-50 text-rose-500">
+                                                    <svg class="w-9 h-9" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"></path></svg>
                                                 </div>
                                             </div>
+                                        <?php elseif ($typeInfo['type'] === 'video'): ?>
+                                            <div class="h-28 w-full rounded-xl bg-gradient-to-br from-amber-50/90 to-orange-50/60 border border-amber-200/60 mb-2.5 flex flex-col items-center justify-center group-hover:scale-[1.01] transition-all">
+                                                <div class="h-11 w-11 rounded-2xl bg-amber-500/15 text-amber-600 flex items-center justify-center mb-1.5 shadow-2xs">
+                                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path></svg>
+                                                </div>
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold <?= $typeInfo['bg'] ?>"><?= $typeInfo['badge'] ?></span>
+                                            </div>
+                                        <?php elseif ($typeInfo['type'] === 'audio'): ?>
+                                            <div class="h-28 w-full rounded-xl bg-gradient-to-br from-indigo-50/90 to-violet-50/60 border border-indigo-200/60 mb-2.5 flex flex-col items-center justify-center group-hover:scale-[1.01] transition-all">
+                                                <div class="h-11 w-11 rounded-2xl bg-indigo-500/15 text-indigo-600 flex items-center justify-center mb-1.5 shadow-2xs">
+                                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z"></path></svg>
+                                                </div>
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold <?= $typeInfo['bg'] ?>"><?= $typeInfo['badge'] ?></span>
+                                            </div>
+                                        <?php elseif ($typeInfo['type'] === 'archive'): ?>
+                                            <div class="h-28 w-full rounded-xl bg-gradient-to-br from-emerald-50/90 to-teal-50/60 border border-emerald-200/60 mb-2.5 flex flex-col items-center justify-center group-hover:scale-[1.01] transition-all">
+                                                <div class="h-11 w-11 rounded-2xl bg-emerald-500/15 text-emerald-600 flex items-center justify-center mb-1.5 shadow-2xs">
+                                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+                                                </div>
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold <?= $typeInfo['bg'] ?>"><?= $typeInfo['badge'] ?></span>
+                                            </div>
+                                        <?php elseif ($typeInfo['type'] === 'pdf'): ?>
+                                            <div class="h-28 w-full rounded-xl bg-gradient-to-br from-red-50/90 to-rose-50/60 border border-red-200/60 mb-2.5 flex flex-col items-center justify-center group-hover:scale-[1.01] transition-all">
+                                                <div class="h-11 w-11 rounded-2xl bg-red-500/15 text-red-600 flex items-center justify-center mb-1.5 shadow-2xs">
+                                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                                                </div>
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold <?= $typeInfo['bg'] ?>"><?= $typeInfo['badge'] ?></span>
+                                            </div>
+                                        <?php elseif ($typeInfo['type'] === 'code'): ?>
+                                            <div class="h-28 w-full rounded-xl bg-gradient-to-br from-violet-50/90 to-purple-50/60 border border-violet-200/60 mb-2.5 flex flex-col items-center justify-center group-hover:scale-[1.01] transition-all">
+                                                <div class="h-11 w-11 rounded-2xl bg-violet-500/15 text-violet-600 flex items-center justify-center mb-1.5 shadow-2xs">
+                                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+                                                </div>
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold <?= $typeInfo['bg'] ?>"><?= $typeInfo['badge'] ?></span>
+                                            </div>
                                         <?php else: ?>
-                                            <div class="h-28 w-full rounded-xl bg-slate-50 border border-slate-100 mb-2.5 flex flex-col items-center justify-center group-hover:bg-brand-50/30 transition-colors">
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold <?= $typeInfo['bg'] ?> mb-1.5">
+                                            <div class="h-28 w-full rounded-xl bg-gradient-to-br from-sky-50/70 to-slate-50 border border-slate-200/70 mb-2.5 flex flex-col items-center justify-center group-hover:bg-brand-50/30 transition-colors">
+                                                <div class="h-11 w-11 rounded-2xl bg-sky-500/10 text-sky-600 flex items-center justify-center mb-1.5">
+                                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                                </div>
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold <?= $typeInfo['bg'] ?>">
                                                     <?= $typeInfo['badge'] ?>
                                                 </span>
-                                                <svg class="w-8 h-8 text-slate-400 group-hover:text-brand-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                                             </div>
                                         <?php endif; ?>
 
@@ -1068,7 +1344,8 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                                                 data-filesize="<?= (int)$file['file_size'] ?>"
                                                 data-created="<?= strtotime($file['created_at']) ?>"
                                                 data-mimetype="<?= htmlspecialchars($file['mime_type']) ?>"
-                                                data-sharetoken="<?= htmlspecialchars($file['share_token'] ?? '') ?>">
+                                                data-sharetoken="<?= htmlspecialchars($file['share_token'] ?? '') ?>"
+                                                data-filejson="<?= $fileJson ?>">
                                                 <td class="py-3 px-4">
                                                     <input type="checkbox" class="file-select-checkbox h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer" 
                                                            data-id="<?= $file['id'] ?>" 
@@ -1409,16 +1686,23 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
         </div>
     </div>
 
-    <!-- Modal 3: File Detail & Preview Modal -->
+    <!-- Modal 3: File Detail & Preview Modal (With Gallery Navigation) -->
     <div id="fileDetailModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden animate-item-in">
             <!-- Header -->
             <div class="h-14 px-6 border-b border-slate-200 flex items-center justify-between bg-slate-50">
-                <div class="flex items-center space-x-2.5 truncate max-w-[80%]">
+                <div class="flex items-center space-x-2.5 truncate max-w-[70%]">
                     <span id="detailFileBadge" class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-700">FILE</span>
                     <h3 class="font-bold text-slate-800 text-sm truncate" id="detailFileName">Nama Berkas</h3>
+                    <span id="detailGalleryCounter" class="hidden px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-slate-200/70 text-slate-600 shrink-0">1 / 1</span>
                 </div>
                 <div class="flex items-center space-x-1.5">
+                    <button type="button" id="detailBtnPrev" onclick="navigatePreviewGallery(-1)" class="hidden h-8 w-8 rounded-lg items-center justify-center text-slate-500 hover:text-brand-600 hover:bg-slate-200 transition-colors" title="Berkas Sebelumnya (←)">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    </button>
+                    <button type="button" id="detailBtnNext" onclick="navigatePreviewGallery(1)" class="hidden h-8 w-8 rounded-lg items-center justify-center text-slate-500 hover:text-brand-600 hover:bg-slate-200 transition-colors" title="Berkas Berikutnya (→)">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </button>
                     <a id="detailBtnOpenNewTab" href="#" target="_blank" class="h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-brand-600 hover:bg-slate-200 transition-colors" title="Buka di Tab Baru">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                     </a>
@@ -1431,7 +1715,7 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
             <!-- Content Area (Preview & Meta) -->
             <div class="flex-1 overflow-y-auto p-6 space-y-6">
                 <!-- Preview Canvas -->
-                <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 flex items-center justify-center min-h-[220px]" id="detailPreviewContainer">
+                <div class="relative rounded-xl border border-slate-200 bg-slate-50 p-4 flex items-center justify-center min-h-[220px]" id="detailPreviewContainer">
                     <!-- Dynamic preview loaded by JS -->
                 </div>
 
@@ -1516,6 +1800,33 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- CUSTOM MODERN CONFIRMATION MODAL (Replaces native window.confirm)     -->
+    <!-- ===================================================================== -->
+    <div id="confirmActionModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-item-in space-y-4">
+            <div class="flex items-start space-x-3.5">
+                <div id="confirmModalIconBox" class="h-11 w-11 rounded-2xl bg-rose-50 text-rose-600 border border-rose-200/80 flex items-center justify-center shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                </div>
+                <div class="min-w-0 flex-1">
+                    <h3 id="confirmModalTitle" class="text-sm font-bold text-slate-900">Konfirmasi Tindakan</h3>
+                    <p id="confirmModalMessage" class="text-xs text-slate-600 mt-1 leading-relaxed">Apakah Anda yakin ingin melanjutkan tindakan ini?</p>
+                </div>
+            </div>
+            <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <button type="button" id="confirmModalCancelBtn" class="h-9 px-4 rounded-xl border border-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-50 transition-colors">
+                    Batal
+                </button>
+                <button type="button" id="confirmModalOkBtn" class="h-9 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs transition-colors">
+                    Ya, Lanjutkan
+                </button>
+            </div>
         </div>
     </div>
 
