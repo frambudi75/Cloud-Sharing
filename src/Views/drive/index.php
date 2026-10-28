@@ -450,9 +450,17 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                         <?php endif; ?>
                     </div>
 
-                    <!-- Right Header Actions (Folder Baru & Upload Berkas) -->
+                    <!-- Right Header Actions (Catatan Baru, Folder Baru & Upload Berkas) -->
                     <?php if ($activeTab === 'my_drive'): ?>
-                        <div class="flex items-center space-x-2 flex-shrink-0">
+                        <div class="flex flex-wrap items-center gap-2 flex-shrink-0">
+                            <button type="button" onclick="openNewTextFileModal()" 
+                                    class="inline-flex items-center h-8 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs hover:border-slate-300 transition-all"
+                                    title="Buat berkas teks, catatan, atau kode baru">
+                                <svg class="w-3.5 h-3.5 mr-1.5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                                Catatan / Teks Baru
+                            </button>
                             <button type="button" id="btnNewFolderModal" 
                                     class="inline-flex items-center h-8 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs hover:border-slate-300 transition-all">
                                 <svg class="w-3.5 h-3.5 mr-1.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1020,6 +1028,10 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                                         <svg class="w-4 h-4 mr-1.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path></svg>
                                         Folder Baru
                                     </button>
+                                    <button type="button" onclick="openNewTextFileModal()" class="inline-flex items-center h-10 px-4 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 active:scale-[0.98] text-slate-700 text-xs font-bold shadow-xs transition-all">
+                                        <svg class="w-4 h-4 mr-1.5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                        Catatan Baru
+                                    </button>
                                 </div>
                                 <span class="block text-[11px] text-slate-400 mt-3 font-medium">atau tarik dan lepaskan (drag & drop) berkas ke layar ini</span>
                             <?php endif; ?>
@@ -1210,6 +1222,11 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                                                             class="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center text-slate-700">
                                                         <svg class="w-4 h-4 mr-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                                         Ganti Nama
+                                                    </button>
+                                                    <button type="button" onclick="duplicateFile(<?= $file['id'] ?>, '<?= htmlspecialchars(addslashes($file['original_name'])) ?>')" 
+                                                            class="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center text-slate-700">
+                                                        <svg class="w-4 h-4 mr-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                                                        Duplikat Berkas
                                                     </button>
                                                     <div class="my-1 border-t border-slate-100"></div>
                                                     <button type="button" onclick="deleteFile(<?= $file['id'] ?>, '<?= htmlspecialchars(addslashes($file['original_name'])) ?>')" 
@@ -1508,6 +1525,10 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
             <svg class="w-4 h-4 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
             Ganti Nama
         </button>
+        <button type="button" id="ctxBtnDuplicate" class="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center text-slate-700">
+            <svg class="w-4 h-4 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+            Duplikat Berkas
+        </button>
         <a id="ctxBtnDownload" href="#" class="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center text-slate-700">
             <svg class="w-4 h-4 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
             Unduh Berkas
@@ -1621,6 +1642,9 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                                 <div class="text-xs">
                                     <span class="font-bold text-slate-800 block">Pindai QR dengan Kamera HP</span>
                                     <span class="text-[11px] text-slate-500 block mt-0.5">Buka tautan unduhan secara instan tanpa mengetik URL.</span>
+                                    <button type="button" onclick="downloadQrFromImg('shareModalQrImg')" class="mt-1 text-[11px] font-bold text-brand-600 hover:underline inline-flex items-center">
+                                        ⬇ Unduh Gambar QR (PNG)
+                                    </button>
                                 </div>
                             </div>
                             <button type="button" id="btnRevokeModalShare"
@@ -1804,6 +1828,66 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
     </div>
 
     <!-- ===================================================================== -->
+    <!-- TEXT / MARKDOWN / CODE FILE CREATOR & INLINE EDITOR MODAL             -->
+    <!-- ===================================================================== -->
+    <div id="textEditorModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-3xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden animate-item-in">
+            <div class="h-14 px-6 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+                <div class="flex items-center space-x-2">
+                    <span class="h-7 w-7 rounded-lg bg-brand-50 text-brand-600 border border-brand-200/80 flex items-center justify-center font-bold text-xs">📝</span>
+                    <h3 id="textEditorModalTitle" class="text-sm font-bold text-slate-900">Buat Catatan / Berkas Teks Baru</h3>
+                </div>
+                <button type="button" onclick="closeModal('textEditorModal')" class="text-slate-400 hover:text-slate-600 p-1">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <form id="textEditorForm" onsubmit="handleSaveTextFile(event)" class="flex-1 flex flex-col overflow-hidden p-5 space-y-3.5">
+                <input type="hidden" id="textEditorFileId" value="0">
+
+                <div id="textEditorNameRow" class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div class="flex-1">
+                        <label for="textEditorFilename" class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Nama Berkas</label>
+                        <input type="text" id="textEditorFilename" placeholder="misal: catatan-rapat.txt atau README.md"
+                               class="w-full h-10 px-3.5 rounded-xl border border-slate-300 text-slate-900 text-xs sm:text-sm font-mono focus:border-brand-600 focus:ring-1 focus:ring-brand-600">
+                    </div>
+                    <div class="sm:pt-5 flex items-center gap-1.5 text-[11px]">
+                        <span class="text-slate-400 font-medium mr-1">Format:</span>
+                        <button type="button" onclick="setTextFileExt('.txt')" class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-brand-50 text-slate-700 hover:text-brand-600 font-mono font-bold transition-colors">.txt</button>
+                        <button type="button" onclick="setTextFileExt('.md')" class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-brand-50 text-slate-700 hover:text-brand-600 font-mono font-bold transition-colors">.md</button>
+                        <button type="button" onclick="setTextFileExt('.json')" class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-brand-50 text-slate-700 hover:text-brand-600 font-mono font-bold transition-colors">.json</button>
+                        <button type="button" onclick="setTextFileExt('.csv')" class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-brand-50 text-slate-700 hover:text-brand-600 font-mono font-bold transition-colors">.csv</button>
+                    </div>
+                </div>
+
+                <div class="flex-1 flex flex-col min-h-[260px]">
+                    <div class="flex items-center justify-between text-[11px] text-slate-400 mb-1 font-mono">
+                        <span>Isi Teks / Kode</span>
+                        <span id="textEditorStats">0 baris • 0 karakter</span>
+                    </div>
+                    <textarea id="textEditorContent" rows="12" placeholder="Ketik catatan, dokumentasi Markdown, atau konfigurasi JSON di sini..."
+                              oninput="updateTextEditorStats()"
+                              class="w-full flex-1 p-3.5 rounded-xl border border-slate-300 bg-slate-950 text-slate-100 font-mono text-xs leading-relaxed focus:border-brand-600 focus:ring-1 focus:ring-brand-600 resize-y"></textarea>
+                </div>
+
+                <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+                    <span class="text-[11px] text-slate-400">Tersimpan langsung di folder Drive Anda saat ini</span>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="closeModal('textEditorModal')"
+                                class="h-9 px-4 rounded-xl border border-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-50 transition-colors">
+                            Batal
+                        </button>
+                        <button type="submit" id="btnSubmitTextEditor"
+                                class="h-9 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-xs transition-colors">
+                            Simpan Berkas
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
     <!-- CUSTOM MODERN CONFIRMATION MODAL (Replaces native window.confirm)     -->
     <!-- ===================================================================== -->
     <div id="confirmActionModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
@@ -1965,6 +2049,9 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
             <div class="flex gap-2 pt-1">
                 <button type="button" id="qrModalCopyBtn" class="flex-1 h-9 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold transition-colors">
                     Salin Tautan
+                </button>
+                <button type="button" onclick="downloadQrFromImg('qrModalImg')" class="h-9 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors" title="Unduh QR sebagai PNG">
+                    ⬇ PNG
                 </button>
                 <button type="button" onclick="closeModal('qrCodeModal')" class="h-9 px-3 rounded-xl border border-slate-200 text-slate-600 text-xs font-semibold hover:bg-slate-50">
                     Tutup

@@ -422,6 +422,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 openRenameModal('file', fileId, rawName);
             };
         }
+
+        const btnDuplicate = document.getElementById('ctxBtnDuplicate');
+        if (btnDuplicate) {
+            btnDuplicate.onclick = () => {
+                closeContextMenu();
+                duplicateFile(fileId, rawName);
+            };
+        }
     };
 
     function closeContextMenu() {
@@ -915,6 +923,180 @@ document.addEventListener('DOMContentLoaded', () => {
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Simpan Perubahan';
             }
+        }
+    };
+
+    // =========================================================================
+    // 7c. Duplicate File & Create / Edit Text File Directly
+    // =========================================================================
+    window.duplicateFile = async function (fileId, fileName) {
+        closeContextMenu();
+        document.querySelectorAll('.card-action-menu').forEach(m => m.classList.add('hidden'));
+
+        const formData = new FormData();
+        formData.append('csrf_token', csrfToken);
+        formData.append('file_id', fileId);
+
+        try {
+            showToast(`Membuat salinan "${fileName}"...`);
+            const response = await fetch('?action=duplicate_file', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+            if (result.success) {
+                showToast(`Salinan "${result.file_name || fileName}" berhasil dibuat!`);
+                setTimeout(() => window.location.reload(), 350);
+            } else {
+                alert(result.error || 'Gagal menduplikat berkas.');
+            }
+        } catch (err) {
+            alert('Terjadi kesalahan jaringan saat menduplikat berkas.');
+        }
+    };
+
+    window.updateTextEditorStats = function () {
+        const textarea = document.getElementById('textEditorContent');
+        const stats = document.getElementById('textEditorStats');
+        if (!textarea || !stats) return;
+        const val = textarea.value || '';
+        const lines = val === '' ? 0 : val.split('\n').length;
+        stats.textContent = `${lines} baris • ${val.length} karakter`;
+    };
+
+    window.setTextFileExt = function (ext) {
+        const input = document.getElementById('textEditorFilename');
+        if (!input) return;
+        let name = input.value.trim();
+        if (!name) {
+            input.value = 'catatan' + ext;
+        } else {
+            const dot = name.lastIndexOf('.');
+            if (dot > 0) {
+                name = name.substring(0, dot);
+            }
+            input.value = name + ext;
+        }
+        input.focus();
+    };
+
+    window.openNewTextFileModal = function () {
+        const idInput = document.getElementById('textEditorFileId');
+        const titleEl = document.getElementById('textEditorModalTitle');
+        const nameRow = document.getElementById('textEditorNameRow');
+        const nameInput = document.getElementById('textEditorFilename');
+        const contentInput = document.getElementById('textEditorContent');
+        const submitBtn = document.getElementById('btnSubmitTextEditor');
+
+        if (idInput) idInput.value = '0';
+        if (titleEl) titleEl.textContent = 'Buat Catatan / Berkas Teks Baru';
+        if (nameRow) nameRow.classList.remove('hidden');
+        if (nameInput) {
+            nameInput.value = '';
+            nameInput.required = true;
+        }
+        if (contentInput) contentInput.value = '';
+        if (submitBtn) submitBtn.textContent = 'Simpan Berkas Baru';
+
+        window.updateTextEditorStats();
+        openModal('textEditorModal');
+        setTimeout(() => nameInput?.focus(), 30);
+    };
+
+    window.openEditTextFileModal = function (fileId, fileName, initialContent) {
+        closeModal('fileDetailModal');
+        const idInput = document.getElementById('textEditorFileId');
+        const titleEl = document.getElementById('textEditorModalTitle');
+        const nameRow = document.getElementById('textEditorNameRow');
+        const nameInput = document.getElementById('textEditorFilename');
+        const contentInput = document.getElementById('textEditorContent');
+        const submitBtn = document.getElementById('btnSubmitTextEditor');
+
+        if (idInput) idInput.value = String(fileId);
+        if (titleEl) titleEl.textContent = `Edit Berkas: ${fileName}`;
+        if (nameRow) nameRow.classList.add('hidden');
+        if (nameInput) {
+            nameInput.value = fileName;
+            nameInput.required = false;
+        }
+        if (contentInput) contentInput.value = initialContent || '';
+        if (submitBtn) submitBtn.textContent = 'Simpan Perubahan';
+
+        window.updateTextEditorStats();
+        openModal('textEditorModal');
+        setTimeout(() => contentInput?.focus(), 30);
+    };
+
+    window.handleSaveTextFile = async function (e) {
+        e.preventDefault();
+        const fileId = parseInt(document.getElementById('textEditorFileId')?.value || '0', 10);
+        const filename = (document.getElementById('textEditorFilename')?.value || '').trim();
+        const content = document.getElementById('textEditorContent')?.value || '';
+        const submitBtn = document.getElementById('btnSubmitTextEditor');
+
+        if (fileId <= 0 && !filename) {
+            alert('Masukkan nama berkas terlebih dahulu.');
+            return;
+        }
+
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Menyimpan...';
+        }
+
+        const formData = new FormData();
+        formData.append('csrf_token', csrfToken);
+        formData.append('content', content);
+
+        const endpoint = fileId > 0 ? '?action=save_text_file' : '?action=create_text_file';
+        if (fileId > 0) {
+            formData.append('file_id', fileId);
+        } else {
+            formData.append('filename', filename);
+            if (currentFolderId) {
+                formData.append('folder_id', currentFolderId);
+            }
+        }
+
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+            if (result.success) {
+                closeModal('textEditorModal');
+                showToast(fileId > 0 ? 'Isi berkas berhasil diperbarui!' : `Berkas "${result.file_name || filename}" berhasil dibuat!`);
+                setTimeout(() => window.location.reload(), 350);
+            } else {
+                alert(result.error || 'Gagal menyimpan berkas teks.');
+            }
+        } catch (err) {
+            alert('Terjadi kesalahan jaringan saat menyimpan berkas teks.');
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = fileId > 0 ? 'Simpan Perubahan' : 'Simpan Berkas';
+            }
+        }
+    };
+
+    window.downloadQrFromImg = async function (imgId) {
+        const img = document.getElementById(imgId);
+        if (!img || !img.src) return;
+        const hiResUrl = img.src.replace(/size=\d+x\d+/, 'size=400x400');
+        try {
+            const res = await fetch(hiResUrl);
+            const blob = await res.blob();
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'qr-code-tautan.png';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showToast('Gambar QR Code berhasil diunduh!');
+        } catch (e) {
+            window.open(hiResUrl, '_blank');
         }
     };
 
@@ -1866,9 +2048,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const codeBox = document.createElement('div');
                 codeBox.className = 'w-full flex flex-col space-y-2';
                 codeBox.innerHTML = `
-                    <div class="flex items-center justify-between text-xs font-mono text-slate-500 pb-1 border-b border-slate-200 dark:border-slate-700">
+                    <div class="flex items-center justify-between text-xs font-mono text-slate-500 pb-1.5 border-b border-slate-200 dark:border-slate-700">
                         <span>Pratinjau Kode / Teks</span>
-                        <span class="text-[10px] text-slate-400">Maks. 200KB</span>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-[10px] text-slate-400">Maks. 200KB</span>
+                            <button type="button" id="btnInlineEditText" class="px-2.5 py-0.5 rounded-lg bg-brand-50 hover:bg-brand-100 text-brand-700 border border-brand-200 font-sans font-bold text-[11px] transition-colors">
+                                ✏️ Edit Teks
+                            </button>
+                        </div>
                     </div>
                     <pre class="w-full max-h-[50vh] overflow-auto p-4 rounded-xl bg-slate-900 text-slate-100 font-mono text-xs leading-relaxed select-text whitespace-pre border border-slate-800"><code id="codePreviewContent">Memuat isi berkas...</code></pre>
                 `;
@@ -1880,6 +2067,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         const codeEl = document.getElementById('codePreviewContent');
                         if (codeEl) {
                             codeEl.textContent = text.slice(0, 200000);
+                        }
+                        const editBtn = document.getElementById('btnInlineEditText');
+                        if (editBtn) {
+                            editBtn.onclick = () => window.openEditTextFileModal(fileData.id, fileData.name, text);
                         }
                     })
                     .catch(() => {
@@ -2213,6 +2404,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // 2. Quick Commands
         const commands = [
             { label: 'Unggah Berkas Baru', sub: 'Pintasan: U', action: () => { closeModal('commandPaletteModal'); document.getElementById('fileUploadInput')?.click(); } },
+            { label: 'Buat Catatan / Berkas Teks Baru', sub: 'Tulis berkas .txt, .md, atau .json langsung', action: () => { closeModal('commandPaletteModal'); openNewTextFileModal(); } },
             { label: 'Buat Folder Baru', sub: 'Pintasan: N', action: () => { closeModal('commandPaletteModal'); openModal('newFolderModal'); } },
             { label: 'Analisis Penyimpanan & Berkas Terbesar', sub: 'Cek pemakaian kuota & 25 berkas terbesar', action: () => { window.location.href = '?action=drive&tab=storage_analyzer'; } },
             { label: 'Buka Drive Saya', sub: 'Navigasi Utama', action: () => { window.location.href = '?action=drive&tab=my_drive'; } },

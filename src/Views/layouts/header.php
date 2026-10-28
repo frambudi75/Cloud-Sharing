@@ -94,14 +94,18 @@
             background-color: #111827 !important;
             color: #f1f5f9 !important;
         }
-        html.dark .bg-slate-50, html.dark .bg-slate-50\/70 {
+        html.dark .bg-slate-50, html.dark .bg-slate-50\/70, html.dark .bg-slate-50\/60, html.dark .bg-slate-50\/80 {
             background-color: #0b0f19 !important;
         }
         html.dark .bg-slate-100 {
             background-color: #1f2937 !important;
             color: #e2e8f0 !important;
         }
-        html.dark .border-slate-200, html.dark .border-slate-200\/80, html.dark .border-slate-100 {
+        html.dark .border-slate-200, html.dark .border-slate-200\/80, html.dark .border-slate-200\/70, html.dark .border-slate-200\/60, html.dark .border-slate-100, html.dark .border-slate-300 {
+            border-color: #1f2937 !important;
+        }
+        html.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+        html.dark .divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
             border-color: #1f2937 !important;
         }
         html.dark .text-slate-900, html.dark .text-slate-800, html.dark .text-slate-700 {
@@ -119,7 +123,7 @@
             color: #f3f4f6 !important;
             border-color: #374151 !important;
         }
-        html.dark .file-row:hover {
+        html.dark .file-row:hover, html.dark .user-row:hover {
             background-color: #1e293b !important;
         }
         html.dark .file-card {

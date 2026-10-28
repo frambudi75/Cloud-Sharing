@@ -786,6 +786,183 @@ class DriveController
         $this->respondJson(['success' => true, 'new_name' => $newName]);
     }
 
+    public function duplicateFile(): void
+    {
+        $this->validateCsrf();
+        $userId = (int) AuthService::id();
+        $fileId = (int) ($_POST['file_id'] ?? 0);
+
+        if ($fileId <= 0) {
+            $this->respondJson(['success' => false, 'error' => 'ID berkas tidak valid.']);
+            return;
+        }
+
+        $db = Database::getConnection();
+        $stmt = $db->prepare("SELECT * FROM files WHERE id = :id AND user_id = :user_id AND deleted_at IS NULL LIMIT 1");
+        $stmt->execute([':id' => $fileId, ':user_id' => $userId]);
+        $source = $stmt->fetch();
+
+        if (!$source) {
+            $this->respondJson(['success' => false, 'error' => 'Berkas tidak ditemukan atau bukan milik Anda.']);
+            return;
+        }
+
+        $sourcePath = StorageService::getFullPath($source['storage_path'], $source['storage_filename']);
+        if (!file_exists($sourcePath)) {
+            $this->respondJson(['success' => false, 'error' => 'Berkas fisik sumber tidak ditemukan di penyimpanan.']);
+            return;
+        }
+
+        $ext = pathinfo($source['original_name'], PATHINFO_EXTENSION);
+        $base = pathinfo($source['original_name'], PATHINFO_FILENAME);
+        $copyName = $base . ' (Salinan)' . ($ext !== '' ? '.' . $ext : '');
+
+        $tempCopy = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'dup_' . bin2hex(random_bytes(8)) . '.tmp';
+        if (!@copy($sourcePath, $tempCopy)) {
+            $this->respondJson(['success' => false, 'error' => 'Gagal menyalin berkas fisik.']);
+            return;
+        }
+
+        $folderId = !empty($source['folder_id']) ? (int) $source['folder_id'] : null;
+        $result = StorageService::storeMergedFile($tempCopy, $copyName, $userId, $folderId);
+        if (file_exists($tempCopy)) {
+            @unlink($tempCopy);
+        }
+
+        $this->respondJson($result);
+    }
+
+    public function createTextFile(): void
+    {
+        $this->validateCsrf();
+        $userId = (int) AuthService::id();
+        $rawName = trim($_POST['filename'] ?? '');
+        $content = (string) ($_POST['content'] ?? '');
+        $folderId = isset($_POST['folder_id']) && is_numeric($_POST['folder_id']) && (int) $_POST['folder_id'] > 0
+            ? (int) $_POST['folder_id']
+            : null;
+
+        if ($rawName === '') {
+            $this->respondJson(['success' => false, 'error' => 'Nama berkas tidak boleh kosong.']);
+            return;
+        }
+
+        $cleanName = str_replace(["\0", '/', '\\', ':', '*', '?', '"', '<', '>', '|'], '', $rawName);
+        if ($cleanName === '') {
+            $this->respondJson(['success' => false, 'error' => 'Nama berkas mengandung karakter terlarang.']);
+            return;
+        }
+
+        $ext = pathinfo($cleanName, PATHINFO_EXTENSION);
+        if ($ext === '') {
+            $cleanName .= '.txt';
+        }
+
+        if (StorageService::isDangerousExtension($cleanName)) {
+            $this->respondJson(['success' => false, 'error' => 'Ekstensi skrip server (.php, .phar) tidak diizinkan.']);
+            return;
+        }
+
+        if (strlen($content) > 2 * 1024 * 1024) {
+            $this->respondJson(['success' => false, 'error' => 'Ukuran teks melampaui batas editor langsung (maksimum 2 MB).']);
+            return;
+        }
+
+        $tempFile = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'txt_' . bin2hex(random_bytes(8)) . '.tmp';
+        if (file_put_contents($tempFile, $content) === false) {
+            $this->respondJson(['success' => false, 'error' => 'Gagal menulis berkas teks sementara.']);
+            return;
+        }
+
+        $result = StorageService::storeMergedFile($tempFile, $cleanName, $userId, $folderId);
+        if (file_exists($tempFile)) {
+            @unlink($tempFile);
+        }
+
+        $this->respondJson($result);
+    }
+
+    public function saveTextFile(): void
+    {
+        $this->validateCsrf();
+        $userId = (int) AuthService::id();
+        $fileId = (int) ($_POST['file_id'] ?? 0);
+        $content = (string) ($_POST['content'] ?? '');
+
+        if ($fileId <= 0) {
+            $this->respondJson(['success' => false, 'error' => 'ID berkas tidak valid.']);
+            return;
+        }
+
+        if (strlen($content) > 2 * 1024 * 1024) {
+            $this->respondJson(['success' => false, 'error' => 'Ukuran teks melampaui batas editor langsung (maksimum 2 MB).']);
+            return;
+        }
+
+        $db = Database::getConnection();
+        $stmt = $db->prepare("SELECT * FROM files WHERE id = :id AND user_id = :user_id AND deleted_at IS NULL LIMIT 1");
+        $stmt->execute([':id' => $fileId, ':user_id' => $userId]);
+        $file = $stmt->fetch();
+
+        if (!$file) {
+            $this->respondJson(['success' => false, 'error' => 'Berkas tidak ditemukan atau Anda tidak memiliki izin edit.']);
+            return;
+        }
+
+        if (StorageService::isDangerousExtension($file['original_name'])) {
+            $this->respondJson(['success' => false, 'error' => 'Berkas ini tidak dapat diedit secara langsung.']);
+            return;
+        }
+
+        $fullPath = StorageService::getFullPath($file['storage_path'], $file['storage_filename']);
+        $oldSize = (int) $file['file_size'];
+        $newSize = strlen($content);
+        $delta = $newSize - $oldSize;
+
+        $user = AuthService::user();
+        if ($delta > 0 && $user && (($user['storage_used'] + $delta) > $user['storage_quota'])) {
+            $this->respondJson(['success' => false, 'error' => 'Kuota penyimpanan Anda tidak mencukupi untuk menyimpan perubahan ini.']);
+            return;
+        }
+
+        if (@file_put_contents($fullPath, $content) === false) {
+            $this->respondJson(['success' => false, 'error' => 'Gagal menyimpan perubahan ke berkas fisik.']);
+            return;
+        }
+
+        $newHash = hash_file('sha256', $fullPath) ?: null;
+
+        $db->beginTransaction();
+        try {
+            $updFile = $db->prepare("UPDATE files SET file_size = :size, file_hash = :hash WHERE id = :id AND user_id = :user_id");
+            $updFile->execute([
+                ':size'    => $newSize,
+                ':hash'    => $newHash,
+                ':id'      => $fileId,
+                ':user_id' => $userId,
+            ]);
+
+            $updUser = $db->prepare("
+                UPDATE users 
+                SET storage_used = GREATEST(0, CAST(storage_used AS SIGNED) + :delta)
+                WHERE id = :user_id
+            ");
+            $updUser->execute([':delta' => $delta, ':user_id' => $userId]);
+
+            $db->commit();
+
+            $this->respondJson([
+                'success'        => true,
+                'file_id'        => $fileId,
+                'new_size'       => $newSize,
+                'formatted_size' => StorageService::formatBytes($newSize),
+            ]);
+        } catch (\Throwable $e) {
+            $db->rollBack();
+            $this->respondJson(['success' => false, 'error' => 'Gagal memperbarui ukuran berkas di database.']);
+        }
+    }
+
     public function createShare(): void
     {
         $this->validateCsrf();

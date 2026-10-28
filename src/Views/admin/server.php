@@ -128,10 +128,10 @@ $diskPercent = $metrics['disk_percent'] ?? 0;
                 </div>
 
                 <!-- Note explaining difference between user quota and server disk -->
-                <div class="mt-4 p-3 rounded-xl bg-amber-50/70 border border-amber-200/60 flex items-start space-x-2.5">
-                    <svg class="w-4 h-4 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <p class="text-xs text-amber-800 leading-relaxed">
-                        <strong>Catatan:</strong> Kuota di sidebar (default 10 GB untuk admin) adalah <em>kuota pengguna</em> per akun yang dapat diatur di menu <a href="?action=users" class="font-semibold underline hover:text-amber-900">Kelola Pengguna</a>. Sedangkan angka di atas adalah kapasitas <em>hard drive / disk fisik server sesungguhnya</em>.
+                <div class="mt-4 p-3 rounded-xl bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200/60 dark:border-amber-900/50 flex items-start space-x-2.5">
+                    <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <p class="text-xs text-amber-800 dark:text-amber-200 leading-relaxed">
+                        <strong>Catatan:</strong> Kuota di sidebar (default 10 GB untuk admin) adalah <em>kuota pengguna</em> per akun yang dapat diatur di menu <a href="?action=users" class="font-semibold underline hover:text-amber-900 dark:hover:text-amber-100">Kelola Pengguna</a>. Sedangkan angka di atas adalah kapasitas <em>hard drive / disk fisik server sesungguhnya</em>.
                     </p>
                 </div>
             </div>

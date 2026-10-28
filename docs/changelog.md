@@ -4,6 +4,14 @@ Semua perubahan pada spesifikasi dan implementasi proyek file-sharing akan dicat
 
 ## [Unreleased] - 2026-10-28
 ### Ditambahkan & Ditingkatkan
+- **Buat & Edit Berkas Teks / Catatan / Kode Langsung di Drive (`?action=create_text_file` & `?action=save_text_file`)**:
+  - Tombol **Catatan / Teks Baru** di Drive untuk membuat berkas `.txt`, `.md`, `.json`, `.csv` langsung di folder saat ini, serta tombol **✏️ Edit Teks** di dalam modal pratinjau untuk mengubah dan menyimpan berkas teks secara langsung tanpa unduh/unggah ulang.
+- **Fitur Duplikat Berkas Cepat (`?action=duplicate_file`)**:
+  - Opsi **Duplikat Berkas** pada menu kartu dan klik kanan untuk membuat salinan cadangan berkas (`Nama (Salinan).ext`) dalam 1 klik dengan perhitungan kuota otomatis.
+- **Embedded Live Preview & Unduh PNG QR di Halaman Tamu (`?action=share`)**:
+  - Menampilkan pratinjau langsung (Gambar, Video player, Audio player, dan cuplikan Teks/Kode) tepat di dalam kartu halaman unduh tamu serta tombol **Unduh Gambar QR (PNG)** baik di halaman tamu maupun di modal berbagi Drive.
+- **Dark Mode Penuh & 4 Kartu Ringkasan KPI di Halaman Admin (`?action=users` & `?action=server`)**:
+  - Dukungan mode gelap menyeluruh pada tabel, kartu, dan modal manajemen pengguna & server, dilengkapi 4 kartu KPI (*Total Akun*, *Status Pengguna*, *Total Alokasi Kuota*, *Total Pemakaian*) serta modal konfirmasi kustom saat menghapus pengguna.
 - **Analisis Penyimpanan & 25 Berkas Terbesar (`?action=drive&tab=storage_analyzer`)**:
   - Dashboard rincian penggunaan kuota per kategori berkas, peringatan ruang sampah yang bisa dibebaskan, serta tabel 25 berkas terbesar lintas folder untuk pembersihan cepat.
 - **Visual Kartu Berkas & Folder Lebih Hidup**:

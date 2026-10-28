@@ -157,6 +157,51 @@ if ($isImage) {
                     </div>
                 </div>
 
+                <!-- Embedded Inline Live Preview (For Image, Video, Audio, Text) -->
+                <?php if ($canPreview): ?>
+                    <div class="mb-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-100/70 dark:bg-slate-950/70 overflow-hidden">
+                        <div class="px-3.5 py-2 border-b border-slate-200/70 dark:border-slate-800 flex items-center justify-between text-[11px] font-semibold text-slate-500">
+                            <span class="flex items-center">
+                                <span class="w-1.5 h-1.5 rounded-full bg-brand-500 mr-1.5"></span>
+                                Pratinjau Langsung
+                            </span>
+                            <button type="button" onclick="openGuestPreview()" class="text-brand-600 dark:text-brand-400 hover:underline font-bold">
+                                Layar Penuh ↗
+                            </button>
+                        </div>
+                        <div class="p-3 flex items-center justify-center">
+                            <?php if ($isImage): ?>
+                                <img src="?action=download_share&token=<?= htmlspecialchars($share['share_token']) ?>&preview=1"
+                                     onclick="openGuestPreview()"
+                                     class="max-h-56 w-auto rounded-xl object-contain shadow-xs cursor-zoom-in hover:scale-[1.01] transition-transform"
+                                     alt="<?= htmlspecialchars($share['original_name']) ?>">
+                            <?php elseif ($isVideo): ?>
+                                <video src="?action=download_share&token=<?= htmlspecialchars($share['share_token']) ?>&preview=1"
+                                       controls preload="metadata"
+                                       class="w-full max-h-56 rounded-xl bg-black"></video>
+                            <?php elseif ($isAudio): ?>
+                                <audio src="?action=download_share&token=<?= htmlspecialchars($share['share_token']) ?>&preview=1"
+                                       controls class="w-full"></audio>
+                            <?php elseif ($isText): ?>
+                                <pre id="guestInlineTextPreview" class="w-full max-h-44 overflow-auto p-3 rounded-xl bg-slate-900 text-slate-100 font-mono text-[11px] leading-relaxed text-left">Memuat isi teks...</pre>
+                                <script>
+                                    fetch('?action=download_share&token=<?= htmlspecialchars($share['share_token']) ?>&preview=1')
+                                        .then(r => r.text())
+                                        .then(t => {
+                                            const el = document.getElementById('guestInlineTextPreview');
+                                            if (el) el.textContent = t.slice(0, 50000);
+                                        })
+                                        .catch(() => {});
+                                </script>
+                            <?php elseif ($isPdf): ?>
+                                <button type="button" onclick="openGuestPreview()" class="py-4 px-6 text-xs font-bold text-rose-600 hover:underline flex items-center">
+                                    📄 Klik untuk Membuka Dokumen PDF di Browser
+                                </button>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
                 <!-- Metadata Cards Grid -->
                 <div class="py-3 px-4 rounded-2xl bg-slate-50 dark:bg-slate-950/50 border border-slate-200/70 dark:border-slate-800 space-y-2 text-xs text-slate-600 dark:text-slate-400">
                     <?php if (!empty($share['expires_at'])): ?>
@@ -229,11 +274,16 @@ if ($isImage) {
                         </button>
                     </div>
 
-                    <div id="guestQrPanel" class="hidden p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 text-center space-y-2">
+                    <div id="guestQrPanel" class="hidden p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 text-center space-y-2.5">
                         <div class="inline-block p-2.5 bg-white rounded-xl border border-slate-200 shadow-2xs">
                             <img id="guestQrImg" src="" alt="QR Code Unduh" class="w-36 h-36 mx-auto object-contain">
                         </div>
                         <p class="text-[11px] text-slate-500 dark:text-slate-400">Pindai dengan kamera ponsel untuk membuka halaman ini di HP.</p>
+                        <div>
+                            <button type="button" onclick="downloadGuestQr()" class="inline-flex items-center px-3 py-1.5 rounded-lg bg-brand-50 hover:bg-brand-100 text-brand-700 text-[11px] font-bold border border-brand-200 transition-colors">
+                                ⬇ Unduh Gambar QR (PNG)
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -323,9 +373,25 @@ function toggleGuestQr() {
     const img = document.getElementById('guestQrImg');
     if (!panel || !img) return;
     if (!img.getAttribute('src')) {
-        img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=6&data=' + encodeURIComponent(window.location.href);
+        img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=8&data=' + encodeURIComponent(window.location.href);
     }
     panel.classList.toggle('hidden');
+}
+
+async function downloadGuestQr() {
+    const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=12&data=' + encodeURIComponent(window.location.href);
+    try {
+        const res = await fetch(qrUrl);
+        const blob = await res.blob();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'qr-unduh-berkas.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    } catch (e) {
+        window.open(qrUrl, '_blank');
+    }
 }
 </script>
 
