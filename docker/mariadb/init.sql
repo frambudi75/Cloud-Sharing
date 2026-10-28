@@ -1,6 +1,6 @@
 -- ==============================================================
--- Database Schema & Initial Seed: File Sharing System (Docker Init)
--- High Performance Indexing
+-- Database Schema & Initial Seed: File Sharing System
+-- High Performance Indexing & Dual Compatible (MySQL & Docker)
 -- ==============================================================
 
 CREATE DATABASE IF NOT EXISTS `filesharing_db` 
@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS `users` (
     `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     `username` VARCHAR(50) NOT NULL UNIQUE,
     `email` VARCHAR(100) NOT NULL UNIQUE,
+    `avatar_path` VARCHAR(255) NULL DEFAULT NULL,
     `password_hash` VARCHAR(255) NOT NULL,
     `role` ENUM('admin', 'user') NOT NULL DEFAULT 'user',
     `storage_quota` BIGINT UNSIGNED NOT NULL DEFAULT 5368709120, -- Default: 5 GB
@@ -30,12 +31,14 @@ CREATE TABLE IF NOT EXISTS `folders` (
     `user_id` BIGINT UNSIGNED NOT NULL,
     `parent_id` BIGINT UNSIGNED NULL DEFAULT NULL,
     `name` VARCHAR(255) NOT NULL,
+    `deleted_at` TIMESTAMP NULL DEFAULT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT `fk_folders_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
     CONSTRAINT `fk_folders_parent` FOREIGN KEY (`parent_id`) REFERENCES `folders` (`id`) ON DELETE CASCADE,
     INDEX `idx_user_parent` (`user_id`, `parent_id`),
-    INDEX `idx_folders_user_name` (`user_id`, `name`)
+    INDEX `idx_folders_user_name` (`user_id`, `name`),
+    INDEX `idx_folders_deleted` (`deleted_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 3. Tabel Files
@@ -49,6 +52,7 @@ CREATE TABLE IF NOT EXISTS `files` (
     `mime_type` VARCHAR(100) NOT NULL,
     `file_size` BIGINT UNSIGNED NOT NULL,
     `file_hash` CHAR(64) NULL,
+    `deleted_at` TIMESTAMP NULL DEFAULT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT `fk_files_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
@@ -56,7 +60,8 @@ CREATE TABLE IF NOT EXISTS `files` (
     INDEX `idx_files_user_folder` (`user_id`, `folder_id`),
     INDEX `idx_files_user_created` (`user_id`, `created_at`),
     INDEX `idx_files_user_name` (`user_id`, `original_name`),
-    INDEX `idx_files_hash` (`file_hash`)
+    INDEX `idx_files_hash` (`file_hash`),
+    INDEX `idx_files_deleted` (`deleted_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 4. Tabel Share Links
@@ -109,6 +114,13 @@ CREATE TABLE IF NOT EXISTS `user_shares` (
     INDEX `idx_shared_by` (`shared_by_user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 7. Tabel System Settings (Pengaturan Webhook & Server)
+CREATE TABLE IF NOT EXISTS `system_settings` (
+    `setting_key` VARCHAR(64) PRIMARY KEY,
+    `setting_value` TEXT NULL,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Default Admin Account:
 INSERT INTO `users` (`username`, `email`, `password_hash`, `role`, `storage_quota`, `storage_used`, `status`)
 VALUES (
@@ -116,7 +128,7 @@ VALUES (
     'admin@fileshare.local', 
     '$2y$12$jZ7GkivHnFE4XhKcIaZpWOph.VRl4DLER1hr7a1QW83.Jj0P0FRO6', 
     'admin', 
-    10737418240, 
+    10737418240, -- 10 GB
     0, 
     'active'
 )

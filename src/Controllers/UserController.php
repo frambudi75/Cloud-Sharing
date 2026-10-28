@@ -220,6 +220,15 @@ class UserController
         }
 
         // 2. Hapus user dari DB (Foreign key cascade akan menghapus folders, files, dan shares)
+        $avStmt = $db->prepare("SELECT avatar_path FROM users WHERE id = :id LIMIT 1");
+        $avStmt->execute([':id' => $userId]);
+        $avRow = $avStmt->fetch();
+        if (!empty($avRow['avatar_path'])) {
+            $avFile = StorageService::getAvatarDir() . DIRECTORY_SEPARATOR . $avRow['avatar_path'];
+            if (file_exists($avFile) && is_file($avFile)) {
+                @unlink($avFile);
+            }
+        }
         $deleteStmt = $db->prepare("DELETE FROM users WHERE id = :id");
         $deleteStmt->execute([':id' => $userId]);
 

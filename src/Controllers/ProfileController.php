@@ -34,8 +34,8 @@ class ProfileController
 
         // Database stats for profile
         $db = Database::getConnection();
-        $filesCount = (int) $db->query("SELECT COUNT(*) FROM files WHERE user_id = {$userId}")->fetchColumn();
-        $foldersCount = (int) $db->query("SELECT COUNT(*) FROM folders WHERE user_id = {$userId}")->fetchColumn();
+        $filesCount = (int) $db->query("SELECT COUNT(*) FROM files WHERE user_id = {$userId} AND deleted_at IS NULL")->fetchColumn();
+        $foldersCount = (int) $db->query("SELECT COUNT(*) FROM folders WHERE user_id = {$userId} AND deleted_at IS NULL")->fetchColumn();
         $sharedCount = (int) $db->query("SELECT COUNT(*) FROM share_links WHERE user_id = {$userId} AND is_active = 1")->fetchColumn();
 
         $pageTitle = 'Profil Pengguna - Cloud Sharing';

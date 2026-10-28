@@ -115,6 +115,13 @@ document.addEventListener('DOMContentLoaded', () => {
         applyLiveFilter();
     };
 
+    function matchesFilterCategory(fileCat, filterCat) {
+        if (filterCat === 'all') return true;
+        if (filterCat === 'media') return ['video', 'audio', 'media'].includes(fileCat);
+        if (filterCat === 'document') return ['document', 'pdf', 'code'].includes(fileCat);
+        return fileCat === filterCat;
+    }
+
     function applyLiveFilter() {
         const searchInput = document.getElementById('searchInput');
         const query = (searchInput ? searchInput.value : '').toLowerCase().trim();
@@ -122,12 +129,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // Filter File Cards in Grid View
         const fileCards = document.querySelectorAll('.file-card');
         fileCards.forEach(card => {
+            if (card.classList.contains('folder-drop-zone')) return;
             const fileName = (card.getAttribute('data-filename') || '').toLowerCase();
             const rawName = (card.getAttribute('data-rawname') || '').toLowerCase();
             const fileCat = card.getAttribute('data-category') || 'document';
 
             const matchesQuery = !query || fileName.includes(query) || rawName.includes(query);
-            const matchesCategory = (currentFilterCategory === 'all') || (fileCat === currentFilterCategory);
+            const matchesCategory = matchesFilterCategory(fileCat, currentFilterCategory);
 
             if (matchesQuery && matchesCategory) {
                 card.classList.remove('hidden');
@@ -158,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const fileCat = row.getAttribute('data-category') || 'document';
 
             const matchesQuery = !query || fileName.includes(query) || rawName.includes(query);
-            const matchesCategory = (currentFilterCategory === 'all') || (fileCat === currentFilterCategory);
+            const matchesCategory = matchesFilterCategory(fileCat, currentFilterCategory);
 
             if (matchesQuery && matchesCategory) {
                 row.classList.remove('hidden');
@@ -445,7 +453,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (fileIds.length === 0) return;
 
-        if (!confirm(`Hapus ${fileIds.length} berkas yang dipilih secara permanen? Tindakan ini tidak dapat dibatalkan.`)) {
+        if (!confirm(`Pindahkan ${fileIds.length} berkas yang dipilih ke Keranjang Sampah?`)) {
             return;
         }
 
@@ -1296,30 +1304,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // =========================================================================
-    // 9. Live Search Filter across Grid Cards and Table Rows
-    // =========================================================================
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-            const query = e.target.value.toLowerCase().trim();
-
-            // Filter List View rows
-            const rows = document.querySelectorAll('.file-row');
-            rows.forEach(row => {
-                const name = (row.getAttribute('data-filename') || '').toLowerCase();
-                row.style.display = name.includes(query) ? '' : 'none';
-            });
-
-            // Filter Grid View cards
-            const cards = document.querySelectorAll('.file-card');
-            cards.forEach(card => {
-                const name = (card.getAttribute('data-filename') || '').toLowerCase();
-                card.style.display = name.includes(query) ? '' : 'none';
-            });
-        });
-    }
-
-    // =========================================================================
     // 10. Sharing Engine (Public Links & User-to-User Shares)
     // =========================================================================
     window.switchShareTab = function (tab) {
@@ -1493,7 +1477,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             </div>
                             <div class="flex items-center space-x-2 flex-shrink-0">
                                 ${permBadge}
-                                <button type="button" onclick="revokeDirectUserShare(${fileId}, ${item.shared_with_user_id})" 
+                                <button type="button" onclick="revokeDirectUserShare(${fileId}, ${item.user_id || item.shared_with_user_id})" 
                                         class="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition-colors" title="Cabut Akses">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                 </button>
@@ -1761,95 +1745,35 @@ document.addEventListener('DOMContentLoaded', () => {
     // =========================================================================
     // 12. Toast Feedback & Clipboard Utilities (Mockup Aligned)
     // =========================================================================
+    window.hideToast = function () {
+        const toast = document.getElementById('appToast');
+        if (!toast) return;
+        toast.classList.remove('translate-y-0', 'opacity-100', 'pointer-events-auto');
+        toast.classList.add('translate-y-12', 'opacity-0', 'pointer-events-none');
+    };
+
     window.showToast = function (message) {
-        let toast = document.getElementById('appToast');
-        if (!toast) {
-            toast = document.createElement('div');
-            toast.id = 'appToast';
-            toast.className = 'fixed bottom-5 right-5 z-50 bg-slate-900 text-white text-xs font-semibold px-4 py-3 rounded-xl shadow-xl flex items-center space-x-2 transition-all duration-300 pointer-events-auto';
-            toast.innerHTML = `
-                <svg class="w-4 h-4 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                </svg>
-                <span id="appToastMsg"></span>
-                <button type="button" onclick="this.parentElement.style.opacity='0'" class="ml-2 text-slate-400 hover:text-white">&times;</button>
-            `;
-            document.body.appendChild(toast);
-        }
+        const toast = document.getElementById('appToast');
+        if (!toast) return;
         const msgEl = toast.querySelector('#appToastMsg') || toast;
         msgEl.textContent = message;
-        toast.style.display = 'flex';
-        toast.style.opacity = '1';
-        toast.style.transform = 'translateY(0)';
+        toast.classList.remove('translate-y-12', 'opacity-0', 'pointer-events-none');
+        toast.classList.add('translate-y-0', 'opacity-100', 'pointer-events-auto');
         clearTimeout(window.__toastTimeout);
         window.__toastTimeout = setTimeout(() => {
-            toast.style.opacity = '0';
-            toast.style.transform = 'translateY(8px)';
-            setTimeout(() => { if (toast.style.opacity === '0') toast.style.display = 'none'; }, 300);
+            window.hideToast();
         }, 3000);
     };
 
-    window.copyToClipboard = async function (text, message = 'Tautan berhasil disalin!') {
-        if (!text) {
-            window.showToast('Tautan tidak tersedia.');
-            return;
-        }
-        try {
-            await navigator.clipboard.writeText(text);
-            window.showToast(message);
-        } catch (err) {
-            // Fallback for non-HTTPS/legacy
-            const textArea = document.createElement('textarea');
-            textArea.value = text;
-            textArea.style.position = 'fixed';
-            textArea.style.left = '-9999px';
-            document.body.appendChild(textArea);
-            textArea.select();
-            try {
-                document.execCommand('copy');
-                window.showToast(message);
-            } catch (e) {
-                alert('Gagal menyalin tautan: ' + text);
-            }
-            document.body.removeChild(textArea);
-        }
-    };
-
-    window.copyShareUrl = function (token, btnElement) {
-        if (!token) {
-            window.showToast('Belum ada tautan publik untuk berkas ini.');
-            return;
-        }
-        const origin = window.location.origin + window.location.pathname;
-        const fullShareUrl = `${origin}?action=share&token=${token}`;
-        window.copyToClipboard(fullShareUrl, 'Tautan publik berhasil disalin!');
-    };
-
-    // Global Keyboard Shortcuts (Ponytail Lean)
+    // Global Shortcut: U to trigger file upload
     document.addEventListener('keydown', function (e) {
         if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
-            if (e.key === 'Escape') {
-                document.activeElement.blur();
-            }
             return;
         }
-
-        if (e.key === '/') {
-            e.preventDefault();
-            const searchInput = document.getElementById('searchInput');
-            if (searchInput) searchInput.focus();
-        } else if (e.key === 'u' || e.key === 'U') {
+        if (e.key === 'u' || e.key === 'U') {
             e.preventDefault();
             const uploadInput = document.getElementById('fileUploadInput');
             if (uploadInput) uploadInput.click();
-        } else if (e.key === 'n' || e.key === 'N') {
-            e.preventDefault();
-            const btnNewFolder = document.getElementById('btnNewFolderModal');
-            if (btnNewFolder) btnNewFolder.click();
-        } else if (e.key === 'Escape') {
-            if (typeof window.closeAllModals === 'function') {
-                window.closeAllModals();
-            }
         }
     });
 });

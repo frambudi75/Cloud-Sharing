@@ -108,7 +108,7 @@ class ShareService
                 FROM share_links s
                 INNER JOIN files f ON s.file_id = f.id
                 INNER JOIN users u ON s.user_id = u.id
-                WHERE s.share_token = :token AND s.is_active = 1
+                WHERE s.share_token = :token AND s.is_active = 1 AND f.deleted_at IS NULL
                 LIMIT 1
             ");
             $stmt->execute([':token' => $token]);
@@ -245,7 +245,7 @@ class ShareService
     {
         $db = Database::getConnection();
         $stmt = $db->prepare("
-            SELECT us.id, us.permission, us.created_at, u.id as user_id, u.username, u.email 
+            SELECT us.id, us.permission, us.created_at, us.shared_with_user_id, u.id as user_id, u.username, u.email 
             FROM user_shares us
             INNER JOIN users u ON us.shared_with_user_id = u.id
             WHERE us.file_id = :file_id AND us.shared_by_user_id = :by_user
@@ -277,7 +277,7 @@ class ShareService
             FROM user_shares us
             INNER JOIN files f ON us.file_id = f.id
             INNER JOIN users u ON us.shared_by_user_id = u.id
-            WHERE us.shared_with_user_id = :user_id
+            WHERE us.shared_with_user_id = :user_id AND f.deleted_at IS NULL
             ORDER BY us.created_at DESC
         ");
         $stmt->execute([':user_id' => $userId]);

@@ -467,7 +467,7 @@ class StorageService
     public static function getStorageCategoryBreakdown(int $userId): array
     {
         $db = Database::getConnection();
-        $stmt = $db->prepare("SELECT mime_type, original_name, file_size FROM files WHERE user_id = :user_id");
+        $stmt = $db->prepare("SELECT mime_type, original_name, file_size FROM files WHERE user_id = :user_id AND deleted_at IS NULL");
         $stmt->execute([':user_id' => $userId]);
         $rows = $stmt->fetchAll();
 

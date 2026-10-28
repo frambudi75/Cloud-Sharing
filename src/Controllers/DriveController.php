@@ -70,6 +70,10 @@ class DriveController
             $recentStmt->execute([':user_id' => $userId]);
             $files = $recentStmt->fetchAll();
             $folders = [];
+        } elseif ($activeTab === 'starred') {
+            $breadcrumbs = [['id' => null, 'name' => 'Berbintang']];
+            $files = [];
+            $folders = [];
         } elseif ($activeTab === 'trash') {
             // Tab Sampah (Recycle Bin)
             $breadcrumbs = [['id' => null, 'name' => 'Keranjang Sampah']];
@@ -448,12 +452,21 @@ class DriveController
         $folderId = (int) ($_POST['folder_id'] ?? 0);
 
         $db = Database::getConnection();
-        $filesStmt = $db->prepare("SELECT id FROM files WHERE folder_id = :fid AND user_id = :uid");
-        $filesStmt->execute([':fid' => $folderId, ':uid' => $userId]);
-        $files = $filesStmt->fetchAll();
-        foreach ($files as $f) {
-            StorageService::deleteFile((int) $f['id'], $userId);
-        }
+        $deleteFolderContents = function (int $fid) use (&$deleteFolderContents, $db, $userId): void {
+            $subStmt = $db->prepare("SELECT id FROM folders WHERE parent_id = :pid AND user_id = :uid");
+            $subStmt->execute([':pid' => $fid, ':uid' => $userId]);
+            foreach ($subStmt->fetchAll() as $sub) {
+                $deleteFolderContents((int) $sub['id']);
+            }
+
+            $filesStmt = $db->prepare("SELECT id FROM files WHERE folder_id = :fid AND user_id = :uid");
+            $filesStmt->execute([':fid' => $fid, ':uid' => $userId]);
+            foreach ($filesStmt->fetchAll() as $f) {
+                StorageService::deleteFile((int) $f['id'], $userId);
+            }
+        };
+
+        $deleteFolderContents($folderId);
 
         $stmt = $db->prepare("DELETE FROM folders WHERE id = :id AND user_id = :user_id");
         $stmt->execute([':id' => $folderId, ':user_id' => $userId]);

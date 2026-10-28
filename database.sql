@@ -114,6 +114,13 @@ CREATE TABLE IF NOT EXISTS `user_shares` (
     INDEX `idx_shared_by` (`shared_by_user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 7. Tabel System Settings (Pengaturan Webhook & Server)
+CREATE TABLE IF NOT EXISTS `system_settings` (
+    `setting_key` VARCHAR(64) PRIMARY KEY,
+    `setting_value` TEXT NULL,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Default Admin Account:
 INSERT INTO `users` (`username`, `email`, `password_hash`, `role`, `storage_quota`, `storage_used`, `status`)
 VALUES (
