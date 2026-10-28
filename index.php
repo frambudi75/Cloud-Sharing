@@ -102,6 +102,9 @@ switch ($action) {
     case 'create_share':
         (new DriveController())->createShare();
         break;
+    case 'revoke_public_share':
+        (new DriveController())->revokePublicShare();
+        break;
     case 'share_with_user':
         (new DriveController())->shareWithUser();
         break;

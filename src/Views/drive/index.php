@@ -1,11 +1,12 @@
 <?php
-$pageTitle = ($activeTab === 'shared_with_me' ? 'Dibagikan ke Saya' : ($activeTab === 'recent' ? 'Terbaru' : 'Drive Saya')) . ' - File Sharing Cloud';
+$pageTitle = ($activeTab === 'my_shares' ? 'Tautan Publik Saya' : ($activeTab === 'shared_with_me' ? 'Dibagikan ke Saya' : ($activeTab === 'recent' ? 'Terbaru' : 'Drive Saya'))) . ' - File Sharing Cloud';
 require_once dirname(__DIR__) . '/layouts/header.php';
 use App\Services\StorageService;
 
 $totalFiles = $totalFilesCount ?? count($files);
 $totalFolders = $totalFoldersCount ?? count($folders);
 $totalShared = $totalSharedCount ?? 0;
+$myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
 ?>
 
 <style>
@@ -39,6 +40,10 @@ $totalShared = $totalSharedCount ?? 0;
         background-color: #eef2ff;
         color: #4f46e5;
         font-weight: 700;
+    }
+    html.dark .sidebar-nav-active {
+        background-color: rgba(79, 70, 229, 0.2) !important;
+        color: #818cf8 !important;
     }
 
     /* Dragover active animation in dark & light */
@@ -131,8 +136,19 @@ $totalShared = $totalSharedCount ?? 0;
                 </a>
             </div>
 
-            <!-- Right: Admin Links, Theme Toggle, User Info & Logout -->
-            <div class="flex items-center space-x-2 sm:space-x-3">
+            <!-- Right: Quick Command Palette, Theme Toggle & Avatar Dropdown -->
+            <div class="flex items-center space-x-2 sm:space-x-2.5">
+                <!-- Command Palette Trigger (Ctrl + K) -->
+                <button type="button" onclick="openCommandPalette()" 
+                        class="inline-flex items-center h-9 px-3 rounded-xl border border-slate-200 hover:border-brand-300 bg-slate-50/80 hover:bg-white text-slate-500 hover:text-slate-800 text-xs font-medium transition-all shadow-2xs"
+                        title="Pencarian & Perintah Cepat (Ctrl+K)">
+                    <svg class="w-3.5 h-3.5 sm:mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    <span class="hidden md:inline mr-2 text-slate-400">Cari atau perintah...</span>
+                    <kbd class="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono font-bold text-slate-500 bg-white rounded border border-slate-200">Ctrl K</kbd>
+                </button>
+
                 <!-- Dark Mode Toggle Button -->
                 <button type="button" id="themeToggleBtn" onclick="toggleDarkMode()" 
                         class="h-9 w-9 rounded-xl border border-slate-200 hover:bg-slate-100 flex items-center justify-center text-slate-600 transition-colors" 
@@ -141,61 +157,87 @@ $totalShared = $totalSharedCount ?? 0;
                     <svg id="themeIconMoon" class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
                 </button>
 
-                <?php if (!empty($user['role']) && $user['role'] === 'admin'): ?>
-                    <a href="?action=users" 
-                       class="inline-flex items-center h-9 px-3.5 text-xs font-semibold rounded-xl text-slate-700 hover:text-brand-600 hover:bg-slate-100 border border-slate-200 transition-colors">
-                        <svg class="w-4 h-4 sm:mr-1.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                        </svg>
-                        <span class="hidden sm:inline">Kelola Pengguna</span>
-                    </a>
-                    <a href="?action=server" 
-                       class="inline-flex items-center h-9 px-3.5 text-xs font-semibold rounded-xl text-slate-700 hover:text-brand-600 hover:bg-slate-100 border border-slate-200 transition-colors">
-                        <svg class="w-4 h-4 sm:mr-1.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path>
-                        </svg>
-                        <span class="hidden sm:inline">Pengaturan Server</span>
-                    </a>
-                <?php endif; ?>
-
-                <!-- User Profile & Avatar -->
-                <a href="?action=profile" class="flex items-center space-x-2.5 pl-2 group p-1.5 rounded-xl hover:bg-slate-100 transition-colors" title="Kelola Profil Saya">
-                    <?php if (!empty($user['avatar_path'])): ?>
-                        <img src="?action=avatar&user_id=<?= $user['id'] ?>&t=<?= !empty($user['updated_at']) ? strtotime($user['updated_at']) : time() ?>" 
-                             alt="Avatar" 
-                             class="h-9 w-9 rounded-xl object-cover shadow-xs ring-2 ring-white group-hover:ring-brand-400 transition-all">
-                    <?php else: ?>
-                        <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-500 text-white font-bold flex items-center justify-center text-xs shadow-xs ring-2 ring-white group-hover:ring-brand-400 transition-all">
-                            <?= strtoupper(substr($user['username'] ?? 'U', 0, 1)) ?>
+                <!-- User Profile Avatar Dropdown -->
+                <div class="relative" id="userDropdownWrapper">
+                    <button type="button" onclick="toggleUserDropdown(event)" 
+                            class="flex items-center space-x-2.5 p-1 pr-2.5 rounded-xl border border-slate-200/80 hover:border-slate-300 bg-white hover:bg-slate-50 transition-all shadow-2xs"
+                            title="Menu Akun & Administrasi">
+                        <?php if (!empty($user['avatar_path'])): ?>
+                            <img src="?action=avatar&user_id=<?= $user['id'] ?>&t=<?= !empty($user['updated_at']) ? strtotime($user['updated_at']) : time() ?>" 
+                                 alt="Avatar" 
+                                 class="h-7 w-7 rounded-lg object-cover shadow-2xs">
+                        <?php else: ?>
+                            <div class="h-7 w-7 rounded-lg bg-gradient-to-tr from-brand-600 to-indigo-500 text-white font-bold flex items-center justify-center text-xs shadow-2xs">
+                                <?= strtoupper(substr($user['username'] ?? 'U', 0, 1)) ?>
+                            </div>
+                        <?php endif; ?>
+                        <div class="hidden sm:flex flex-col text-left leading-none">
+                            <span class="text-xs font-bold text-slate-800"><?= htmlspecialchars($user['username'] ?? 'User') ?></span>
+                            <span class="text-[9px] text-slate-400 font-bold uppercase mt-0.5"><?= htmlspecialchars($user['role'] ?? 'Member') ?></span>
                         </div>
-                    <?php endif; ?>
-                    <div class="hidden sm:flex flex-col text-left leading-tight">
-                        <span class="text-xs font-bold text-slate-800 group-hover:text-brand-600 transition-colors"><?= htmlspecialchars($user['username'] ?? 'User') ?></span>
-                        <span class="text-[10px] text-slate-400 font-semibold uppercase"><?= htmlspecialchars($user['role'] ?? 'Member') ?></span>
-                    </div>
-                </a>
+                        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
 
-                <!-- Logout Button -->
-                <a href="?action=logout" 
-                   class="inline-flex items-center justify-center h-9 px-3 text-xs font-semibold rounded-xl text-slate-600 hover:text-red-600 hover:bg-red-50 border border-slate-200 hover:border-red-200 transition-colors" title="Keluar dari akun">
-                    <svg class="w-4 h-4 sm:mr-1.5 text-slate-400 group-hover:text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-                    </svg>
-                    <span class="hidden sm:inline">Keluar</span>
-                </a>
+                    <!-- Dropdown Card -->
+                    <div id="userDropdownMenu" class="hidden absolute right-0 mt-2 w-60 bg-white rounded-2xl border border-slate-200 shadow-xl py-2 z-50 text-xs font-semibold text-slate-700 animate-item-in">
+                        <div class="px-4 py-2.5 border-b border-slate-100">
+                            <p class="font-bold text-slate-900 truncate"><?= htmlspecialchars($user['username'] ?? 'User') ?></p>
+                            <p class="text-[11px] text-slate-400 font-normal truncate mt-0.5"><?= htmlspecialchars($user['email'] ?? '') ?></p>
+                        </div>
+
+                        <div class="py-1">
+                            <a href="?action=profile" class="flex items-center px-4 py-2 hover:bg-slate-50 text-slate-700">
+                                <svg class="w-4 h-4 mr-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                Profil & Kata Sandi
+                            </a>
+                            <a href="?action=drive&tab=my_shares" class="flex items-center justify-between px-4 py-2 hover:bg-slate-50 text-slate-700">
+                                <span class="flex items-center">
+                                    <svg class="w-4 h-4 mr-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                                    Tautan Publik Saya
+                                </span>
+                                <?php if ($myPublicSharesCount > 0): ?>
+                                    <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-100 text-emerald-700 font-bold"><?= $myPublicSharesCount ?></span>
+                                <?php endif; ?>
+                            </a>
+                        </div>
+
+                        <?php if (!empty($user['role']) && $user['role'] === 'admin'): ?>
+                            <div class="py-1 border-t border-slate-100">
+                                <span class="block px-4 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Panel Admin</span>
+                                <a href="?action=users" class="flex items-center px-4 py-2 hover:bg-slate-50 text-slate-700">
+                                    <svg class="w-4 h-4 mr-2.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                                    Kelola Pengguna
+                                </a>
+                                <a href="?action=server" class="flex items-center px-4 py-2 hover:bg-slate-50 text-slate-700">
+                                    <svg class="w-4 h-4 mr-2.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path></svg>
+                                    Pengaturan Server & Webhook
+                                </a>
+                            </div>
+                        <?php endif; ?>
+
+                        <div class="pt-1 border-t border-slate-100">
+                            <a href="?action=logout" class="flex items-center px-4 py-2 hover:bg-rose-50 text-rose-600">
+                                <svg class="w-4 h-4 mr-2.5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                                Keluar dari Akun
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </header>
 
     <!-- Main Application Body: Sidebar + Main Content (2-Column Modern Shell) -->
-    <div class="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div class="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 lg:pb-8">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
             <!-- ============================================================= -->
             <!-- 1. LEFT SIDEBAR NAVIGATION (Mockup Aligned)                    -->
             <!-- ============================================================= -->
-            <aside class="col-span-12 lg:col-span-3 xl:col-span-2 space-y-1">
-                <nav class="space-y-1 bg-white p-2 rounded-2xl border border-slate-200/80 shadow-xs" aria-label="Sidebar">
+            <aside class="col-span-12 lg:col-span-3 xl:col-span-2 space-y-2.5">
+                <nav class="hidden lg:block space-y-1 bg-white p-2 rounded-2xl border border-slate-200/80 shadow-xs" aria-label="Sidebar">
                     
                     <!-- Drive Saya -->
                     <a href="?action=drive&tab=my_drive" 
@@ -204,6 +246,20 @@ $totalShared = $totalSharedCount ?? 0;
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
                         </svg>
                         Drive Saya
+                    </a>
+
+                    <!-- Tautan Publik Saya (Active Public Shares Manager) -->
+                    <a href="?action=drive&tab=my_shares" 
+                       class="flex items-center justify-between px-3.5 py-2.5 text-xs font-semibold rounded-xl transition-all <?= $activeTab === 'my_shares' ? 'sidebar-nav-active' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' ?>">
+                        <span class="flex items-center">
+                            <svg class="w-4 h-4 mr-3 <?= $activeTab === 'my_shares' ? 'text-brand-600' : 'text-slate-400' ?>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+                            </svg>
+                            Tautan Publik
+                        </span>
+                        <?php if ($myPublicSharesCount > 0): ?>
+                            <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-100 text-emerald-700 font-bold"><?= $myPublicSharesCount ?></span>
+                        <?php endif; ?>
                     </a>
 
                     <!-- Dibagikan ke Saya -->
@@ -488,9 +544,149 @@ $totalShared = $totalSharedCount ?? 0;
                 <?php endif; ?>
 
                 <!-- ========================================================= -->
+                <!-- CONTENT 0: TAB TAUTAN PUBLIK SAYA (ACTIVE SHARES MANAGER) -->
+                <!-- ========================================================= -->
+                <?php if ($activeTab === 'my_shares'): ?>
+
+                    <div class="space-y-4">
+                        <div class="bg-gradient-to-r from-emerald-50 to-teal-50/70 dark:from-slate-900 dark:to-emerald-950/30 border border-emerald-200/80 dark:border-emerald-900/50 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs animate-item-in">
+                            <div class="flex items-center space-x-3">
+                                <div class="h-10 w-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">Pusat Kendali Tautan Publik</h3>
+                                    <p class="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5">Kelola semua tautan unduhan tamu yang sedang aktif, pantau kuota unduhan, tampilkan QR Code, atau cabut akses kapan saja.</p>
+                                </div>
+                            </div>
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 self-start sm:self-auto">
+                                <?= count($myPublicShares ?? []) ?> Tautan Aktif
+                            </span>
+                        </div>
+
+                        <?php if (empty($myPublicShares)): ?>
+                            <div class="bg-white border border-slate-200/80 rounded-2xl p-12 text-center shadow-xs animate-item-in">
+                                <div class="h-16 w-16 mx-auto mb-3 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center">
+                                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+                                    </svg>
+                                </div>
+                                <h3 class="text-base font-bold text-slate-800 mb-1">Belum Ada Tautan Publik Aktif</h3>
+                                <p class="text-xs text-slate-500 max-w-sm mx-auto mb-4">
+                                    Anda belum membagikan berkas apa pun melalui tautan publik. Klik ikon Bagikan pada berkas di Drive Saya untuk membuat tautan.
+                                </p>
+                                <a href="?action=drive" class="inline-flex items-center h-9 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-xs transition-colors">
+                                    Buka Drive Saya
+                                </a>
+                            </div>
+                        <?php else: ?>
+                            <div class="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs animate-item-in">
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-left border-collapse" id="filesTable">
+                                        <thead>
+                                            <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                                <th class="py-3 px-4">Berkas</th>
+                                                <th class="py-3 px-4">Proteksi</th>
+                                                <th class="py-3 px-4">Unduhan</th>
+                                                <th class="py-3 px-4">Masa Berlaku</th>
+                                                <th class="py-3 px-4 text-right">Aksi Cepat</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-slate-100 text-sm">
+                                            <?php foreach ($myPublicShares as $sItem): ?>
+                                                <?php
+                                                $typeInfo = StorageService::getFileTypeInfo($sItem['mime_type'], $sItem['original_name']);
+                                                $isExpired = !empty($sItem['expires_at']) && strtotime($sItem['expires_at']) < time();
+                                                $isQuotaFull = $sItem['max_downloads'] !== null && (int)$sItem['download_count'] >= (int)$sItem['max_downloads'];
+                                                ?>
+                                                <tr class="file-row hover:bg-slate-50/70 transition-colors"
+                                                    data-filename="<?= htmlspecialchars(strtolower($sItem['original_name'])) ?>"
+                                                    data-rawname="<?= htmlspecialchars($sItem['original_name']) ?>"
+                                                    data-category="<?= htmlspecialchars($typeInfo['type']) ?>"
+                                                    data-filesize="<?= (int)$sItem['file_size'] ?>"
+                                                    data-created="<?= strtotime($sItem['shared_at']) ?>">
+                                                    <td class="py-3.5 px-4">
+                                                        <div class="flex items-center space-x-3">
+                                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold <?= $typeInfo['bg'] ?>">
+                                                                <?= $typeInfo['badge'] ?>
+                                                            </span>
+                                                            <div class="min-w-0">
+                                                                <p class="font-semibold text-slate-800 truncate max-w-xs sm:max-w-md" title="<?= htmlspecialchars($sItem['original_name']) ?>">
+                                                                    <?= htmlspecialchars($sItem['original_name']) ?>
+                                                                </p>
+                                                                <span class="text-[11px] text-slate-400 font-mono"><?= StorageService::formatBytes((int)$sItem['file_size']) ?></span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td class="py-3.5 px-4 whitespace-nowrap">
+                                                        <?php if (!empty($sItem['has_password'])): ?>
+                                                            <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                                                🔒 Sandi Aktif
+                                                            </span>
+                                                        <?php else: ?>
+                                                            <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                                🌐 Publik Terbuka
+                                                            </span>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                    <td class="py-3.5 px-4 whitespace-nowrap font-mono text-xs">
+                                                        <span class="font-bold text-slate-800"><?= (int)$sItem['download_count'] ?></span>
+                                                        <span class="text-slate-400">/ <?= $sItem['max_downloads'] !== null ? (int)$sItem['max_downloads'] . ' maks' : '∞' ?></span>
+                                                        <?php if ($isQuotaFull): ?>
+                                                            <span class="ml-1 px-1.5 py-0.2 rounded text-[10px] bg-rose-50 text-rose-600 font-sans font-bold">Habis</span>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                    <td class="py-3.5 px-4 whitespace-nowrap text-xs">
+                                                        <?php if (!empty($sItem['expires_at'])): ?>
+                                                            <span class="<?= $isExpired ? 'text-rose-600 font-bold' : 'text-slate-600' ?>">
+                                                                <?= date('d M Y, H:i', strtotime($sItem['expires_at'])) ?>
+                                                            </span>
+                                                        <?php else: ?>
+                                                            <span class="text-slate-400">Selamanya</span>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                    <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                                                        <div class="inline-flex items-center space-x-1.5 justify-end">
+                                                            <button type="button" onclick="openQrModal('<?= htmlspecialchars($sItem['share_token']) ?>', '<?= htmlspecialchars(addslashes($sItem['original_name'])) ?>')"
+                                                                    class="h-8 px-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold inline-flex items-center transition-colors"
+                                                                    title="Tampilkan QR Code">
+                                                                <svg class="w-3.5 h-3.5 mr-1 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                                                                QR
+                                                            </button>
+                                                            <button type="button" onclick="copyShareUrl('<?= htmlspecialchars($sItem['share_token']) ?>', this)"
+                                                                    class="copy-btn h-8 px-2.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-bold inline-flex items-center transition-colors">
+                                                                Salin Link
+                                                            </button>
+                                                            <a href="?action=share&token=<?= htmlspecialchars($sItem['share_token']) ?>" target="_blank"
+                                                               class="h-8 w-8 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 inline-flex items-center justify-center transition-colors"
+                                                               title="Buka Halaman Unduh Tamu">
+                                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                                                            </a>
+                                                            <button type="button" onclick="openShareModal(<?= (int)$sItem['file_id'] ?>, '<?= htmlspecialchars(addslashes($sItem['original_name'])) ?>', '<?= htmlspecialchars($sItem['share_token']) ?>')"
+                                                                    class="h-8 w-8 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 inline-flex items-center justify-center transition-colors"
+                                                                    title="Ubah Pengaturan Link">
+                                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                                                            </button>
+                                                            <button type="button" onclick="revokePublicShareLink(<?= (int)$sItem['share_id'] ?>, <?= (int)$sItem['file_id'] ?>, '<?= htmlspecialchars(addslashes($sItem['original_name'])) ?>')"
+                                                                    class="h-8 px-2.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-bold inline-flex items-center transition-colors"
+                                                                    title="Matikan & Cabut Tautan Publik">
+                                                                Cabut
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+
+                <!-- ========================================================= -->
                 <!-- CONTENT 1: TAB DIBAGIKAN KE SAYA                          -->
                 <!-- ========================================================= -->
-                <?php if ($activeTab === 'shared_with_me'): ?>
+                <?php elseif ($activeTab === 'shared_with_me'): ?>
                     
                     <div>
                         <?php if (empty($sharedWithMeFiles)): ?>
@@ -745,10 +941,15 @@ $totalShared = $totalSharedCount ?? 0;
                                                         Hapus Permanen
                                                     </button>
                                                 <?php else: ?>
+                                                    <button type="button" onclick="openInspectorDrawer(<?= $fileJson ?>)" 
+                                                            class="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center text-brand-600">
+                                                        <svg class="w-4 h-4 mr-2.5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                                        Inspektur & Info
+                                                    </button>
                                                     <button type="button" onclick="openFileDetail(<?= $fileJson ?>)" 
                                                             class="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center text-slate-700">
                                                         <svg class="w-4 h-4 mr-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                                                        Detail & Pratinjau
+                                                        Pratinjau Penuh
                                                     </button>
                                                     <a href="?action=download_direct&file_id=<?= $file['id'] ?>" 
                                                        class="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center text-slate-700">
@@ -917,9 +1118,17 @@ $totalShared = $totalSharedCount ?? 0;
                                                             </button>
                                                         <?php else: ?>
                                                             <button type="button" 
+                                                                    onclick="openInspectorDrawer(<?= $fileJson ?>)" 
+                                                                    class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 border border-slate-200/80 inline-flex items-center justify-center transition-all duration-150 shadow-2xs" 
+                                                                    title="Panel Inspektur Info">
+                                                                <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                                </svg>
+                                                            </button>
+                                                            <button type="button" 
                                                                     onclick="openFileDetail(<?= $fileJson ?>)" 
                                                                     class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-brand-50 text-slate-600 hover:text-brand-600 border border-slate-200/80 inline-flex items-center justify-center transition-all duration-150 shadow-2xs" 
-                                                                    title="Detail & Pratinjau">
+                                                                    title="Pratinjau Penuh">
                                                                 <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
@@ -1115,14 +1324,32 @@ $totalShared = $totalSharedCount ?? 0;
                         <label for="shareAllowPreview" class="ml-2 text-xs font-medium text-slate-700">Izinkan pratinjau berkas di browser</label>
                     </div>
 
-                    <div id="shareResultBox" class="hidden pt-3 border-t border-slate-100">
-                        <label class="block text-xs font-bold text-slate-800 mb-1">Tautan Publik Siap Dibagikan:</label>
+                    <div id="shareResultBox" class="hidden pt-3 border-t border-slate-100 space-y-3">
+                        <label class="block text-xs font-bold text-slate-800">Tautan Publik Siap Dibagikan:</label>
                         <div class="flex gap-2">
                             <input type="text" id="shareGeneratedUrl" readonly 
                                    class="flex-1 h-9 px-3 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 text-xs font-mono">
                             <button type="button" onclick="copyGeneratedShareUrl(this)" 
                                     class="copy-btn h-9 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all whitespace-nowrap">
                                 Salin
+                            </button>
+                        </div>
+
+                        <!-- Instant QR Code & Quick Share Strip -->
+                        <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-3">
+                            <div class="flex items-center space-x-3">
+                                <div class="h-16 w-16 rounded-lg bg-white p-1 border border-slate-200 shrink-0 flex items-center justify-center">
+                                    <img id="shareModalQrImg" src="" alt="QR Code" class="h-full w-full object-contain">
+                                </div>
+                                <div class="text-xs">
+                                    <span class="font-bold text-slate-800 block">Pindai QR dengan Kamera HP</span>
+                                    <span class="text-[11px] text-slate-500 block mt-0.5">Buka tautan unduhan secara instan tanpa mengetik URL.</span>
+                                </div>
+                            </div>
+                            <button type="button" id="btnRevokeModalShare"
+                                    class="h-8 px-2.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-[11px] font-bold transition-colors whitespace-nowrap"
+                                    title="Nonaktifkan tautan publik ini">
+                                Cabut Link
                             </button>
                         </div>
                     </div>
@@ -1291,6 +1518,181 @@ $totalShared = $totalSharedCount ?? 0;
             </form>
         </div>
     </div>
+
+    <!-- ===================================================================== -->
+    <!-- SLIDE-OVER FILE INSPECTOR DRAWER (Right-Side Detail & Quick Actions)  -->
+    <!-- ===================================================================== -->
+    <div id="fileInspectorBackdrop" onclick="closeInspectorDrawer()" class="hidden fixed inset-0 z-40 bg-slate-900/30 backdrop-blur-[1px] transition-opacity"></div>
+    <aside id="fileInspectorDrawer" class="fixed top-0 right-0 bottom-0 z-50 w-full max-w-sm bg-white border-l border-slate-200 shadow-2xl flex flex-col transform translate-x-full transition-transform duration-300 ease-out">
+        <!-- Drawer Header -->
+        <div class="h-16 px-5 border-b border-slate-100 flex items-center justify-between">
+            <div class="flex items-center space-x-2 truncate pr-2">
+                <span id="inspectorBadge" class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-brand-50 text-brand-700">FILE</span>
+                <h3 id="inspectorTitle" class="text-sm font-bold text-slate-900 truncate">Detail Berkas</h3>
+            </div>
+            <button type="button" onclick="closeInspectorDrawer()" class="h-8 w-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+        <!-- Drawer Body -->
+        <div class="flex-1 overflow-y-auto p-5 space-y-5">
+            <!-- Thumbnail / Visual Box -->
+            <div id="inspectorPreviewBox" class="h-44 w-full rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-center overflow-hidden p-3">
+                <!-- Populated dynamically -->
+            </div>
+
+            <!-- Primary Action Grid -->
+            <div class="grid grid-cols-2 gap-2">
+                <button type="button" id="inspectorBtnPreview" class="h-9 px-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold flex items-center justify-center shadow-xs transition-colors">
+                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                    Pratinjau Layar
+                </button>
+                <a id="inspectorBtnDownload" href="#" class="h-9 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center justify-center transition-colors">
+                    <svg class="w-4 h-4 mr-1.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Unduh
+                </a>
+            </div>
+
+            <!-- Metadata Specifications -->
+            <div class="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 space-y-3 text-xs">
+                <h4 class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Informasi Berkas</h4>
+                <div class="flex justify-between gap-2">
+                    <span class="text-slate-500">Nama Lengkap</span>
+                    <span id="inspectorMetaName" class="font-semibold text-slate-900 text-right break-all max-w-[180px]">-</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-500">Ukuran</span>
+                    <span id="inspectorMetaSize" class="font-mono font-bold text-slate-800">-</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-500">Format MIME</span>
+                    <span id="inspectorMetaMime" class="font-mono text-slate-700 truncate max-w-[170px]">-</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-500">Diunggah</span>
+                    <span id="inspectorMetaDate" class="font-semibold text-slate-700">-</span>
+                </div>
+                <div class="flex justify-between items-center pt-2 border-t border-slate-200/70">
+                    <span class="text-slate-500">Status Akses</span>
+                    <span id="inspectorMetaShare">-</span>
+                </div>
+            </div>
+
+            <!-- Share & QR Section inside Inspector -->
+            <div id="inspectorShareCard" class="hidden rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4 space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-emerald-900">Tautan Publik Aktif</span>
+                    <button type="button" id="inspectorBtnQr" class="text-[11px] font-bold text-emerald-700 hover:underline flex items-center">
+                        Lihat QR Code →
+                    </button>
+                </div>
+                <div class="flex gap-1.5">
+                    <input type="text" id="inspectorShareUrlInput" readonly class="flex-1 h-8 px-2.5 rounded-lg border border-emerald-200 bg-white text-[11px] font-mono text-slate-700">
+                    <button type="button" id="inspectorBtnCopyShare" class="h-8 px-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold">
+                        Salin
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Drawer Footer -->
+        <div class="p-4 border-t border-slate-100 bg-slate-50/70 flex items-center justify-between gap-2">
+            <button type="button" id="inspectorBtnShare" class="flex-1 h-9 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center justify-center">
+                Bagikan
+            </button>
+            <button type="button" id="inspectorBtnRename" class="flex-1 h-9 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center justify-center">
+                Ganti Nama
+            </button>
+            <button type="button" id="inspectorBtnDelete" class="h-9 w-9 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center" title="Pindahkan ke Sampah">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            </button>
+        </div>
+    </aside>
+
+    <!-- ===================================================================== -->
+    <!-- COMMAND PALETTE MODAL (Ctrl + K Spotlight Navigation & File Search)   -->
+    <!-- ===================================================================== -->
+    <div id="commandPaletteModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-start justify-center pt-16 sm:pt-24 p-4">
+        <div class="bg-white rounded-2xl max-w-xl w-full shadow-2xl border border-slate-200 overflow-hidden animate-item-in">
+            <div class="relative flex items-center px-4 border-b border-slate-100">
+                <svg class="w-4 h-4 text-brand-600 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <input type="text" id="commandPaletteInput" placeholder="Ketik nama berkas, folder, atau perintah cepat..." 
+                       class="w-full h-12 text-sm text-slate-900 placeholder:text-slate-400 bg-transparent border-0 focus:outline-none focus:ring-0">
+                <button type="button" onclick="closeModal('commandPaletteModal')" class="px-1.5 py-0.5 text-[10px] font-mono font-bold text-slate-400 bg-slate-100 rounded border border-slate-200">ESC</button>
+            </div>
+            <div id="commandPaletteResults" class="max-h-80 overflow-y-auto p-2 divide-y divide-slate-100 text-xs">
+                <!-- Populated dynamically by JS -->
+            </div>
+            <div class="px-4 py-2 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400">
+                <span>Gunakan klik atau <kbd class="px-1 py-0.2 bg-white border rounded font-mono">Enter</kbd> untuk membuka</span>
+                <span>Cloud Sharing Command</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- QR CODE QUICK MODAL                                                   -->
+    <!-- ===================================================================== -->
+    <div id="qrCodeModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-xs w-full p-6 shadow-2xl border border-slate-200 text-center space-y-4 animate-item-in">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-brand-600">QR Code Unduhan</span>
+                <button type="button" onclick="closeModal('qrCodeModal')" class="text-slate-400 hover:text-slate-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-4 bg-white rounded-2xl border border-slate-200 inline-block mx-auto shadow-xs">
+                <img id="qrModalImg" src="" alt="QR Code Share" class="w-44 h-44 object-contain mx-auto">
+            </div>
+            <div>
+                <h4 id="qrModalFileName" class="text-xs font-bold text-slate-900 truncate">Nama Berkas</h4>
+                <p class="text-[11px] text-slate-500 mt-0.5">Arahkan kamera ponsel untuk membuka halaman unduhan berkas ini.</p>
+            </div>
+            <div class="flex gap-2 pt-1">
+                <button type="button" id="qrModalCopyBtn" class="flex-1 h-9 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold transition-colors">
+                    Salin Tautan
+                </button>
+                <button type="button" onclick="closeModal('qrCodeModal')" class="h-9 px-3 rounded-xl border border-slate-200 text-slate-600 text-xs font-semibold hover:bg-slate-50">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MOBILE BOTTOM NAVIGATION BAR (Responsive Touch Bar for < lg screens)  -->
+    <!-- ===================================================================== -->
+    <nav class="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 px-2 py-1.5 grid grid-cols-5 gap-1 text-[10px] font-semibold shadow-lg" aria-label="Navigasi Mobile">
+        <a href="?action=drive&tab=my_drive" class="flex flex-col items-center justify-center py-1 rounded-xl <?= $activeTab === 'my_drive' ? 'text-brand-600 font-bold bg-brand-50/60 dark:bg-brand-950/50' : 'text-slate-500' ?>">
+            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+            <span>Drive</span>
+        </a>
+        <a href="?action=drive&tab=my_shares" class="relative flex flex-col items-center justify-center py-1 rounded-xl <?= $activeTab === 'my_shares' ? 'text-brand-600 font-bold bg-brand-50/60 dark:bg-brand-950/50' : 'text-slate-500' ?>">
+            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+            <span>Link Publik</span>
+            <?php if ($myPublicSharesCount > 0): ?>
+                <span class="absolute top-0.5 right-3 w-4 h-4 rounded-full bg-emerald-500 text-white text-[9px] flex items-center justify-center font-bold"><?= $myPublicSharesCount ?></span>
+            <?php endif; ?>
+        </a>
+        <a href="?action=drive&tab=shared_with_me" class="relative flex flex-col items-center justify-center py-1 rounded-xl <?= $activeTab === 'shared_with_me' ? 'text-brand-600 font-bold bg-brand-50/60 dark:bg-brand-950/50' : 'text-slate-500' ?>">
+            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+            <span>Dibagikan</span>
+            <?php if (!empty($sharedWithMeFiles) && count($sharedWithMeFiles) > 0): ?>
+                <span class="absolute top-0.5 right-3 w-4 h-4 rounded-full bg-brand-600 text-white text-[9px] flex items-center justify-center font-bold"><?= count($sharedWithMeFiles) ?></span>
+            <?php endif; ?>
+        </a>
+        <a href="?action=drive&tab=recent" class="flex flex-col items-center justify-center py-1 rounded-xl <?= $activeTab === 'recent' ? 'text-brand-600 font-bold bg-brand-50/60 dark:bg-brand-950/50' : 'text-slate-500' ?>">
+            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span>Terbaru</span>
+        </a>
+        <a href="?action=drive&tab=trash" class="flex flex-col items-center justify-center py-1 rounded-xl <?= $activeTab === 'trash' ? 'text-brand-600 font-bold bg-brand-50/60 dark:bg-brand-950/50' : 'text-slate-500' ?>">
+            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            <span>Sampah</span>
+        </a>
+    </nav>
 
 </div>
 

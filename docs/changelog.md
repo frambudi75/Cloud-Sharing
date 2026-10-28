@@ -2,7 +2,22 @@
 
 Semua perubahan pada spesifikasi dan implementasi proyek file-sharing akan dicatat di dokumen ini.
 
-## [Unreleased] - 2026-10-27
+## [Unreleased] - 2026-10-28
+### Ditambahkan & Ditingkatkan
+- **Menu Pusat Kendali Tautan Publik (`?action=drive&tab=my_shares`)**:
+  - Menampilkan seluruh tautan publik aktif milik pengguna beserta status proteksi kata sandi, kuota unduhan (`X / Y`), masa berlaku, tombol QR Code, Salin Link, dan pencabutan akses (`?action=revoke_public_share`).
+- **Slide-Over File Inspector Drawer**:
+  - Panel inspektur di sisi kanan layar untuk melihat thumbnail, metadata lengkap berkas, status berbagi, QR Code, dan aksi cepat tanpa meninggalkan halaman utama.
+- **Command Palette Cepat (`Ctrl + K`)**:
+  - Modal pencarian cepat lintas berkas dan pintasan aksi (*Unggah Berkas*, *Buat Folder*, *Tautan Publik*, *Ganti Mode Gelap/Terang*, *Profil*).
+- **QR Code Instan pada Modal Berbagi & Halaman Unduh Tamu**:
+  - Pembuatan QR Code otomatis untuk memudahkan transfer dan pengunduhan berkas dari PC ke ponsel.
+- **Dropdown Menu Avatar & Mobile Bottom Navigation Bar**:
+  - Penyederhanaan header atas dengan menu akun terpadu serta bilah navigasi bawah khusus perangkat mobile (`< lg`).
+- **Perbaikan Ganti Kata Sandi Profil**:
+  - Menjamin respons JSON murni tanpa redirect HTML `302`, trimming input otomatis, dan penyeragaman CSRF pada `ProfileController::updatePassword()`.
+
+## [2026-10-27]
 ### Ditambahkan
 - **Fitur User Management Lengkap & Kuota Storage per User** di [UserController.php](file:///c:/xampp/htdocs/file-sharing/src/Controllers/UserController.php) dan [users.php](file:///c:/xampp/htdocs/file-sharing/src/Views/admin/users.php):
   - Tambah pengguna baru dengan role (`admin` atau `user`) dan penetapan kuota storage (dalam GB).

@@ -214,6 +214,27 @@ if ($isImage) {
                             Pratinjau di Browser
                         </button>
                     <?php endif; ?>
+
+                    <!-- Quick Copy Link & QR Toggle Row -->
+                    <div class="grid grid-cols-2 gap-2.5 pt-1">
+                        <button type="button" onclick="copyGuestUrl(this)"
+                                class="h-10 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-semibold flex items-center justify-center transition-colors">
+                            <svg class="w-3.5 h-3.5 mr-1.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                            <span>Salin Tautan</span>
+                        </button>
+                        <button type="button" onclick="toggleGuestQr()"
+                                class="h-10 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-semibold flex items-center justify-center transition-colors">
+                            <svg class="w-3.5 h-3.5 mr-1.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                            <span>QR Code HP</span>
+                        </button>
+                    </div>
+
+                    <div id="guestQrPanel" class="hidden p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 text-center space-y-2">
+                        <div class="inline-block p-2.5 bg-white rounded-xl border border-slate-200 shadow-2xs">
+                            <img id="guestQrImg" src="" alt="QR Code Unduh" class="w-36 h-36 mx-auto object-contain">
+                        </div>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400">Pindai dengan kamera ponsel untuk membuka halaman ini di HP.</p>
+                    </div>
                 </div>
 
                 <!-- Modal Preview Guest -->
@@ -276,6 +297,35 @@ function togglePasswordVisibility() {
     if (input) {
         input.type = input.type === 'password' ? 'text' : 'password';
     }
+}
+
+function toggleDarkMode() {
+    const isDark = document.documentElement.classList.toggle('dark');
+    try { localStorage.setItem('drive_theme', isDark ? 'dark' : 'light'); } catch (e) {}
+    const sun = document.getElementById('themeIconSun');
+    const moon = document.getElementById('themeIconMoon');
+    if (sun && moon) {
+        sun.classList.toggle('hidden', !isDark);
+        moon.classList.toggle('hidden', isDark);
+    }
+}
+
+function copyGuestUrl(btn) {
+    const url = window.location.href;
+    navigator.clipboard?.writeText(url);
+    const orig = btn.innerHTML;
+    btn.innerHTML = '<span class="text-emerald-600 font-bold">✓ Tersalin!</span>';
+    setTimeout(() => { btn.innerHTML = orig; }, 1800);
+}
+
+function toggleGuestQr() {
+    const panel = document.getElementById('guestQrPanel');
+    const img = document.getElementById('guestQrImg');
+    if (!panel || !img) return;
+    if (!img.getAttribute('src')) {
+        img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=6&data=' + encodeURIComponent(window.location.href);
+    }
+    panel.classList.toggle('hidden');
 }
 </script>
 

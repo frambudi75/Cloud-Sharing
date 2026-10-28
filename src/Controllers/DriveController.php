@@ -42,9 +42,21 @@ class DriveController
         $files = [];
         $sharedWithMeFiles = ShareService::getFilesSharedWithUser($userId);
         $sharedWithMeCount = count($sharedWithMeFiles);
+        $myPublicShares = ShareService::getUserPublicShares($userId);
+        $myPublicSharesCount = count($myPublicShares);
         $breadcrumbs = [['id' => null, 'name' => 'Drive Saya']];
 
-        if ($activeTab === 'shared_with_me') {
+        if ($activeTab === 'my_shares') {
+            $breadcrumbs = [['id' => null, 'name' => 'Tautan Publik Saya']];
+            if (!empty($search)) {
+                $myPublicShares = array_filter($myPublicShares, function ($item) use ($search) {
+                    return stripos($item['original_name'], $search) !== false || stripos($item['share_token'], $search) !== false;
+                });
+                $myPublicShares = array_values($myPublicShares);
+            }
+            $files = [];
+            $folders = [];
+        } elseif ($activeTab === 'shared_with_me') {
             // Tab Dibagikan ke Saya
             $breadcrumbs = [['id' => null, 'name' => 'Dibagikan ke Saya']];
             if (!empty($search)) {
@@ -731,6 +743,27 @@ class DriveController
 
         $result = ShareService::createShareLink($fileId, $userId, $password ?: null, $expiry, $maxDownloads, $allowPreview);
         $this->respondJson($result);
+    }
+
+    public function revokePublicShare(): void
+    {
+        $this->validateCsrf();
+        $userId = (int) AuthService::id();
+        $shareId = (int) ($_POST['share_id'] ?? 0);
+        $fileId = (int) ($_POST['file_id'] ?? 0);
+
+        $ok = false;
+        if ($shareId > 0) {
+            $ok = ShareService::revokeShare($shareId, $userId);
+        } elseif ($fileId > 0) {
+            $ok = ShareService::revokeShareByFileId($fileId, $userId);
+        }
+
+        $this->respondJson([
+            'success' => $ok,
+            'message' => $ok ? 'Tautan publik berhasil dinonaktifkan.' : null,
+            'error'   => $ok ? null : 'Tautan publik tidak ditemukan atau sudah dicabut.'
+        ]);
     }
 
     // Direct User-to-User Sharing Endpoints

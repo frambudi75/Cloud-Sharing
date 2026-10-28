@@ -34,10 +34,22 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             closeContextMenu();
+            if (typeof window.closeInspectorDrawer === 'function') window.closeInspectorDrawer();
+            const userMenu = document.getElementById('userDropdownMenu');
+            if (userMenu) userMenu.classList.add('hidden');
             document.querySelectorAll('[id$="Modal"]').forEach(m => m.classList.add('hidden'));
             if (document.querySelectorAll('.file-select-checkbox:checked').length > 0) {
                 clearBulkSelection();
             }
+        }
+
+        // Global Shortcut: Ctrl + K or Cmd + K to open Command Palette
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
+            e.preventDefault();
+            if (typeof window.openCommandPalette === 'function') {
+                window.openCommandPalette();
+            }
+            return;
         }
 
         // Global Shortcut: / to focus search
@@ -1351,14 +1363,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
         switchShareTab('public');
 
+        const qrImg = document.getElementById('shareModalQrImg');
+        const btnRevokeModal = document.getElementById('btnRevokeModalShare');
+
         if (existingToken) {
             const origin = window.location.origin + window.location.pathname;
-            urlInput.value = `${origin}?action=share&token=${existingToken}`;
+            const fullShareUrl = `${origin}?action=share&token=${existingToken}`;
+            urlInput.value = fullShareUrl;
+            if (qrImg) {
+                qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&margin=4&data=${encodeURIComponent(fullShareUrl)}`;
+            }
+            if (btnRevokeModal) {
+                btnRevokeModal.classList.remove('hidden');
+                btnRevokeModal.onclick = () => window.revokePublicShareLink(0, fileId, fileName);
+            }
             resultBox.classList.remove('hidden');
             if (submitBtn) submitBtn.textContent = 'Perbarui Tautan Publik';
         } else {
             resultBox.classList.add('hidden');
             urlInput.value = '';
+            if (qrImg) qrImg.src = '';
             if (submitBtn) submitBtn.textContent = 'Buat Tautan Publik';
         }
 
@@ -1393,6 +1417,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 const origin = window.location.origin + window.location.pathname;
                 const fullShareUrl = `${origin}?action=share&token=${result.share_token}`;
                 document.getElementById('shareGeneratedUrl').value = fullShareUrl;
+                const qrImg = document.getElementById('shareModalQrImg');
+                if (qrImg) {
+                    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&margin=4&data=${encodeURIComponent(fullShareUrl)}`;
+                }
+                const btnRevokeModal = document.getElementById('btnRevokeModalShare');
+                if (btnRevokeModal) {
+                    btnRevokeModal.classList.remove('hidden');
+                    const fName = document.getElementById('shareModalFileName')?.textContent || 'berkas';
+                    btnRevokeModal.onclick = () => window.revokePublicShareLink(result.share_id || 0, fileId, fName);
+                }
                 document.getElementById('shareResultBox').classList.remove('hidden');
                 copyToClipboard(fullShareUrl, 'Tautan publik berhasil dibuat dan disalin!');
             } else {
@@ -1776,4 +1810,286 @@ document.addEventListener('DOMContentLoaded', () => {
             if (uploadInput) uploadInput.click();
         }
     });
+
+    // =========================================================================
+    // 13. User Avatar Dropdown, QR Modal, Revoke Public Share, Inspector & Command Palette
+    // =========================================================================
+    window.toggleUserDropdown = function (e) {
+        if (e) e.stopPropagation();
+        const menu = document.getElementById('userDropdownMenu');
+        if (menu) menu.classList.toggle('hidden');
+    };
+
+    document.addEventListener('click', (e) => {
+        const wrapper = document.getElementById('userDropdownWrapper');
+        const menu = document.getElementById('userDropdownMenu');
+        if (menu && wrapper && !wrapper.contains(e.target)) {
+            menu.classList.add('hidden');
+        }
+    });
+
+    window.openQrModal = function (token, fileName) {
+        const origin = window.location.origin + window.location.pathname;
+        const fullUrl = `${origin}?action=share&token=${token}`;
+        const qrImg = document.getElementById('qrModalImg');
+        const qrName = document.getElementById('qrModalFileName');
+        const qrCopyBtn = document.getElementById('qrModalCopyBtn');
+
+        if (qrImg) {
+            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=6&data=${encodeURIComponent(fullUrl)}`;
+        }
+        if (qrName) qrName.textContent = fileName || 'Tautan Berkas';
+        if (qrCopyBtn) {
+            qrCopyBtn.onclick = function () {
+                copyToClipboard(fullUrl, 'Tautan berhasil disalin!', this);
+            };
+        }
+        openModal('qrCodeModal');
+    };
+
+    window.revokePublicShareLink = async function (shareId, fileId, fileName) {
+        if (!confirm(`Nonaktifkan dan cabut tautan publik untuk "${fileName}"?`)) {
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('csrf_token', csrfToken);
+        if (shareId > 0) formData.append('share_id', shareId);
+        if (fileId > 0) formData.append('file_id', fileId);
+
+        try {
+            const response = await fetch('?action=revoke_public_share', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+            if (result.success) {
+                showToast('Tautan publik berhasil dicabut.');
+                closeModal('shareModal');
+                setTimeout(() => window.location.reload(), 350);
+            } else {
+                alert(result.error || 'Gagal mencabut tautan publik.');
+            }
+        } catch (err) {
+            alert('Terjadi kesalahan jaringan saat mencabut tautan.');
+        }
+    };
+
+    // Slide-Over File Inspector Drawer
+    window.openInspectorDrawer = function (fileData) {
+        closeContextMenu();
+        document.querySelectorAll('.card-action-menu').forEach(m => m.classList.add('hidden'));
+
+        const drawer = document.getElementById('fileInspectorDrawer');
+        const backdrop = document.getElementById('fileInspectorBackdrop');
+        if (!drawer) return;
+
+        const badgeEl = document.getElementById('inspectorBadge');
+        const titleEl = document.getElementById('inspectorTitle');
+        const previewBox = document.getElementById('inspectorPreviewBox');
+        const metaName = document.getElementById('inspectorMetaName');
+        const metaSize = document.getElementById('inspectorMetaSize');
+        const metaMime = document.getElementById('inspectorMetaMime');
+        const metaDate = document.getElementById('inspectorMetaDate');
+        const metaShare = document.getElementById('inspectorMetaShare');
+        const shareCard = document.getElementById('inspectorShareCard');
+        const shareInput = document.getElementById('inspectorShareUrlInput');
+
+        if (badgeEl) {
+            badgeEl.textContent = fileData.badge || 'FILE';
+            badgeEl.className = `inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${fileData.bg || 'bg-brand-50 text-brand-700'}`;
+        }
+        if (titleEl) titleEl.textContent = fileData.name;
+        if (metaName) metaName.textContent = fileData.name;
+        if (metaSize) metaSize.textContent = fileData.formatted_size;
+        if (metaMime) metaMime.textContent = fileData.mime;
+        if (metaDate) metaDate.textContent = fileData.created_at;
+
+        if (previewBox) {
+            if (fileData.mime && fileData.mime.startsWith('image/')) {
+                previewBox.innerHTML = `<img src="?action=download_direct&file_id=${fileData.id}&thumb=1" alt="${escapeHtml(fileData.name)}" class="max-h-full max-w-full rounded-xl object-contain shadow-2xs">`;
+            } else {
+                previewBox.innerHTML = `
+                    <div class="text-center">
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold ${fileData.bg || 'bg-slate-200 text-slate-700'} mb-2">${fileData.badge || 'FILE'}</span>
+                        <p class="text-[11px] text-slate-400 truncate max-w-[200px]">${escapeHtml(fileData.name)}</p>
+                    </div>
+                `;
+            }
+        }
+
+        if (metaShare) {
+            if (fileData.is_shared && fileData.share_token) {
+                metaShare.innerHTML = `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Publik Aktif</span>`;
+            } else if (fileData.user_shares_count > 0) {
+                metaShare.innerHTML = `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">${fileData.user_shares_count} Pengguna</span>`;
+            } else {
+                metaShare.innerHTML = `<span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-500">Pribadi</span>`;
+            }
+        }
+
+        if (shareCard) {
+            if (fileData.is_shared && fileData.share_token) {
+                const origin = window.location.origin + window.location.pathname;
+                const fullShareUrl = `${origin}?action=share&token=${fileData.share_token}`;
+                if (shareInput) shareInput.value = fullShareUrl;
+                const btnCopy = document.getElementById('inspectorBtnCopyShare');
+                if (btnCopy) {
+                    btnCopy.onclick = function () {
+                        copyToClipboard(fullShareUrl, 'Tautan disalin!', this);
+                    };
+                }
+                const btnQr = document.getElementById('inspectorBtnQr');
+                if (btnQr) {
+                    btnQr.onclick = () => window.openQrModal(fileData.share_token, fileData.name);
+                }
+                shareCard.classList.remove('hidden');
+            } else {
+                shareCard.classList.add('hidden');
+            }
+        }
+
+        const btnPreview = document.getElementById('inspectorBtnPreview');
+        const btnDownload = document.getElementById('inspectorBtnDownload');
+        const btnShare = document.getElementById('inspectorBtnShare');
+        const btnRename = document.getElementById('inspectorBtnRename');
+        const btnDelete = document.getElementById('inspectorBtnDelete');
+
+        if (btnPreview) {
+            btnPreview.onclick = () => {
+                window.closeInspectorDrawer();
+                window.openFileDetail(fileData);
+            };
+        }
+        if (btnDownload) {
+            btnDownload.href = `?action=download_direct&file_id=${fileData.id}`;
+        }
+        if (btnShare) {
+            btnShare.onclick = () => {
+                window.closeInspectorDrawer();
+                window.openShareModal(fileData.id, fileData.name, fileData.share_token || '');
+            };
+        }
+        if (btnRename) {
+            btnRename.onclick = () => {
+                window.closeInspectorDrawer();
+                window.openRenameModal('file', fileData.id, fileData.name);
+            };
+        }
+        if (btnDelete) {
+            btnDelete.onclick = () => {
+                window.closeInspectorDrawer();
+                window.deleteFile(fileData.id, fileData.name);
+            };
+        }
+
+        if (backdrop) backdrop.classList.remove('hidden');
+        drawer.classList.remove('translate-x-full');
+    };
+
+    window.closeInspectorDrawer = function () {
+        const drawer = document.getElementById('fileInspectorDrawer');
+        const backdrop = document.getElementById('fileInspectorBackdrop');
+        if (drawer) drawer.classList.add('translate-x-full');
+        if (backdrop) backdrop.classList.add('hidden');
+    };
+
+    // Command Palette (Ctrl + K)
+    window.openCommandPalette = function () {
+        const modal = document.getElementById('commandPaletteModal');
+        const input = document.getElementById('commandPaletteInput');
+        if (!modal || !input) return;
+
+        modal.classList.remove('hidden');
+        input.value = '';
+        renderCommandPaletteItems('');
+        setTimeout(() => input.focus(), 20);
+    };
+
+    function renderCommandPaletteItems(query) {
+        const container = document.getElementById('commandPaletteResults');
+        if (!container) return;
+
+        const q = (query || '').toLowerCase().trim();
+        const items = [];
+
+        // 1. Collect files on current view
+        const seenIds = new Set();
+        document.querySelectorAll('.file-card[data-id], .file-row[data-id]').forEach(el => {
+            const id = el.getAttribute('data-id');
+            if (!id || seenIds.has(id)) return;
+            seenIds.add(id);
+            const rawName = el.getAttribute('data-rawname') || '';
+            const mime = el.getAttribute('data-mimetype') || '';
+            if (!q || rawName.toLowerCase().includes(q)) {
+                items.push({
+                    type: 'file',
+                    label: rawName,
+                    sub: 'Berkas • Klik untuk Pratinjau',
+                    action: () => {
+                        closeModal('commandPaletteModal');
+                        previewFile(parseInt(id, 10), rawName, mime);
+                    }
+                });
+            }
+        });
+
+        // 2. Quick Commands
+        const commands = [
+            { label: 'Unggah Berkas Baru', sub: 'Pintasan: U', action: () => { closeModal('commandPaletteModal'); document.getElementById('fileUploadInput')?.click(); } },
+            { label: 'Buat Folder Baru', sub: 'Pintasan: N', action: () => { closeModal('commandPaletteModal'); openModal('newFolderModal'); } },
+            { label: 'Buka Drive Saya', sub: 'Navigasi Utama', action: () => { window.location.href = '?action=drive&tab=my_drive'; } },
+            { label: 'Buka Tautan Publik Saya', sub: 'Kelola Link Aktif & QR Code', action: () => { window.location.href = '?action=drive&tab=my_shares'; } },
+            { label: 'Buka Dibagikan ke Saya', sub: 'Berkas dari Pengguna Lain', action: () => { window.location.href = '?action=drive&tab=shared_with_me'; } },
+            { label: 'Buka Keranjang Sampah', sub: 'Pulihkan atau Kosongkan Sampah', action: () => { window.location.href = '?action=drive&tab=trash'; } },
+            { label: 'Ganti Tema Gelap / Terang', sub: 'Mode Tampilan', action: () => { closeModal('commandPaletteModal'); toggleDarkMode(); } },
+            { label: 'Buka Profil & Keamanan Sandi', sub: 'Pengaturan Akun', action: () => { window.location.href = '?action=profile'; } }
+        ];
+
+        commands.forEach(cmd => {
+            if (!q || cmd.label.toLowerCase().includes(q) || cmd.sub.toLowerCase().includes(q)) {
+                items.push({ type: 'cmd', ...cmd });
+            }
+        });
+
+        if (items.length === 0) {
+            container.innerHTML = `<div class="p-6 text-center text-slate-400">Tidak ditemukan berkas atau perintah untuk "${escapeHtml(query)}"</div>`;
+            return;
+        }
+
+        container.innerHTML = '';
+        items.slice(0, 12).forEach((item, idx) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'w-full text-left px-3.5 py-2.5 rounded-xl hover:bg-brand-50/70 flex items-center justify-between transition-colors group';
+            const iconHtml = item.type === 'file'
+                ? `<span class="h-7 w-7 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center text-[10px] font-bold mr-3">📄</span>`
+                : `<span class="h-7 w-7 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center text-xs font-bold mr-3">⚡</span>`;
+            btn.innerHTML = `
+                <div class="flex items-center min-w-0">
+                    ${iconHtml}
+                    <div class="truncate">
+                        <span class="font-bold text-slate-800 group-hover:text-brand-600 block truncate">${escapeHtml(item.label)}</span>
+                        <span class="text-[10px] text-slate-400">${escapeHtml(item.sub)}</span>
+                    </div>
+                </div>
+                <span class="text-[10px] font-mono text-slate-400 group-hover:text-brand-600 ml-2">↵</span>
+            `;
+            btn.onclick = item.action;
+            if (idx === 0) btn.dataset.firstItem = '1';
+            container.appendChild(btn);
+        });
+    }
+
+    const cmdInput = document.getElementById('commandPaletteInput');
+    if (cmdInput) {
+        cmdInput.addEventListener('input', () => renderCommandPaletteItems(cmdInput.value));
+        cmdInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const firstBtn = document.querySelector('#commandPaletteResults button');
+                if (firstBtn) firstBtn.click();
+            }
+        });
+    }
 });

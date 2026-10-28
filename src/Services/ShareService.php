@@ -296,4 +296,54 @@ class ShareService
         $stmt->execute([':id' => $excludeUserId]);
         return $stmt->fetchAll();
     }
+
+    public static function revokeShareByFileId(int $fileId, int $userId): bool
+    {
+        $db = Database::getConnection();
+
+        $findStmt = $db->prepare("SELECT share_token FROM share_links WHERE file_id = :file_id AND user_id = :user_id AND is_active = 1");
+        $findStmt->execute([':file_id' => $fileId, ':user_id' => $userId]);
+        $rows = $findStmt->fetchAll();
+
+        $stmt = $db->prepare("
+            UPDATE share_links 
+            SET is_active = 0 
+            WHERE file_id = :file_id AND user_id = :user_id AND is_active = 1
+        ");
+        $stmt->execute([':file_id' => $fileId, ':user_id' => $userId]);
+
+        foreach ($rows as $row) {
+            if (!empty($row['share_token'])) {
+                CacheService::delete("share:{$row['share_token']}");
+            }
+        }
+
+        return $stmt->rowCount() > 0;
+    }
+
+    public static function getUserPublicShares(int $userId): array
+    {
+        $db = Database::getConnection();
+        $stmt = $db->prepare("
+            SELECT 
+                s.id as share_id,
+                s.share_token,
+                s.expires_at,
+                s.max_downloads,
+                s.download_count,
+                s.allow_preview,
+                (s.password_hash IS NOT NULL AND s.password_hash != '') as has_password,
+                s.created_at as shared_at,
+                f.id as file_id,
+                f.original_name,
+                f.mime_type,
+                f.file_size
+            FROM share_links s
+            INNER JOIN files f ON s.file_id = f.id
+            WHERE s.user_id = :user_id AND s.is_active = 1 AND f.deleted_at IS NULL
+            ORDER BY s.created_at DESC
+        ");
+        $stmt->execute([':user_id' => $userId]);
+        return $stmt->fetchAll();
+    }
 }
