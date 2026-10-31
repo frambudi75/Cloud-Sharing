@@ -436,6 +436,18 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
             <!-- ============================================================= -->
             <main class="col-span-12 lg:col-span-9 xl:col-span-10 space-y-3.5">
 
+                <?php if (\App\Services\SettingService::get('maintenance_mode', '0') === '1' && \App\Services\AuthService::isAdmin()): ?>
+                    <div class="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-200 flex items-center justify-between text-xs font-semibold shadow-xs">
+                        <span class="flex items-center gap-2">
+                            <span class="animate-pulse">⚠️</span>
+                            <span><strong>Mode Pemeliharaan (Maintenance Mode) Aktif:</strong> Pengguna biasa saat ini diarahkan ke layar pemeliharaan sistem.</span>
+                        </span>
+                        <a href="?action=server#globalSettingsCard" class="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold transition-all shadow-xs shrink-0">
+                            Kelola di Server →
+                        </a>
+                    </div>
+                <?php endif; ?>
+
                 <!-- ROW 1: Clean Header (Breadcrumbs as Title + Action Buttons) -->
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-200/80">
                     <!-- Interactive Breadcrumbs & Subfolder ZIP -->
@@ -1828,12 +1840,13 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">Masa Berlaku</label>
+                            <?php $defExp = \App\Services\SettingService::get('default_share_expiry', 'never'); ?>
                             <select id="shareExpiry" class="w-full h-9 px-3 rounded-lg border border-slate-300 text-slate-800 text-xs focus:border-brand-600 focus:ring-1 focus:ring-brand-600">
-                                <option value="never">Tanpa Batas Waktu</option>
+                                <option value="never" <?= $defExp === 'never' ? 'selected' : '' ?>>Tanpa Batas Waktu</option>
                                 <option value="1h">1 Jam</option>
-                                <option value="24h">24 Jam</option>
-                                <option value="7d">7 Hari</option>
-                                <option value="30d">30 Hari</option>
+                                <option value="24h" <?= $defExp === '1d' ? 'selected' : '' ?>>24 Jam / 1 Hari</option>
+                                <option value="7d" <?= $defExp === '7d' ? 'selected' : '' ?>>7 Hari</option>
+                                <option value="30d" <?= $defExp === '30d' ? 'selected' : '' ?>>30 Hari</option>
                             </select>
                         </div>
                         <div>

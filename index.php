@@ -11,6 +11,7 @@ use App\Controllers\ProfileController;
 use App\Controllers\ServerController;
 use App\Controllers\UserController;
 use App\Services\AuthService;
+use App\Services\SettingService;
 
 // Cek koneksi Database sebelum routing
 $dbCheck = Database::checkConnection();
@@ -23,6 +24,21 @@ if (!$dbCheck['status']) {
 
 // Router sederhana berbasis query parameter 'action'
 $action = $_GET['action'] ?? (AuthService::check() ? 'drive' : 'login');
+
+// Cek Mode Pemeliharaan (Maintenance Mode)
+$maintenanceMode = SettingService::get('maintenance_mode', '0') === '1';
+if ($maintenanceMode && !AuthService::isAdmin()) {
+    $allowedActions = ['login', 'do_login', 'logout'];
+    if (!in_array($action, $allowedActions, true)) {
+        http_response_code(503);
+        $maintenanceMessage = SettingService::get(
+            'maintenance_message',
+            'Sistem Cloud Sharing sedang dalam proses pemeliharaan rutin untuk meningkatkan performa dan keandalan. Silakan coba kembali dalam beberapa saat.'
+        );
+        require_once __DIR__ . '/src/Views/system/maintenance.php';
+        exit;
+    }
+}
 
 switch ($action) {
     // Autentikasi
@@ -164,6 +180,24 @@ switch ($action) {
         break;
     case 'test_webhook':
         (new ServerController())->testWebhook();
+        break;
+    case 'save_system_settings':
+        (new ServerController())->saveSystemSettings();
+        break;
+    case 'clean_chunks':
+        (new ServerController())->cleanChunks();
+        break;
+    case 'purge_cache':
+        (new ServerController())->purgeCache();
+        break;
+    case 'optimize_db':
+        (new ServerController())->optimizeDatabase();
+        break;
+    case 'benchmark_disk':
+        (new ServerController())->benchmarkDisk();
+        break;
+    case 'get_global_logs':
+        (new ServerController())->getGlobalLogs();
         break;
 
     // Database Self-Healing / Auto-Repair (Khusus Admin)

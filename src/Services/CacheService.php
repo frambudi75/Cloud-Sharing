@@ -110,4 +110,21 @@ class CacheService
 
         return $value;
     }
+
+    public static function flush(): bool
+    {
+        if (!self::isAvailable()) {
+            return false;
+        }
+
+        try {
+            $keys = self::$redis->keys('fileshare:*');
+            if (!empty($keys)) {
+                self::$redis->del($keys);
+            }
+            return true;
+        } catch (Throwable) {
+            return false;
+        }
+    }
 }

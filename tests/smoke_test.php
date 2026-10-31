@@ -68,4 +68,21 @@ $timeAgo = ActivityLogService::formatTimeAgo(date('Y-m-d H:i:s'));
 assert($timeAgo === 'Baru saja', 'formatTimeAgo waktu saat ini harus Baru saja');
 echo "[PASS] ActivityLogService metadata, parser, dan formatting terverifikasi.\n";
 
+// 7. Uji Maintenance Tools & Server Controller Helper
+use App\Controllers\ServerController;
+use App\Services\CacheService;
+
+$serverStats = ServerController::getServerLoadAndMemory();
+assert(isset($serverStats['cpu_load'], $serverStats['ram_total'], $serverStats['uptime']), 'getServerLoadAndMemory harus menyediakan cpu_load, ram_total, uptime');
+
+$purgeRes = StorageService::purgeChunks(99999999);
+assert(is_array($purgeRes) && isset($purgeRes['deleted_dirs']), 'purgeChunks harus mengembalikan array hasil');
+
+$cacheFlush = CacheService::flush();
+assert(is_bool($cacheFlush), 'CacheService::flush harus mengembalikan boolean');
+
+$maskedUrl = WebhookService::maskWebhookUrl('https://discord.com/api/webhooks/123456789/abcdefghijklmnopqrstuvwxyz');
+assert(str_starts_with($maskedUrl, 'https://discord.com') && str_contains($maskedUrl, '...'), 'maskWebhookUrl harus menyamarkan token webhook');
+echo "[PASS] Server maintenance helpers & URL masking terverifikasi.\n";
+
 echo "Semua smoke test berhasil dilewati dengan sempurna (All tests passed)!\n";

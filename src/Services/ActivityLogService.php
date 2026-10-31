@@ -164,6 +164,96 @@ class ActivityLogService
     }
 
     /**
+     * Ambil riwayat aktivitas seluruh sistem (Khusus Administrator)
+     */
+    public static function getGlobalLogs(
+        int $limit = 50,
+        int $offset = 0,
+        ?string $filterAction = null,
+        ?string $search = null
+    ): array {
+        try {
+            $db = Database::getConnection();
+
+            $where = ["1=1"];
+            $params = [];
+
+            if (!empty($filterAction) && $filterAction !== 'all') {
+                $where[] = "a.action = :action";
+                $params[':action'] = $filterAction;
+            }
+
+            if (!empty($search)) {
+                $where[] = "(a.file_name LIKE :search OR a.details LIKE :search OR a.ip_address LIKE :search OR u.username LIKE :search)";
+                $params[':search'] = "%{$search}%";
+            }
+
+            $whereClause = implode(' AND ', $where);
+
+            $stmt = $db->prepare("
+                SELECT a.id, a.user_id, a.action, a.file_id, a.file_name, a.details, a.ip_address, a.user_agent, a.created_at,
+                       u.username, u.email, u.role
+                FROM activity_logs a
+                LEFT JOIN users u ON a.user_id = u.id
+                WHERE {$whereClause}
+                ORDER BY a.created_at DESC
+                LIMIT :limit OFFSET :offset
+            ");
+
+            foreach ($params as $k => $v) {
+                $stmt->bindValue($k, $v);
+            }
+            $stmt->bindValue(':limit', (int) $limit, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', (int) $offset, PDO::PARAM_INT);
+
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (\Throwable $e) {
+            error_log('ActivityLogService::getGlobalLogs error: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Hitung total log aktivitas global sistem
+     */
+    public static function countGlobalLogs(
+        ?string $filterAction = null,
+        ?string $search = null
+    ): int {
+        try {
+            $db = Database::getConnection();
+
+            $where = ["1=1"];
+            $params = [];
+
+            if (!empty($filterAction) && $filterAction !== 'all') {
+                $where[] = "a.action = :action";
+                $params[':action'] = $filterAction;
+            }
+
+            if (!empty($search)) {
+                $where[] = "(a.file_name LIKE :search OR a.details LIKE :search OR a.ip_address LIKE :search OR u.username LIKE :search)";
+                $params[':search'] = "%{$search}%";
+            }
+
+            $whereClause = implode(' AND ', $where);
+
+            $stmt = $db->prepare("
+                SELECT COUNT(*) 
+                FROM activity_logs a
+                LEFT JOIN users u ON a.user_id = u.id
+                WHERE {$whereClause}
+            ");
+
+            $stmt->execute($params);
+            return (int) $stmt->fetchColumn();
+        } catch (\Throwable $e) {
+            return 0;
+        }
+    }
+
+    /**
      * Statistik ringkasan aktivitas
      */
     public static function getUserLogStats(int $userId): array
@@ -403,3 +493,4 @@ class ActivityLogService
         }
     }
 }
+

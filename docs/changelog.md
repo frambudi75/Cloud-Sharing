@@ -2,7 +2,24 @@
 
 Semua perubahan pada spesifikasi dan implementasi proyek file-sharing akan dicatat di dokumen ini.
 
-## [Unreleased] - 2026-10-29
+## [Unreleased] - 2026-10-31
+### Ditambahkan & Ditingkatkan
+- **Alat Pemeliharaan & Optimasi Server (System Maintenance Tools)**:
+  - Tombol **Bersihkan Chunk Unggahan** (`?action=clean_chunks`): Membersihkan seluruh sisa potongan file sementara (`storage/chunks`) dan membebaskan ruang disk fisik.
+  - Tombol **Bersihkan Cache Redis & Sesi** (`?action=purge_cache`): Menghapus seluruh namespace cache `fileshare:*` dan mensinkronkan ulang data in-memory.
+  - Tombol **Optimasi & Defrag Basis Data** (`?action=optimize_db`): Menjalankan `OPTIMIZE TABLE` pada 8 tabel inti MariaDB secara atomik.
+  - Tombol **Uji Kecepatan Disk Storage** (`?action=benchmark_disk`): Melakukan uji tulis & baca acak 10 MB ke storage dan menghitung kecepatan nyata (MB/s).
+- **Pengaturan Global Aplikasi (System Global Settings)**:
+  - Panel konfigurasi baru untuk kuota default pengguna baru (GB) dan masa berlaku default tautan berbagi publik.
+  - Sakelar **Mode Pemeliharaan (Maintenance Mode)**: Mengunci akses pengguna biasa saat server sedang dalam perbaikan rutin dengan pesan pengumuman kustom dan layar pemeliharaan modern (`src/Views/system/maintenance.php`).
+- **Log Viewer & Riwayat Webhook (Webhook Delivery Logs)**:
+  - Tabel riwayat pengiriman notifikasi webhook terakhir lengkap dengan status HTTP response, latensi milidetik, masking URL aman, dan indikator status.
+- **Audit Trail Global Administrator**:
+  - Tabel kronologi aktivitas seluruh pengguna sistem lintas akun dengan fitur pencarian instan nama berkas/IP/user dan filter jenis tindakan.
+- **Pemantauan Beban CPU, RAM, & Uptime Server Real-Time**:
+  - Kartu pemantauan beban CPU (*Load Average 1m, 5m, 15m*), penggunaan RAM fisik server, dan uptime host di halaman [Pengaturan Server](file:///c:/xampp/htdocs/file-sharing/src/Views/admin/server.php).
+
+## [2026-10-29]
 ### Ditambahkan & Ditingkatkan
 - **Log Aktivitas & Riwayat Unduhan Lengkap (Activity & Audit Trail) (`?action=drive&tab=activity_logs`)**:
   - Tabel dan skema baru `activity_logs` dengan migrasi *self-healing* otomatis di `Database::ensureSchema()` dan `Database::repairSchema()`.

@@ -50,7 +50,8 @@ class UserController
         $email = trim($_POST['email'] ?? '');
         $password = trim($_POST['password'] ?? '');
         $role = trim($_POST['role'] ?? 'user');
-        $quotaGb = (float) ($_POST['quota_gb'] ?? 5);
+        $defaultQuota = (float) SettingService::get('default_user_quota_gb', '5');
+        $quotaGb = !empty($_POST['quota_gb']) ? (float) $_POST['quota_gb'] : $defaultQuota;
 
         if (empty($username) || empty($email) || empty($password)) {
             $this->respondJson(['success' => false, 'error' => 'Semua kolom wajib diisi.']);

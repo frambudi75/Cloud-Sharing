@@ -63,35 +63,52 @@ class StorageService
 
     public static function cleanOldChunks(int $maxAgeSeconds = 86400): void
     {
+        self::purgeChunks($maxAgeSeconds);
+    }
+
+    public static function purgeChunks(int $maxAgeSeconds = 0): array
+    {
+        $deletedDirs = 0;
+        $freedBytes = 0;
+
         try {
             $chunkDir = self::getChunkDir();
-            if (!is_dir($chunkDir)) return;
+            if (!is_dir($chunkDir)) {
+                return ['deleted_dirs' => 0, 'freed_bytes' => 0];
+            }
 
             $now = time();
             $items = scandir($chunkDir);
-            if (!$items) return;
+            if (!$items) {
+                return ['deleted_dirs' => 0, 'freed_bytes' => 0];
+            }
 
             foreach ($items as $item) {
                 if ($item === '.' || $item === '..') continue;
                 $itemPath = $chunkDir . DIRECTORY_SEPARATOR . $item;
                 if (is_dir($itemPath)) {
                     $mtime = filemtime($itemPath);
-                    if ($mtime !== false && ($now - $mtime) > $maxAgeSeconds) {
+                    if ($maxAgeSeconds === 0 || ($mtime !== false && ($now - $mtime) > $maxAgeSeconds)) {
                         $files = scandir($itemPath);
                         if ($files) {
                             foreach ($files as $f) {
                                 if ($f !== '.' && $f !== '..') {
-                                    @unlink($itemPath . DIRECTORY_SEPARATOR . $f);
+                                    $filePath = $itemPath . DIRECTORY_SEPARATOR . $f;
+                                    $freedBytes += (int) @filesize($filePath);
+                                    @unlink($filePath);
                                 }
                             }
                         }
                         @rmdir($itemPath);
+                        $deletedDirs++;
                     }
                 }
             }
         } catch (\Throwable $e) {
             // Silently ignore
         }
+
+        return ['deleted_dirs' => $deletedDirs, 'freed_bytes' => $freedBytes];
     }
 
     public static function isDangerousExtension(string $filename): bool
