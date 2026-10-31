@@ -181,59 +181,59 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                     </button>
 
                     <!-- Dropdown Card -->
-                    <div id="userDropdownMenu" class="hidden absolute right-0 mt-2 w-60 bg-white rounded-2xl border border-slate-200 shadow-xl py-2 z-50 text-xs font-semibold text-slate-700 animate-item-in">
-                        <div class="px-4 py-2.5 border-b border-slate-100">
-                            <p class="font-bold text-slate-900 truncate"><?= htmlspecialchars($user['username'] ?? 'User') ?></p>
+                    <div id="userDropdownMenu" class="hidden absolute right-0 mt-2 w-60 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl py-2 z-50 text-xs font-semibold text-slate-700 dark:text-slate-200 animate-item-in">
+                        <div class="px-4 py-2.5 border-b border-slate-100 dark:border-slate-800">
+                            <p class="font-bold text-slate-900 dark:text-white truncate"><?= htmlspecialchars($user['username'] ?? 'User') ?></p>
                             <p class="text-[11px] text-slate-400 font-normal truncate mt-0.5"><?= htmlspecialchars($user['email'] ?? '') ?></p>
                         </div>
 
                         <div class="py-1">
-                            <a href="?action=profile" class="flex items-center px-4 py-2 hover:bg-slate-50 text-slate-700">
+                            <a href="?action=profile" class="flex items-center px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition-colors">
                                 <svg class="w-4 h-4 mr-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                                 Profil & Kata Sandi
                             </a>
-                            <a href="?action=drive&tab=my_shares" class="flex items-center justify-between px-4 py-2 hover:bg-slate-50 text-slate-700">
+                            <a href="?action=drive&tab=my_shares" class="flex items-center justify-between px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition-colors">
                                 <span class="flex items-center">
                                     <svg class="w-4 h-4 mr-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
                                     Tautan Publik Saya
                                 </span>
                                 <?php if ($myPublicSharesCount > 0): ?>
-                                    <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-100 text-emerald-700 font-bold"><?= $myPublicSharesCount ?></span>
+                                    <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 font-bold"><?= $myPublicSharesCount ?></span>
                                 <?php endif; ?>
                             </a>
-                            <a href="?action=drive&tab=storage_analyzer" class="flex items-center justify-between px-4 py-2 hover:bg-slate-50 text-slate-700">
+                            <a href="?action=drive&tab=storage_analyzer" class="flex items-center justify-between px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition-colors">
                                 <span class="flex items-center">
                                     <svg class="w-4 h-4 mr-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
                                     Analisis Penyimpanan
                                 </span>
-                                <span class="text-[10px] font-mono text-brand-600 font-bold"><?= $quotaPercentage ?>%</span>
+                                <span class="text-[10px] font-mono text-brand-600 dark:text-brand-400 font-bold"><?= $quotaPercentage ?>%</span>
                             </a>
-                            <a href="?action=drive&tab=activity_logs" class="flex items-center px-4 py-2 hover:bg-slate-50 text-slate-700">
+                            <a href="?action=drive&tab=activity_logs" class="flex items-center px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition-colors">
                                 <svg class="w-4 h-4 mr-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                 Log Aktivitas & Audit
                             </a>
-                            <a href="?action=about" class="flex items-center px-4 py-2 hover:bg-slate-50 text-slate-700">
+                            <a href="?action=about" class="flex items-center px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition-colors">
                                 <svg class="w-4 h-4 mr-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                 Tentang & Info Developer
                             </a>
                         </div>
 
                         <?php if (!empty($user['role']) && $user['role'] === 'admin'): ?>
-                            <div class="py-1 border-t border-slate-100">
+                            <div class="py-1 border-t border-slate-100 dark:border-slate-800">
                                 <span class="block px-4 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Panel Admin</span>
-                                <a href="?action=users" class="flex items-center px-4 py-2 hover:bg-slate-50 text-slate-700">
-                                    <svg class="w-4 h-4 mr-2.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                                <a href="?action=users" class="flex items-center px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition-colors">
+                                    <svg class="w-4 h-4 mr-2.5 text-indigo-500 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                                     Kelola Pengguna
                                 </a>
-                                <a href="?action=server" class="flex items-center px-4 py-2 hover:bg-slate-50 text-slate-700">
-                                    <svg class="w-4 h-4 mr-2.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path></svg>
+                                <a href="?action=server" class="flex items-center px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition-colors">
+                                    <svg class="w-4 h-4 mr-2.5 text-indigo-500 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path></svg>
                                     Pengaturan Server & Webhook
                                 </a>
                             </div>
                         <?php endif; ?>
 
-                        <div class="pt-1 border-t border-slate-100">
-                            <a href="?action=logout" class="flex items-center px-4 py-2 hover:bg-rose-50 text-rose-600">
+                        <div class="pt-1 border-t border-slate-100 dark:border-slate-800">
+                            <a href="?action=logout" class="flex items-center px-4 py-2 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-600 dark:text-rose-400 transition-colors">
                                 <svg class="w-4 h-4 mr-2.5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                                 Keluar dari Akun
                             </a>
@@ -1752,33 +1752,33 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
     </div>
 
     <!-- Right-Click Context Menu -->
-    <div id="fileContextMenu" class="hidden fixed z-50 bg-white border border-slate-200 rounded-xl shadow-2xl py-1.5 w-48 text-xs font-semibold text-slate-700 animate-item-in">
-        <button type="button" id="ctxBtnPreview" class="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center text-slate-700">
+    <div id="fileContextMenu" class="hidden fixed z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl py-1.5 w-48 text-xs font-semibold text-slate-700 dark:text-slate-200 animate-item-in">
+        <button type="button" id="ctxBtnPreview" class="w-full text-left px-3.5 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center text-slate-700 dark:text-slate-200 transition-colors">
             <svg class="w-4 h-4 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
             Pratinjau
         </button>
-        <button type="button" id="ctxBtnShare" class="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center text-slate-700">
+        <button type="button" id="ctxBtnShare" class="w-full text-left px-3.5 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center text-slate-700 dark:text-slate-200 transition-colors">
             <svg class="w-4 h-4 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316"></path></svg>
             Bagikan Berkas
         </button>
-        <button type="button" id="ctxBtnCopyLink" class="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center text-slate-700">
+        <button type="button" id="ctxBtnCopyLink" class="w-full text-left px-3.5 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center text-slate-700 dark:text-slate-200 transition-colors">
             <svg class="w-4 h-4 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101"></path></svg>
             Salin Link Berbagi
         </button>
-        <button type="button" id="ctxBtnRename" class="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center text-slate-700">
+        <button type="button" id="ctxBtnRename" class="w-full text-left px-3.5 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center text-slate-700 dark:text-slate-200 transition-colors">
             <svg class="w-4 h-4 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
             Ganti Nama
         </button>
-        <button type="button" id="ctxBtnDuplicate" class="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center text-slate-700">
+        <button type="button" id="ctxBtnDuplicate" class="w-full text-left px-3.5 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center text-slate-700 dark:text-slate-200 transition-colors">
             <svg class="w-4 h-4 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
             Duplikat Berkas
         </button>
-        <a id="ctxBtnDownload" href="#" class="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center text-slate-700">
+        <a id="ctxBtnDownload" href="#" class="w-full text-left px-3.5 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center text-slate-700 dark:text-slate-200 transition-colors">
             <svg class="w-4 h-4 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
             Unduh Berkas
         </a>
-        <div class="my-1 border-t border-slate-100"></div>
-        <button type="button" id="ctxBtnDelete" class="w-full text-left px-3.5 py-2 hover:bg-red-50 flex items-center text-red-600">
+        <div class="my-1 border-t border-slate-100 dark:border-slate-800"></div>
+        <button type="button" id="ctxBtnDelete" class="w-full text-left px-3.5 py-2 hover:bg-red-50 dark:hover:bg-rose-950/40 flex items-center text-red-600 dark:text-rose-400 transition-colors">
             <svg class="w-4 h-4 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
             Hapus Berkas
         </button>

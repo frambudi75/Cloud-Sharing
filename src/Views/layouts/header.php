@@ -137,6 +137,107 @@
             background-color: #1e1b4b !important;
             color: #818cf8 !important;
         }
+        /* Comprehensive Dark Mode Hover & Interactive Elements */
+        html.dark .hover\:bg-slate-50:hover,
+        html.dark .hover\:bg-slate-100:hover,
+        html.dark .hover\:bg-slate-200:hover,
+        html.dark .hover\:bg-slate-50\/70:hover,
+        html.dark .hover\:bg-slate-50\/60:hover,
+        html.dark .hover\:bg-slate-50\/50:hover,
+        html.dark .hover\:bg-white:hover,
+        html.dark .hover\:bg-gray-50:hover,
+        html.dark .hover\:bg-gray-100:hover,
+        html.dark [class*="hover:bg-slate-50"]:hover,
+        html.dark [class*="hover:bg-slate-100"]:hover,
+        html.dark [class*="hover:bg-white"]:hover {
+            background-color: #1e293b !important;
+            color: #f8fafc !important;
+        }
+        html.dark .hover\:bg-rose-50:hover,
+        html.dark .hover\:bg-red-50:hover,
+        html.dark [class*="hover:bg-rose-50"]:hover,
+        html.dark [class*="hover:bg-red-50"]:hover {
+            background-color: rgba(225, 29, 72, 0.2) !important;
+            color: #fb7185 !important;
+        }
+        html.dark .hover\:bg-emerald-50:hover,
+        html.dark [class*="hover:bg-emerald-50"]:hover {
+            background-color: rgba(16, 185, 129, 0.2) !important;
+            color: #34d399 !important;
+        }
+        html.dark .hover\:bg-brand-50:hover,
+        html.dark [class*="hover:bg-brand-50"]:hover {
+            background-color: rgba(99, 102, 241, 0.2) !important;
+            color: #a5b4fc !important;
+        }
+        html.dark .hover\:bg-amber-50:hover,
+        html.dark [class*="hover:bg-amber-50"]:hover {
+            background-color: rgba(245, 158, 11, 0.2) !important;
+            color: #fbbf24 !important;
+        }
+        /* Dark mode dropdowns, popovers, and context menus */
+        html.dark #userDropdownMenu,
+        html.dark #fileContextMenu,
+        html.dark .action-menu-dropdown {
+            background-color: #111827 !important;
+            border-color: #1f2937 !important;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4) !important;
+        }
+        html.dark #userDropdownMenu a:hover,
+        html.dark #fileContextMenu button:hover,
+        html.dark #fileContextMenu a:hover,
+        html.dark .action-menu-dropdown button:hover,
+        html.dark .action-menu-dropdown a:hover {
+            background-color: #1e293b !important;
+            color: #f8fafc !important;
+        }
+        /* Dark mode selection highlights */
+        html.dark .file-card.is-selected {
+            border-color: #818cf8 !important;
+            background-color: rgba(99, 102, 241, 0.2) !important;
+            box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.4) !important;
+        }
+        html.dark .file-row.is-selected {
+            background-color: rgba(99, 102, 241, 0.2) !important;
+        }
+        /* Badge backgrounds in dark mode */
+        html.dark .bg-indigo-50, html.dark .bg-brand-50, html.dark .bg-blue-50, html.dark .bg-sky-50 {
+            background-color: rgba(99, 102, 241, 0.15) !important;
+        }
+        html.dark .bg-emerald-50, html.dark .bg-teal-50 {
+            background-color: rgba(16, 185, 129, 0.15) !important;
+        }
+        html.dark .bg-amber-50 {
+            background-color: rgba(245, 158, 11, 0.15) !important;
+        }
+        html.dark .bg-red-50, html.dark .bg-rose-50 {
+            background-color: rgba(244, 63, 94, 0.15) !important;
+        }
+        html.dark .bg-purple-50 {
+            background-color: rgba(168, 85, 247, 0.15) !important;
+        }
+        html.dark .bg-cyan-50 {
+            background-color: rgba(6, 182, 212, 0.15) !important;
+        }
+        html.dark .bg-emerald-100 {
+            background-color: rgba(16, 185, 129, 0.2) !important;
+            color: #34d399 !important;
+        }
+        html.dark .bg-brand-100, html.dark .bg-indigo-100 {
+            background-color: rgba(99, 102, 241, 0.2) !important;
+            color: #818cf8 !important;
+        }
+        html.dark .bg-amber-100 {
+            background-color: rgba(245, 158, 11, 0.2) !important;
+            color: #fbbf24 !important;
+        }
+        html.dark .bg-rose-100, html.dark .bg-red-100 {
+            background-color: rgba(244, 63, 94, 0.2) !important;
+            color: #f87171 !important;
+        }
+        html.dark .bg-slate-200 {
+            background-color: #334155 !important;
+        }
         /* Modern Typography & Focus */
         body {
             font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
