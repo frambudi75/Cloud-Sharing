@@ -24,8 +24,8 @@ $maintenanceActive = $globalSettings['maintenance_mode'] ?? false;
                          class="h-9 w-9 rounded-lg shadow-sm group-hover:scale-105 transition-all duration-200">
                     <span class="font-bold text-slate-900 dark:text-white text-lg tracking-tight">Cloud Sharing</span>
                 </a>
-                <span class="text-slate-300 dark:text-slate-700">/</span>
-                <span class="font-semibold text-slate-700 dark:text-slate-200 text-sm">Pengaturan Server</span>
+                <span class="hidden md:inline text-slate-300 dark:text-slate-700">/</span>
+                <span class="hidden md:inline font-semibold text-slate-700 dark:text-slate-200 text-sm">Pengaturan Server</span>
             </div>
 
             <!-- Header Navigation -->
@@ -39,7 +39,7 @@ $maintenanceActive = $globalSettings['maintenance_mode'] ?? false;
                 </button>
 
                 <a href="?action=about" 
-                   class="inline-flex items-center h-9 px-3 sm:px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold shadow-xs transition-colors" title="Tentang Aplikasi & Pengembang">
+                   class="inline-flex items-center h-9 px-2.5 sm:px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold shadow-xs transition-colors" title="Tentang Aplikasi & Pengembang">
                     <svg class="w-4 h-4 sm:mr-1.5 text-brand-600 dark:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
@@ -47,7 +47,7 @@ $maintenanceActive = $globalSettings['maintenance_mode'] ?? false;
                 </a>
 
                 <a href="?action=users" 
-                   class="inline-flex items-center h-9 px-3 sm:px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold shadow-xs transition-colors" title="Kelola Pengguna">
+                   class="inline-flex items-center h-9 px-2.5 sm:px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold shadow-xs transition-colors" title="Kelola Pengguna">
                     <svg class="w-4 h-4 sm:mr-1.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
                     </svg>
@@ -55,14 +55,14 @@ $maintenanceActive = $globalSettings['maintenance_mode'] ?? false;
                 </a>
 
                 <a href="?action=drive" 
-                   class="inline-flex items-center h-9 px-3 sm:px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold shadow-xs transition-colors" title="Buka Drive Saya">
+                   class="inline-flex items-center h-9 px-2.5 sm:px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold shadow-xs transition-colors" title="Buka Drive Saya">
                     <svg class="w-4 h-4 sm:mr-1.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
                     </svg>
                     <span class="hidden sm:inline">Buka Drive Saya</span>
                 </a>
 
-                <a href="?action=logout" class="inline-flex items-center justify-center h-9 px-3 text-xs font-semibold rounded-xl text-slate-700 dark:text-slate-300 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 border border-slate-200 dark:border-slate-700 hover:border-red-200 transition-colors" title="Keluar">
+                <a href="?action=logout" class="inline-flex items-center justify-center h-9 px-2.5 sm:px-3 text-xs font-semibold rounded-xl text-slate-700 dark:text-slate-300 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 border border-slate-200 dark:border-slate-700 hover:border-red-200 transition-colors" title="Keluar">
                     <span class="hidden sm:inline">Keluar</span>
                     <svg class="w-4 h-4 sm:hidden text-slate-500 hover:text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                 </a>
@@ -74,7 +74,7 @@ $maintenanceActive = $globalSettings['maintenance_mode'] ?? false;
     <main class="relative z-10 flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         
         <!-- Maintenance Alert Banner (If Active) -->
-        <div id="maintenanceNoticeBanner" class="<?= $maintenanceActive ? '' : 'hidden' ?> p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-200 flex items-start sm:items-center justify-between gap-3 shadow-xs">
+        <div id="maintenanceNoticeBanner" class="<?= $maintenanceActive ? '' : 'hidden' ?> p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
             <div class="flex items-center space-x-3">
                 <span class="text-2xl animate-pulse">⚠️</span>
                 <div>
@@ -82,7 +82,7 @@ $maintenanceActive = $globalSettings['maintenance_mode'] ?? false;
                     <p class="text-xs text-amber-700 dark:text-amber-300 mt-0.5">Pengguna non-admin saat ini dialihkan ke layar pemeliharaan sistem. Anda dapat mematikannya di formulir Pengaturan Global di bawah.</p>
                 </div>
             </div>
-            <a href="#globalSettingsCard" class="shrink-0 px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-all shadow-xs">
+            <a href="#globalSettingsCard" class="self-start sm:self-auto shrink-0 px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-all shadow-xs">
                 Atur Mode →
             </a>
         </div>
@@ -155,9 +155,9 @@ $maintenanceActive = $globalSettings['maintenance_mode'] ?? false;
                     </div>
                 </div>
 
-                <div class="mt-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between">
+                <div class="mt-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 text-xs text-slate-500 dark:text-slate-400 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <span>Berkas Chunk Terbengkalai: <strong class="text-slate-800 dark:text-slate-200 font-mono"><?= $metrics['chunk_dirs'] ?> folder (<?= StorageService::formatBytes($metrics['chunk_bytes']) ?>)</strong></span>
-                    <button type="button" onclick="cleanChunks()" class="text-brand-600 dark:text-brand-400 font-bold hover:underline">Bersihkan Sekarang →</button>
+                    <button type="button" onclick="cleanChunks()" class="text-brand-600 dark:text-brand-400 font-bold hover:underline shrink-0 text-left sm:text-right">Bersihkan Sekarang →</button>
                 </div>
             </div>
 
@@ -354,7 +354,7 @@ $maintenanceActive = $globalSettings['maintenance_mode'] ?? false;
                         </p>
                     </div>
                     <button type="button" onclick="cleanChunks()" id="btnCleanChunks"
-                            class="w-full h-9 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-bold transition-all shadow-2xs">
+                            class="w-full h-10 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-bold transition-all shadow-2xs">
                         Bersihkan Chunk
                     </button>
                 </div>
@@ -373,7 +373,7 @@ $maintenanceActive = $globalSettings['maintenance_mode'] ?? false;
                         </p>
                     </div>
                     <button type="button" onclick="purgeCache()" id="btnPurgeCache"
-                            class="w-full h-9 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-bold transition-all shadow-2xs">
+                            class="w-full h-10 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-bold transition-all shadow-2xs">
                         Bersihkan Cache
                     </button>
                 </div>
@@ -392,7 +392,7 @@ $maintenanceActive = $globalSettings['maintenance_mode'] ?? false;
                         </p>
                     </div>
                     <button type="button" onclick="optimizeDatabase()" id="btnOptimizeDb"
-                            class="w-full h-9 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-bold transition-all shadow-2xs">
+                            class="w-full h-10 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-bold transition-all shadow-2xs">
                         Optimalkan DB
                     </button>
                 </div>
@@ -411,7 +411,7 @@ $maintenanceActive = $globalSettings['maintenance_mode'] ?? false;
                         </p>
                     </div>
                     <button type="button" onclick="benchmarkDisk()" id="btnBenchmark"
-                            class="w-full h-9 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-bold transition-all shadow-2xs">
+                            class="w-full h-10 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-bold transition-all shadow-2xs">
                         Mulai Benchmark
                     </button>
                 </div>
@@ -721,8 +721,8 @@ $maintenanceActive = $globalSettings['maintenance_mode'] ?? false;
 
                 <div class="flex items-center gap-2">
                     <input type="text" id="globalSearchInput" placeholder="Cari nama / user / IP..." onkeyup="if(event.key==='Enter') loadGlobalLogs(1)"
-                           class="h-9 px-3 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:bg-white focus:outline-none focus:ring-1 focus:ring-brand-500 w-full sm:w-48">
-                    <button type="button" onclick="loadGlobalLogs(1)" class="h-9 px-3.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-all">
+                           class="h-10 px-3 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:bg-white focus:outline-none focus:ring-1 focus:ring-brand-500 flex-1 sm:w-48">
+                    <button type="button" onclick="loadGlobalLogs(1)" class="h-10 px-3.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-all shrink-0">
                         Cari
                     </button>
                 </div>

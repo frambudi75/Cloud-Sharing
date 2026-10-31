@@ -76,7 +76,7 @@ $isAdmin = !empty($currentUser['role']) && $currentUser['role'] === 'admin';
                     <div>
                         <div class="flex flex-wrap items-center gap-2 mb-2">
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-brand-600 text-white shadow-2xs">
-                                v1.3.0 Production
+                                v1.4.0 Production
                             </span>
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>
