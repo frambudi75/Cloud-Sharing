@@ -248,7 +248,7 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
     </header>
 
     <!-- Main Application Body: Sidebar + Main Content (2-Column Modern Shell) -->
-    <div class="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 lg:pb-8">
+    <div id="driveContainer" class="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 lg:pb-8">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
             <!-- ============================================================= -->
@@ -1735,6 +1735,12 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
         <button type="button" onclick="clearBulkSelection()" class="text-xs font-semibold text-slate-400 hover:text-white transition-colors">
             Batal
         </button>
+        <button type="button" onclick="bulkDownloadSelected()" class="inline-flex items-center h-8 px-3 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold shadow-xs transition-colors">
+            <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+            </svg>
+            Unduh ZIP
+        </button>
         <button type="button" onclick="bulkDeleteSelected()" class="inline-flex items-center h-8 px-3 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow-xs transition-colors">
             <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
@@ -2311,7 +2317,7 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
     <!-- ===================================================================== -->
     <!-- MOBILE BOTTOM NAVIGATION BAR (Responsive Touch Bar for < lg screens)  -->
     <!-- ===================================================================== -->
-    <nav class="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 px-2 py-1.5 grid grid-cols-5 gap-1 text-[10px] font-semibold shadow-lg" aria-label="Navigasi Mobile">
+    <nav id="mobileBottomNav" class="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 px-2 py-1.5 grid grid-cols-5 gap-1 text-[10px] font-semibold shadow-lg" aria-label="Navigasi Mobile">
         <a href="?action=drive&tab=my_drive" class="flex flex-col items-center justify-center py-1 rounded-xl <?= $activeTab === 'my_drive' ? 'text-brand-600 font-bold bg-brand-50/60 dark:bg-brand-950/50' : 'text-slate-500' ?>">
             <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
             <span>Drive</span>

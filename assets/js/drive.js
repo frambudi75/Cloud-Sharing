@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!driveApp) return;
 
     const csrfToken = driveApp.getAttribute('data-csrf') || '';
-    const currentFolderId = driveApp.getAttribute('data-folder-id') || '';
+    let currentFolderId = driveApp.getAttribute('data-folder-id') || '';
 
     // =========================================================================
     // 1. Modal Helper Functions
@@ -257,10 +257,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    const searchInputEl = document.getElementById('searchInput');
-    if (searchInputEl) {
-        searchInputEl.addEventListener('input', applyLiveFilter);
+    function bindSearchAndFilter() {
+        const searchInputEl = document.getElementById('searchInput');
+        if (searchInputEl) {
+            searchInputEl.addEventListener('input', applyLiveFilter);
+        }
     }
+    bindSearchAndFilter();
 
     // =========================================================================
     // 2. View Mode Switcher (Grid vs List View)
@@ -536,6 +539,36 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    window.bulkDownloadSelected = function () {
+        const checkedBoxes = Array.from(document.querySelectorAll('.file-select-checkbox:checked'));
+        const fileIds = Array.from(new Set(checkedBoxes.map(cb => parseInt(cb.getAttribute('data-id'), 10)))).filter(id => id > 0);
+
+        if (fileIds.length === 0) return;
+
+        showToast(`Mempersiapkan arsip ZIP untuk ${fileIds.length} berkas...`);
+
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '?action=bulk_download_zip';
+        form.style.display = 'none';
+
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrf_token';
+        csrfInput.value = csrfToken;
+        form.appendChild(csrfInput);
+
+        const idsInput = document.createElement('input');
+        idsInput.type = 'hidden';
+        idsInput.name = 'file_ids';
+        idsInput.value = JSON.stringify(fileIds);
+        form.appendChild(idsInput);
+
+        document.body.appendChild(form);
+        form.submit();
+        setTimeout(() => form.remove(), 2000);
+    };
+
     window.bulkDeleteSelected = async function () {
         const checkedBoxes = Array.from(document.querySelectorAll('.file-select-checkbox:checked'));
         const fileIds = Array.from(new Set(checkedBoxes.map(cb => parseInt(cb.getAttribute('data-id'), 10))));
@@ -575,14 +608,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // =========================================================================
     // 6. New Folder Management
     // =========================================================================
-    const btnNewFolderModal = document.getElementById('btnNewFolderModal');
-    if (btnNewFolderModal) {
-        btnNewFolderModal.addEventListener('click', () => {
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('#btnNewFolderModal');
+        if (btn) {
             const folderInput = document.getElementById('newFolderName');
             if (folderInput) folderInput.value = '';
             openModal('newFolderModal');
-        });
-    }
+        }
+    });
 
     window.handleCreateFolder = async function (e) {
         e.preventDefault();
@@ -1103,51 +1136,57 @@ document.addEventListener('DOMContentLoaded', () => {
     // =========================================================================
     // 8. Drag-and-Drop File Upload & Multi-File Support
     // =========================================================================
-    const dropZone = document.getElementById('dropZone');
-    const fileUploadInput = document.getElementById('fileUploadInput');
+    let dropZone = document.getElementById('dropZone');
+    let fileUploadInput = document.getElementById('fileUploadInput');
     const globalDropOverlay = document.getElementById('globalDropOverlay');
     let dragCounter = 0;
 
-    if (fileUploadInput) {
-        fileUploadInput.addEventListener('change', () => {
-            if (fileUploadInput.files && fileUploadInput.files.length > 0) {
-                handleFiles(fileUploadInput.files);
-            }
-            fileUploadInput.value = '';
-        });
-    }
+    function bindUploadDropZone() {
+        dropZone = document.getElementById('dropZone');
+        fileUploadInput = document.getElementById('fileUploadInput');
 
-    if (dropZone) {
-        dropZone.style.cursor = 'pointer';
-        dropZone.addEventListener('click', () => {
-            if (fileUploadInput) fileUploadInput.click();
-        });
+        if (fileUploadInput) {
+            fileUploadInput.onchange = () => {
+                if (fileUploadInput.files && fileUploadInput.files.length > 0) {
+                    handleFiles(fileUploadInput.files);
+                }
+                fileUploadInput.value = '';
+            };
+        }
 
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropZone.addEventListener(eventName, (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                dropZone.classList.add('dragover-active');
-            }, false);
-        });
+        if (dropZone) {
+            dropZone.style.cursor = 'pointer';
+            dropZone.onclick = () => {
+                if (fileUploadInput) fileUploadInput.click();
+            };
 
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, (e) => {
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropZone.classList.add('dragover-active');
+                }, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropZone.classList.remove('dragover-active');
+                }, false);
+            });
+
+            dropZone.addEventListener('drop', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 dropZone.classList.remove('dragover-active');
-            }, false);
-        });
-
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            dropZone.classList.remove('dragover-active');
-            if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-                handleFiles(e.dataTransfer.files);
-            }
-        });
+                if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    handleFiles(e.dataTransfer.files);
+                }
+            });
+        }
     }
+    bindUploadDropZone();
 
     // =========================================================================
     // 8.1 Drag and Drop File to Folder (Pindahkan Berkas Tunggal maupun Banyak)
@@ -2463,4 +2502,156 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // =========================================================================
+    // 16. Instant Tab & Folder Navigation (SPA Engine)
+    // =========================================================================
+    function rebindDriveDOMListeners() {
+        bindUploadDropZone();
+        initFileToFolderDragAndDrop();
+        bindSearchAndFilter();
+
+        const savedMode = localStorage.getItem('drive_view_mode') || 'grid';
+        if (typeof window.setViewMode === 'function') {
+            window.setViewMode(savedMode);
+        }
+
+        if (typeof syncThemeIcons === 'function') {
+            syncThemeIcons(document.documentElement.classList.contains('dark'));
+        }
+    }
+
+    let isSpaNavigating = false;
+    async function navigateDriveSpa(url, pushState = true) {
+        if (isSpaNavigating) return;
+        isSpaNavigating = true;
+
+        const progressBar = document.getElementById('spaProgressBar');
+        if (progressBar) {
+            progressBar.style.width = '35%';
+            progressBar.classList.remove('opacity-0');
+        }
+
+        try {
+            const resp = await fetch(url, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+
+            if (!resp.ok) {
+                window.location.href = url;
+                return;
+            }
+
+            const html = await resp.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+
+            const currentContainer = document.getElementById('driveContainer');
+            const newContainer = doc.getElementById('driveContainer');
+
+            if (!currentContainer || !newContainer) {
+                window.location.href = url;
+                return;
+            }
+
+            if (progressBar) progressBar.style.width = '75%';
+
+            // Swap main drive container (includes sidebar and main view)
+            currentContainer.innerHTML = newContainer.innerHTML;
+
+            // Swap mobile bottom navigation if present
+            const currentMobileNav = document.getElementById('mobileBottomNav');
+            const newMobileNav = doc.getElementById('mobileBottomNav');
+            if (currentMobileNav && newMobileNav) {
+                currentMobileNav.innerHTML = newMobileNav.innerHTML;
+            }
+
+            // Sync document title
+            if (doc.title) {
+                document.title = doc.title;
+            }
+
+            // Sync current folder ID attribute
+            const newDriveApp = doc.getElementById('driveApp');
+            if (newDriveApp && driveApp) {
+                const newFid = newDriveApp.getAttribute('data-folder-id');
+                if (newFid !== null) {
+                    driveApp.setAttribute('data-folder-id', newFid);
+                    currentFolderId = newFid;
+                }
+            }
+
+            // Update browser URL
+            if (pushState) {
+                window.history.pushState({ spa: true, url: url }, '', url);
+            }
+
+            // Re-bind interactive events to freshly rendered DOM
+            rebindDriveDOMListeners();
+
+            // Close any leftover modals, context menus, or drawers
+            closeContextMenu();
+            document.querySelectorAll('[id$="Modal"]').forEach(m => m.classList.add('hidden'));
+            if (typeof window.closeInspectorDrawer === 'function') window.closeInspectorDrawer();
+
+            // Animate progress bar completion
+            if (progressBar) {
+                progressBar.style.width = '100%';
+                setTimeout(() => {
+                    progressBar.classList.add('opacity-0');
+                    setTimeout(() => { progressBar.style.width = '0%'; }, 250);
+                }, 100);
+            }
+
+            // Smooth scroll top on mobile viewports
+            if (window.innerWidth < 1024) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        } catch (err) {
+            console.error('SPA navigation error, falling back to full navigation:', err);
+            window.location.href = url;
+        } finally {
+            isSpaNavigating = false;
+        }
+    }
+
+    // Intercept clicks on internal tab & folder links
+    document.addEventListener('click', (e) => {
+        const link = e.target.closest('a');
+        if (!link) return;
+
+        const href = link.getAttribute('href');
+        if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
+
+        if (link.target === '_blank' || link.hasAttribute('download') || link.dataset.noSpa === 'true') return;
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+
+        try {
+            const url = new URL(href, window.location.href);
+            if (url.origin !== window.location.origin) return;
+
+            const action = url.searchParams.get('action');
+            // Intercept ?action=drive... or within drive navigation (?tab=..., ?folder_id=...)
+            if (action === 'drive' || (window.location.search.includes('action=drive') && !action && (url.searchParams.has('tab') || url.searchParams.has('folder_id')))) {
+                // Ensure downloads and API actions are not intercepted
+                if (action === 'download_folder_zip' || action === 'download_direct' || action === 'download_public' || action === 'bulk_download_zip') {
+                    return;
+                }
+                e.preventDefault();
+                navigateDriveSpa(url.href);
+            }
+        } catch (err) {}
+    });
+
+    // Handle browser back/forward buttons
+    window.addEventListener('popstate', (e) => {
+        try {
+            const url = window.location.href;
+            const parsed = new URL(url);
+            const action = parsed.searchParams.get('action');
+            if (action === 'drive' || (!action && (parsed.searchParams.has('tab') || parsed.searchParams.has('folder_id')))) {
+                navigateDriveSpa(url, false);
+            }
+        } catch (err) {}
+    });
 });

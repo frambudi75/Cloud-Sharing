@@ -11,6 +11,21 @@
     <link rel="alternate icon" href="favicon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="assets/img/favicon.svg">
 
+    <!-- Progressive Web App (PWA) Manifest & Meta -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="CloudShare">
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(err => {
+                    console.debug('PWA ServiceWorker registration notice:', err);
+                });
+            });
+        }
+    </script>
+
     <!-- Google Fonts: Plus Jakarta Sans for crisp modern typography -->
     <link rel="dns-prefetch" href="//cdn.tailwindcss.com">
     <link rel="dns-prefetch" href="//fonts.googleapis.com">
@@ -301,3 +316,5 @@
     </style>
 </head>
 <body class="h-full text-slate-800 antialiased flex flex-col font-sans selection:bg-brand-500 selection:text-white">
+    <!-- Top Progress Bar for Instant SPA Tab Navigation -->
+    <div id="spaProgressBar" class="fixed top-0 left-0 h-0.5 bg-gradient-to-r from-brand-600 via-indigo-500 to-sky-400 z-[9999] transition-all duration-200 pointer-events-none opacity-0" style="width: 0%;"></div>

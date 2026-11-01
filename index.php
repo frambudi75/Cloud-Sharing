@@ -115,6 +115,9 @@ switch ($action) {
     case 'download_folder_zip':
         (new DriveController())->downloadFolderZip();
         break;
+    case 'bulk_download_zip':
+        (new DriveController())->bulkDownloadZip();
+        break;
     case 'create_share':
         (new DriveController())->createShare();
         break;

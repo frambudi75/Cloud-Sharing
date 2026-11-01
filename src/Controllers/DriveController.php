@@ -719,6 +719,95 @@ class DriveController
         exit;
     }
 
+    public function bulkDownloadZip(): void
+    {
+        $this->validateCsrf();
+        $userId = (int) AuthService::id();
+
+        $raw = $_POST['file_ids'] ?? [];
+        $fileIds = [];
+        if (is_string($raw)) {
+            $decoded = json_decode($raw, true);
+            if (is_array($decoded)) {
+                $fileIds = array_map('intval', $decoded);
+            }
+        } elseif (is_array($raw)) {
+            $fileIds = array_map('intval', $raw);
+        }
+
+        $fileIds = array_values(array_filter($fileIds, fn($id) => $id > 0));
+        if (empty($fileIds)) {
+            http_response_code(400);
+            die('Tidak ada berkas yang dipilih.');
+        }
+
+        if (!class_exists('ZipArchive')) {
+            http_response_code(500);
+            die('Ekstensi PHP ZipArchive tidak aktif.');
+        }
+
+        $db = Database::getConnection();
+        $placeholders = implode(',', array_fill(0, count($fileIds), '?'));
+        $stmt = $db->prepare("SELECT id, original_name, storage_path, storage_filename FROM files WHERE id IN ($placeholders) AND user_id = ? AND deleted_at IS NULL");
+        $stmt->execute([...$fileIds, $userId]);
+        $files = $stmt->fetchAll();
+
+        if (empty($files)) {
+            http_response_code(404);
+            die('Tidak ada berkas valid yang ditemukan.');
+        }
+
+        $zip = new \ZipArchive();
+        $tempZipPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'bulk_' . $userId . '_' . uniqid() . '.zip';
+
+        if ($zip->open($tempZipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+            http_response_code(500);
+            die('Gagal membuat arsip ZIP.');
+        }
+
+        $usedNames = [];
+        foreach ($files as $f) {
+            $fullPath = StorageService::getFullPath($f['storage_path'], $f['storage_filename']);
+            if (file_exists($fullPath) && is_readable($fullPath)) {
+                $name = $f['original_name'];
+                if (isset($usedNames[$name])) {
+                    $usedNames[$name]++;
+                    $pathInfo = pathinfo($name);
+                    $ext = !empty($pathInfo['extension']) ? '.' . $pathInfo['extension'] : '';
+                    $name = $pathInfo['filename'] . ' (' . $usedNames[$name] . ')' . $ext;
+                } else {
+                    $usedNames[$name] = 1;
+                }
+                $zip->addFile($fullPath, $name);
+            }
+        }
+
+        $zip->close();
+
+        if (!file_exists($tempZipPath)) {
+            http_response_code(500);
+            die('Berkas ZIP gagal dihasilkan.');
+        }
+
+        $zipFilename = 'CloudShare_Download_' . date('Ymd_His') . '.zip';
+
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+
+        header('Content-Type: application/zip');
+        header('Content-Disposition: attachment; filename="' . $zipFilename . '"');
+        header('Content-Length: ' . filesize($tempZipPath));
+        header('Cache-Control: private, no-transform');
+        header('X-Accel-Buffering: no');
+
+        ActivityLogService::log($userId, 'download', $zipFilename, "Unduh massal " . count($files) . " berkas sebagai arsip ZIP");
+
+        readfile($tempZipPath);
+        @unlink($tempZipPath);
+        exit;
+    }
+
     public function moveFile(): void
     {
         $this->validateCsrf();
