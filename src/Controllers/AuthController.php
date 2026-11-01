@@ -5,6 +5,7 @@ namespace App\Controllers;
 
 use App\Services\AuthService;
 use App\Services\CacheService;
+use App\Services\WebhookService;
 
 class AuthController
 {

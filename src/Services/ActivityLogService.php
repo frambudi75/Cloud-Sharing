@@ -258,60 +258,62 @@ class ActivityLogService
      */
     public static function getUserLogStats(int $userId): array
     {
-        try {
-            $db = Database::getConnection();
+        return CacheService::remember("user:log_stats:{$userId}", 60, function () use ($userId) {
+            try {
+                $db = Database::getConnection();
 
-            // Total aktivitas
-            $totalStmt = $db->prepare("SELECT COUNT(*) FROM activity_logs WHERE user_id = :uid");
-            $totalStmt->execute([':uid' => $userId]);
-            $total = (int) $totalStmt->fetchColumn();
+                // Total aktivitas
+                $totalStmt = $db->prepare("SELECT COUNT(*) FROM activity_logs WHERE user_id = :uid");
+                $totalStmt->execute([':uid' => $userId]);
+                $total = (int) $totalStmt->fetchColumn();
 
-            // Total unduhan hari ini (langsung + publik)
-            $dlStmt = $db->prepare("
-                SELECT COUNT(*) FROM activity_logs 
-                WHERE user_id = :uid 
-                  AND action IN ('download', 'public_download') 
-                  AND created_at >= CURDATE()
-            ");
-            $dlStmt->execute([':uid' => $userId]);
-            $downloadsToday = (int) $dlStmt->fetchColumn();
+                // Total unduhan hari ini (langsung + publik)
+                $dlStmt = $db->prepare("
+                    SELECT COUNT(*) FROM activity_logs 
+                    WHERE user_id = :uid 
+                      AND action IN ('download', 'public_download') 
+                      AND created_at >= CURDATE()
+                ");
+                $dlStmt->execute([':uid' => $userId]);
+                $downloadsToday = (int) $dlStmt->fetchColumn();
 
-            // Total unggahan hari ini
-            $upStmt = $db->prepare("
-                SELECT COUNT(*) FROM activity_logs 
-                WHERE user_id = :uid 
-                  AND action = 'upload' 
-                  AND created_at >= CURDATE()
-            ");
-            $upStmt->execute([':uid' => $userId]);
-            $uploadsToday = (int) $upStmt->fetchColumn();
+                // Total unggahan hari ini
+                $upStmt = $db->prepare("
+                    SELECT COUNT(*) FROM activity_logs 
+                    WHERE user_id = :uid 
+                      AND action = 'upload' 
+                      AND created_at >= CURDATE()
+                ");
+                $upStmt->execute([':uid' => $userId]);
+                $uploadsToday = (int) $upStmt->fetchColumn();
 
-            // Berkas paling sering diakses/diunduh
-            $topFileStmt = $db->prepare("
-                SELECT file_name, COUNT(*) as cnt 
-                FROM activity_logs 
-                WHERE user_id = :uid AND action IN ('download', 'public_download', 'upload')
-                GROUP BY file_name 
-                ORDER BY cnt DESC 
-                LIMIT 1
-            ");
-            $topFileStmt->execute([':uid' => $userId]);
-            $topFileRow = $topFileStmt->fetch(PDO::FETCH_ASSOC);
+                // Berkas paling sering diakses/diunduh
+                $topFileStmt = $db->prepare("
+                    SELECT file_name, COUNT(*) as cnt 
+                    FROM activity_logs 
+                    WHERE user_id = :uid AND action IN ('download', 'public_download', 'upload')
+                    GROUP BY file_name 
+                    ORDER BY cnt DESC 
+                    LIMIT 1
+                ");
+                $topFileStmt->execute([':uid' => $userId]);
+                $topFileRow = $topFileStmt->fetch(PDO::FETCH_ASSOC);
 
-            return [
-                'total_events'    => $total,
-                'downloads_today' => $downloadsToday,
-                'uploads_today'   => $uploadsToday,
-                'most_active_file'=> $topFileRow ? $topFileRow['file_name'] : '-'
-            ];
-        } catch (\Throwable $e) {
-            return [
-                'total_events'    => 0,
-                'downloads_today' => 0,
-                'uploads_today'   => 0,
-                'most_active_file'=> '-'
-            ];
-        }
+                return [
+                    'total_events'    => $total,
+                    'downloads_today' => $downloadsToday,
+                    'uploads_today'   => $uploadsToday,
+                    'most_active_file'=> $topFileRow ? $topFileRow['file_name'] : '-'
+                ];
+            } catch (\Throwable $e) {
+                return [
+                    'total_events'    => 0,
+                    'downloads_today' => 0,
+                    'uploads_today'   => 0,
+                    'most_active_file'=> '-'
+                ];
+            }
+        });
     }
 
     /**

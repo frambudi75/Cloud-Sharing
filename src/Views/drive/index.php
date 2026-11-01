@@ -2,6 +2,9 @@
 $pageTitle = ($activeTab === 'my_shares' ? 'Tautan Publik Saya' : ($activeTab === 'shared_with_me' ? 'Dibagikan ke Saya' : ($activeTab === 'recent' ? 'Terbaru' : 'Drive Saya'))) . ' - File Sharing Cloud';
 require_once dirname(__DIR__) . '/layouts/header.php';
 use App\Services\StorageService;
+use App\Services\ActivityLogService;
+use App\Services\AuthService;
+use App\Services\SettingService;
 
 $totalFiles = $totalFilesCount ?? count($files);
 $totalFolders = $totalFoldersCount ?? count($folders);

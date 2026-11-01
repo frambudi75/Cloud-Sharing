@@ -5,6 +5,7 @@ namespace App\Controllers;
 
 use App\Config\Database;
 use App\Services\ActivityLogService;
+use App\Services\CacheService;
 use App\Services\AuthService;
 use App\Services\DownloadService;
 use App\Services\ShareService;
@@ -13,6 +14,17 @@ use App\Services\WebhookService;
 
 class DriveController
 {
+    public static function invalidateUserDriveCache(int $userId): void
+    {
+        CacheService::delete("user:files_cnt:{$userId}");
+        CacheService::delete("user:folders_cnt:{$userId}");
+        CacheService::delete("user:shared_cnt:{$userId}");
+        CacheService::delete("user:trash_summary:{$userId}");
+        CacheService::delete("user:storage_breakdown:{$userId}");
+        CacheService::delete("user:log_stats:{$userId}");
+        CacheService::delete("users:share_list:{$userId}");
+    }
+
     public function __construct()
     {
         if (!AuthService::check()) {
@@ -37,7 +49,9 @@ class DriveController
         $quotaPercentage = $storageQuota > 0 ? min(100, round(($storageUsed / $storageQuota) * 100, 1)) : 0;
 
         // 2. Daftar user lain untuk modal direct share
-        $allOtherUsers = ShareService::getAllUsersExcept($userId);
+        $allOtherUsers = CacheService::remember("users:share_list:{$userId}", 120, function () use ($userId) {
+            return ShareService::getAllUsersExcept($userId);
+        });
 
         $folders = [];
         $files = [];
@@ -264,21 +278,33 @@ class DriveController
             $files = $filesStmt->fetchAll();
         }
 
-        // Summary Counts for Modern Dashboard Overview (Hanya yang aktif / bukan sampah)
-        $totalFilesCount = (int) $db->query("SELECT COUNT(*) FROM files WHERE user_id = {$userId} AND deleted_at IS NULL")->fetchColumn();
-        $totalFoldersCount = (int) $db->query("SELECT COUNT(*) FROM folders WHERE user_id = {$userId} AND deleted_at IS NULL")->fetchColumn();
-        $totalSharedCount = (int) $db->query("
-            SELECT (
-                (SELECT COUNT(*) FROM share_links WHERE user_id = {$userId} AND is_active = 1) +
-                (SELECT COUNT(*) FROM user_shares WHERE shared_by_user_id = {$userId} OR shared_with_user_id = {$userId})
-            )
-        ")->fetchColumn();
+        // Summary Counts for Modern Dashboard Overview (Cached in Redis for high-speed responsiveness)
+        $totalFilesCount = (int) CacheService::remember("user:files_cnt:{$userId}", 60, function () use ($db, $userId) {
+            return (int) $db->query("SELECT COUNT(*) FROM files WHERE user_id = {$userId} AND deleted_at IS NULL")->fetchColumn();
+        });
 
-        $trashSummaryStmt = $db->prepare("SELECT COUNT(*) as cnt, COALESCE(SUM(file_size), 0) as total_bytes FROM files WHERE user_id = :user_id AND deleted_at IS NOT NULL");
-        $trashSummaryStmt->execute([':user_id' => $userId]);
-        $trashSummary = $trashSummaryStmt->fetch() ?: ['cnt' => 0, 'total_bytes' => 0];
+        $totalFoldersCount = (int) CacheService::remember("user:folders_cnt:{$userId}", 60, function () use ($db, $userId) {
+            return (int) $db->query("SELECT COUNT(*) FROM folders WHERE user_id = {$userId} AND deleted_at IS NULL")->fetchColumn();
+        });
 
-        $storageBreakdown = StorageService::getStorageCategoryBreakdown($userId);
+        $totalSharedCount = (int) CacheService::remember("user:shared_cnt:{$userId}", 60, function () use ($db, $userId) {
+            return (int) $db->query("
+                SELECT (
+                    (SELECT COUNT(*) FROM share_links WHERE user_id = {$userId} AND is_active = 1) +
+                    (SELECT COUNT(*) FROM user_shares WHERE shared_by_user_id = {$userId} OR shared_with_user_id = {$userId})
+                )
+            ")->fetchColumn();
+        });
+
+        $trashSummary = CacheService::remember("user:trash_summary:{$userId}", 60, function () use ($db, $userId) {
+            $trashSummaryStmt = $db->prepare("SELECT COUNT(*) as cnt, COALESCE(SUM(file_size), 0) as total_bytes FROM files WHERE user_id = :user_id AND deleted_at IS NOT NULL");
+            $trashSummaryStmt->execute([':user_id' => $userId]);
+            return $trashSummaryStmt->fetch() ?: ['cnt' => 0, 'total_bytes' => 0];
+        });
+
+        $storageBreakdown = CacheService::remember("user:storage_breakdown:{$userId}", 120, function () use ($userId) {
+            return StorageService::getStorageCategoryBreakdown($userId);
+        });
         $csrfToken = AuthService::csrfToken();
 
         require_once dirname(__DIR__) . '/Views/drive/index.php';

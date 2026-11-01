@@ -5,6 +5,7 @@ namespace App\Config;
 
 use PDO;
 use PDOException;
+use App\Services\CacheService;
 
 class Database
 {
@@ -57,9 +58,17 @@ class Database
                 }
             }
 
-            // Lakukan verifikasi skema tabel otomatis jika belum diverifikasi
+            // Lakukan verifikasi skema tabel otomatis jika belum diverifikasi (cache via Redis)
             if (!self::$schemaVerified) {
-                self::ensureSchema();
+                if (class_exists(\App\Services\CacheService::class) && \App\Services\CacheService::isAvailable() && \App\Services\CacheService::get('schema_verified')) {
+                    self::$schemaVerified = true;
+                } else {
+                    self::ensureSchema();
+                    if (class_exists(\App\Services\CacheService::class) && \App\Services\CacheService::isAvailable()) {
+                        \App\Services\CacheService::set('schema_verified', true, 86400);
+                    }
+                    self::$schemaVerified = true;
+                }
             }
         }
 

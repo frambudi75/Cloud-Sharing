@@ -6,6 +6,7 @@ namespace App\Controllers;
 use App\Config\Database;
 use App\Services\AuthService;
 use App\Services\StorageService;
+use App\Services\SettingService;
 
 class UserController
 {
