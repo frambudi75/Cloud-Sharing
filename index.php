@@ -16,8 +16,23 @@ use App\Services\SettingService;
 // Cek koneksi Database sebelum routing
 $dbCheck = Database::checkConnection();
 if (!$dbCheck['status']) {
+    // Jika pengguna meminta inisialisasi / perbaikan skema database
+    if (isset($_GET['action']) && $_GET['action'] === 'repair_db') {
+        try {
+            $repairResult = Database::repairSchema();
+            if (!empty($repairResult['success'])) {
+                header('Location: index.php?action=login&installed=1');
+                exit;
+            }
+            $dbError = $repairResult['error'] ?? 'Gagal menginisialisasi skema database.';
+        } catch (\Throwable $e) {
+            $dbError = $e->getMessage();
+        }
+    } else {
+        $dbError = $dbCheck['message'];
+    }
+
     // Tampilkan panduan persiapan database yang ramah pengguna
-    $dbError = $dbCheck['message'];
     require_once __DIR__ . '/src/Views/system/db_setup.php';
     exit;
 }
