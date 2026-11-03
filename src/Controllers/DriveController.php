@@ -541,16 +541,6 @@ class DriveController
         }
     }
 
-            $result['completed'] = true;
-            $this->respondJson($result);
-        } catch (\Throwable $e) {
-            $this->respondJson([
-                'success' => false,
-                'error' => 'Gagal memproses potongan berkas: ' . $e->getMessage()
-            ]);
-        }
-    }
-
     public function deleteFile(): void
     {
         $this->validateCsrf();
