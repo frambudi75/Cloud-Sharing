@@ -134,7 +134,7 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                          class="h-10 w-10 rounded-xl shadow-sm shadow-brand-500/20 group-hover:scale-105 transition-all duration-200">
                     <div>
                         <span class="font-extrabold text-slate-900 text-lg tracking-tight block leading-tight">Cloud Sharing</span>
-                        <span class="text-[10px] text-slate-400 font-medium">PHP 8.4 • Redis Powered</span>
+                        <span class="text-[10px] text-slate-400 font-medium">PHP <?= PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION ?> • Redis Powered</span>
                     </div>
                 </a>
             </div>

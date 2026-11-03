@@ -1,6 +1,6 @@
 # Cloud Sharing
 
-Sistem File Sharing berbasis web modern, ringan, dan cepat, dibangun menggunakan **PHP Native (PHP 8.4+)**, **Tailwind CSS**, **MariaDB/MySQL**, dan **Redis Cache**.
+Sistem File Sharing berbasis web modern, ringan, dan cepat, dibangun menggunakan **PHP Native (PHP 8.5+)**, **Tailwind CSS**, **MariaDB/MySQL**, dan **Redis Cache**.
 
 Didesain dual-compatible: dapat langsung dijalankan di lingkungan lokal **XAMPP Windows** maupun dideploy melalui **Docker di Linux**.
 
@@ -72,7 +72,7 @@ Didesain dual-compatible: dapat langsung dijalankan di lingkungan lokal **XAMPP 
 
 ```
 file-sharing/
-├── docker/                  # Konfigurasi container Nginx, PHP 8.4-FPM, MariaDB
+├── docker/                  # Konfigurasi container Nginx, PHP 8.5-FPM, MariaDB
 ├── docs/                    # Dokumentasi lengkap: PRD, Architecture, Schema, Rules
 ├── public/                  # Document root web server
 │   └── assets/              # Script JavaScript & CSS
@@ -83,5 +83,5 @@ file-sharing/
 │   └── Views/               # Antarmuka Tailwind CSS
 ├── storage/                 # Private file uploads (di luar document root)
 ├── database.sql             # Skema DDL dan seed data
-└── docker-compose.yml       # Stack Nginx, PHP 8.4, Redis, MariaDB
+└── docker-compose.yml       # Stack Nginx, PHP 8.5, Redis, MariaDB
 ```

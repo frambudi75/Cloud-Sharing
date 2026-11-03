@@ -61,7 +61,7 @@ file-sharing/
 │   ├── nginx/
 │   │   └── default.conf         # Konfigurasi Nginx & X-Accel-Redirect
 │   ├── php/
-│   │   ├── Dockerfile           # PHP 8.4 / 8.5 Alpine + pdo_mysql, redis, gd, zip
+│   │   ├── Dockerfile           # PHP 8.5 Alpine + pdo_mysql, redis, gd, zip, JIT compiler
 │   │   └── php.ini
 │   └── mariadb/
 │       └── init.sql             # Auto-bootstrap DDL & Seeding

@@ -86,7 +86,7 @@ Sistem ini mengadopsi **Model Hybrid (Model C)**:
 | **OS Host** | Linux (Ubuntu/Debian/Arch/CentOS/Rocky) |
 | **Containerization** | Docker Engine & Docker Compose |
 | **Web Server** | **Nginx** (Alpine Linux) sebagai Reverse Proxy & Static/X-Accel Server |
-| **Backend Runtime** | **PHP 8.4+ FPM** (Native, clean modular MVC/service-based architecture, tanpa framework berat) |
+| **Backend Runtime** | **PHP 8.5+ FPM** (Native, clean modular MVC/service-based architecture, tanpa framework berat) |
 | **Database** | **MariaDB 10.11+ / MySQL 8.0+** (Persistent Volume di Docker) |
 | **Frontend** | **Tailwind CSS** + Modern Vanilla JavaScript (Fetch API, Drag & Drop API, ES Modules) |
 | **Background Jobs** | Docker Cron Container untuk auto-purge berkas kedaluwarsa |
