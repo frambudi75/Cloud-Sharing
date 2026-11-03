@@ -158,7 +158,7 @@ class DriveController
             $breadcrumbs = [['id' => null, 'name' => 'Log Aktivitas & Riwayat Unduhan']];
             $filterAction = trim($_GET['action_type'] ?? 'all');
             $logPage = max(1, (int) ($_GET['log_page'] ?? 1));
-            $logLimit = 50;
+            $logLimit = max(10, min(100, (int) ($_GET['log_limit'] ?? 50)));
             $logOffset = ($logPage - 1) * $logLimit;
 
             $activityLogs = ActivityLogService::getUserLogs($userId, $logLimit, $logOffset, $filterAction, $search);

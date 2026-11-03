@@ -1,5 +1,5 @@
 // Service Worker for Cloud Sharing PWA
-const CACHE_NAME = 'cloudsharing-v1.5.2';
+const CACHE_NAME = 'cloudsharing-v1.5.3';
 const STATIC_ASSETS = [
     'assets/img/favicon.svg',
     'manifest.json'

@@ -1098,7 +1098,7 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                                 ];
                                 ?>
                                 <?php foreach ($chips as $key => $title): ?>
-                                    <a href="?action=drive&tab=activity_logs&action_type=<?= $key ?><?= !empty($search) ? '&search=' . urlencode($search) : '' ?>"
+                                    <a href="?action=drive&tab=activity_logs&action_type=<?= $key ?>&log_limit=<?= (int) $logLimit ?><?= !empty($search) ? '&search=' . urlencode($search) : '' ?>"
                                        class="px-3 py-1.5 rounded-xl font-bold transition-all shrink-0 <?= $filterAction === $key ? 'bg-brand-600 text-white shadow-xs' : 'bg-slate-100 hover:bg-slate-200 text-slate-600' ?>">
                                         <?= $title ?>
                                     </a>
@@ -1110,6 +1110,7 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                                     <input type="hidden" name="action" value="drive">
                                     <input type="hidden" name="tab" value="activity_logs">
                                     <input type="hidden" name="action_type" value="<?= htmlspecialchars($filterAction) ?>">
+                                    <input type="hidden" name="log_limit" value="<?= (int) $logLimit ?>">
                                     <div class="relative w-full md:w-56">
                                         <input type="text" name="search" value="<?= htmlspecialchars($search ?? '') ?>" placeholder="Cari berkas / IP..." 
                                                class="w-full h-8 pl-8 pr-3 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:outline-none focus:ring-1 focus:ring-brand-500">
@@ -1120,7 +1121,7 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                                     </button>
                                 </form>
                                 <?php if (!empty($search) || $filterAction !== 'all'): ?>
-                                    <a href="?action=drive&tab=activity_logs" class="h-8 px-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold inline-flex items-center transition-colors" title="Reset Filter">
+                                    <a href="?action=drive&tab=activity_logs&log_limit=<?= (int) $logLimit ?>" class="h-8 px-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold inline-flex items-center transition-colors" title="Reset Filter">
                                         Reset
                                     </a>
                                 <?php endif; ?>
@@ -1137,7 +1138,7 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                                     </span>
                                 </div>
                                 <div class="text-[11px] text-slate-400">
-                                    Menampilkan 50 entri per halaman
+                                    Menampilkan <?= (int) $logLimit ?> entri per halaman
                                 </div>
                             </div>
 
@@ -1209,29 +1210,101 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                                     </table>
                                 </div>
 
-                                <!-- Pagination (if needed) -->
-                                <?php $totalPages = ceil($activityTotal / $logLimit); ?>
-                                <?php if ($totalPages > 1): ?>
-                                    <div class="p-3 bg-slate-50/60 border-t border-slate-100 flex items-center justify-between text-xs">
+                                <!-- Pagination Container -->
+                                <?php 
+                                $totalPages = (int) ceil($activityTotal / $logLimit); 
+                                $startItem = $activityTotal > 0 ? ($logPage - 1) * $logLimit + 1 : 0;
+                                $endItem = min($logPage * $logLimit, $activityTotal);
+                                
+                                $buildPageUrl = function(int $p) use ($filterAction, $search, $logLimit): string {
+                                    $url = "?action=drive&tab=activity_logs&log_page={$p}&log_limit={$logLimit}";
+                                    if ($filterAction !== 'all') {
+                                        $url .= "&action_type=" . urlencode($filterAction);
+                                    }
+                                    if (!empty($search)) {
+                                        $url .= "&search=" . urlencode($search);
+                                    }
+                                    return $url;
+                                };
+                                ?>
+                                <div class="p-3.5 bg-slate-50/70 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                                    <div class="flex items-center gap-3">
                                         <div class="text-slate-500 text-[11px]">
-                                            Halaman <b><?= $logPage ?></b> dari <b><?= $totalPages ?></b>
+                                            Menampilkan <strong class="text-slate-800"><?= $startItem ?></strong> &ndash; <strong class="text-slate-800"><?= $endItem ?></strong> dari <strong class="text-slate-800"><?= number_format($activityTotal) ?></strong> aktivitas
                                         </div>
-                                        <div class="flex items-center space-x-1.5">
-                                            <?php if ($logPage > 1): ?>
-                                                <a href="?action=drive&tab=activity_logs&log_page=<?= $logPage - 1 ?>&action_type=<?= htmlspecialchars($filterAction) ?><?= !empty($search) ? '&search=' . urlencode($search) : '' ?>"
-                                                   class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 font-semibold transition-colors">
-                                                    &larr; Sebelumnya
+                                        <div class="hidden sm:flex items-center space-x-1 text-[11px] text-slate-400">
+                                            <span>Baris:</span>
+                                            <?php foreach ([25, 50, 100] as $lim): ?>
+                                                <a href="<?= "?action=drive&tab=activity_logs&log_page=1&log_limit={$lim}" . ($filterAction !== 'all' ? '&action_type=' . urlencode($filterAction) : '') . (!empty($search) ? '&search=' . urlencode($search) : '') ?>"
+                                                   class="px-1.5 py-0.5 rounded font-mono font-bold transition-colors <?= $logLimit === $lim ? 'bg-slate-200 text-slate-800' : 'text-slate-500 hover:text-slate-800' ?>">
+                                                    <?= $lim ?>
                                                 </a>
-                                            <?php endif; ?>
-                                            <?php if ($logPage < $totalPages): ?>
-                                                <a href="?action=drive&tab=activity_logs&log_page=<?= $logPage + 1 ?>&action_type=<?= htmlspecialchars($filterAction) ?><?= !empty($search) ? '&search=' . urlencode($search) : '' ?>"
-                                                   class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 font-semibold transition-colors">
-                                                    Selanjutnya &rarr;
-                                                </a>
-                                            <?php endif; ?>
+                                            <?php endforeach; ?>
                                         </div>
                                     </div>
-                                <?php endif; ?>
+
+                                    <?php if ($totalPages > 1): ?>
+                                        <div class="flex items-center space-x-1">
+                                            <!-- Tombol Sebelumnya -->
+                                            <?php if ($logPage > 1): ?>
+                                                <a href="<?= $buildPageUrl($logPage - 1) ?>"
+                                                   class="h-7 px-2.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 font-semibold flex items-center transition-colors text-[11px]"
+                                                   title="Halaman Sebelumnya">
+                                                    &larr; Prev
+                                                </a>
+                                            <?php else: ?>
+                                                <span class="h-7 px-2.5 rounded-lg bg-slate-100 border border-slate-200/50 text-slate-400 font-semibold flex items-center text-[11px] cursor-not-allowed">
+                                                    &larr; Prev
+                                                </span>
+                                            <?php endif; ?>
+
+                                            <!-- Nomor Halaman -->
+                                            <?php
+                                            $window = 2;
+                                            $pagesToShow = [];
+                                            for ($i = 1; $i <= $totalPages; $i++) {
+                                                if ($i == 1 || $i == $totalPages || ($i >= $logPage - $window && $i <= $logPage + $window)) {
+                                                    $pagesToShow[] = $i;
+                                                }
+                                            }
+                                            $prevP = 0;
+                                            foreach ($pagesToShow as $p):
+                                                if ($prevP > 0 && $p - $prevP > 1):
+                                            ?>
+                                                    <span class="px-1 text-slate-400 text-xs font-mono">...</span>
+                                            <?php 
+                                                endif;
+                                                if ($p === $logPage):
+                                            ?>
+                                                    <span class="h-7 w-7 rounded-lg bg-brand-600 text-white font-bold flex items-center justify-center text-[11px] shadow-xs">
+                                                        <?= $p ?>
+                                                    </span>
+                                            <?php else: ?>
+                                                    <a href="<?= $buildPageUrl($p) ?>"
+                                                       class="h-7 w-7 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 font-semibold flex items-center justify-center transition-colors text-[11px]">
+                                                        <?= $p ?>
+                                                    </a>
+                                            <?php 
+                                                endif;
+                                                $prevP = $p;
+                                            endforeach; 
+                                            ?>
+
+                                            <!-- Tombol Selanjutnya -->
+                                            <?php if ($logPage < $totalPages): ?>
+                                                <a href="<?= $buildPageUrl($logPage + 1) ?>"
+                                                   class="h-7 px-2.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 font-semibold flex items-center transition-colors text-[11px]"
+                                                   title="Halaman Selanjutnya">
+                                                    Next &rarr;
+                                                </a>
+                                            <?php else: ?>
+                                                <span class="h-7 px-2.5 rounded-lg bg-slate-100 border border-slate-200/50 text-slate-400 font-semibold flex items-center text-[11px] cursor-not-allowed">
+                                                    Next &rarr;
+                                                </span>
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
                             <?php endif; ?>
                         </div>
                     </div>

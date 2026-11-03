@@ -68,9 +68,15 @@ class ServerController
             'maintenance_message'   => (string) SettingService::get('maintenance_message', 'Sistem Cloud Sharing sedang dalam proses pemeliharaan rutin. Silakan coba kembali dalam beberapa saat.'),
         ];
 
-        // Global Activity Logs (Latest 20)
-        $globalActivityLogs = ActivityLogService::getGlobalLogs(20, 0);
-        $globalActivityTotal = ActivityLogService::countGlobalLogs();
+        // Global Activity Logs (Paginated)
+        $globalLogPage = max(1, (int) ($_GET['global_page'] ?? 1));
+        $globalLogLimit = max(10, min(100, (int) ($_GET['global_limit'] ?? 20)));
+        $globalLogFilter = trim($_GET['global_action'] ?? 'all');
+        $globalLogSearch = trim($_GET['global_search'] ?? '');
+        $globalLogOffset = ($globalLogPage - 1) * $globalLogLimit;
+
+        $globalActivityLogs = ActivityLogService::getGlobalLogs($globalLogLimit, $globalLogOffset, $globalLogFilter, $globalLogSearch);
+        $globalActivityTotal = ActivityLogService::countGlobalLogs($globalLogFilter, $globalLogSearch);
 
         // Metrics package
         $metrics = [
@@ -285,7 +291,7 @@ class ServerController
         $filterAction = trim($_GET['action_type'] ?? 'all');
         $search = trim($_GET['search'] ?? '');
         $page = max(1, (int) ($_GET['page'] ?? 1));
-        $limit = 20;
+        $limit = max(5, min(100, (int) ($_GET['limit'] ?? 20)));
         $offset = ($page - 1) * $limit;
 
         $logs = ActivityLogService::getGlobalLogs($limit, $offset, $filterAction, $search);
@@ -315,6 +321,7 @@ class ServerController
             'logs'    => $formatted,
             'total'   => $total,
             'page'    => $page,
+            'limit'   => $limit,
             'pages'   => ceil($total / $limit)
         ]);
     }

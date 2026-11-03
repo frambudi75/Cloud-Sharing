@@ -2,6 +2,21 @@
 
 Semua perubahan pada spesifikasi dan implementasi proyek file-sharing akan dicatat di dokumen ini.
 
+## [v1.5.3] - 2026-11-03
+### Ditambahkan & Ditingkatkan
+- **Sistem Pagination Interaktif pada Seluruh Log Aktivitas (Audit Trail)**:
+  - **Log Aktivitas Pengguna (`Drive -> Log Aktivitas`)**:
+    - Penambahan navigasi halaman bernomor cerdas (pills 1, 2, 3 ... N dengan ellipsis), tombol *Prev* dan *Next* aktif/nonaktif.
+    - Penampil ringkasan data (*range indicator*): `Menampilkan X - Y dari Z aktivitas`.
+    - Pilihan jumlah baris per halaman dinamis (`25`, `50`, `100` entri per halaman via `log_limit`).
+    - Mempertahankan filter kategori tindakan (`action_type`) dan kata kunci pencarian (`search`) di setiap navigasi halaman.
+  - **Audit Trail Global Seluruh Pengguna (`Pengaturan Server -> Section 6`)**:
+    - Penambahan dropdown filter tindakan instan (*Semua, Unggah, Unduh Langsung, Unduh Publik, Berbagi, Hapus, Pulihkan, Login*).
+    - Penambahan pagination dinamis AJAX tanpa reload halaman lengkap dengan tombol halaman, tombol Prev/Next, dan pilihan baris (`10`, `20`, `50`).
+    - Penyesuaian endpoint `get_global_logs` dengan dukungan parameter `page`, `limit`, dan `action_type`.
+  - **Audit Pagination Menyeluruh Sistem**:
+    - Evaluasi seluruh modul tabel: Tab Drive Saya, Keranjang Sampah, dan Tautan Publik tetap menggunakan live client-side filtering untuk menjaga kelancaran seleksi massal (*bulk action*) dan operasi *drag-and-drop*.
+
 ## [v1.5.2] - 2026-11-03
 ### Diperbaiki
 - **Perbaikan Kosongkan Sampah (*Empty Trash*)**:

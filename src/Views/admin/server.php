@@ -712,7 +712,7 @@ $maintenanceActive = $globalSettings['maintenance_mode'] ?? false;
                     <div>
                         <div class="flex items-center gap-2">
                             <h2 class="text-base font-bold text-slate-900 dark:text-white">Audit Trail Global Seluruh Pengguna</h2>
-                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-mono">
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-mono" id="globalLogsCountBadge">
                                 <?= number_format($globalActivityTotal) ?> Catatan
                             </span>
                         </div>
@@ -720,9 +720,24 @@ $maintenanceActive = $globalSettings['maintenance_mode'] ?? false;
                     </div>
                 </div>
 
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                    <!-- Action Filter -->
+                    <select id="globalActionFilter" onchange="loadGlobalLogs(1)" 
+                            class="h-10 px-3 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-brand-500">
+                        <option value="all">Semua Tindakan</option>
+                        <option value="upload">Unggah Berkas</option>
+                        <option value="download">Unduh Langsung</option>
+                        <option value="public_download">Unduh Publik</option>
+                        <option value="share_public">Tautan Publik</option>
+                        <option value="share_user">Berbagi Teman</option>
+                        <option value="edit_text">Edit Teks</option>
+                        <option value="delete">Hapus / Sampah</option>
+                        <option value="restore">Pulihkan</option>
+                        <option value="login">Login / Masuk</option>
+                    </select>
+
                     <input type="text" id="globalSearchInput" placeholder="Cari nama / user / IP..." onkeyup="if(event.key==='Enter') loadGlobalLogs(1)"
-                           class="h-10 px-3 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:bg-white focus:outline-none focus:ring-1 focus:ring-brand-500 flex-1 sm:w-48">
+                           class="h-10 px-3 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-brand-500 flex-1 sm:w-44">
                     <button type="button" onclick="loadGlobalLogs(1)" class="h-10 px-3.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-all shrink-0">
                         Cari
                     </button>
@@ -801,6 +816,55 @@ $maintenanceActive = $globalSettings['maintenance_mode'] ?? false;
                         <?php endif; ?>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Global Logs Pagination Container -->
+            <?php
+            $initialPages = (int) ceil($globalActivityTotal / $globalLogLimit);
+            $initialStart = $globalActivityTotal > 0 ? ($globalLogPage - 1) * $globalLogLimit + 1 : 0;
+            $initialEnd = min($globalLogPage * $globalLogLimit, $globalActivityTotal);
+            ?>
+            <div id="globalLogsPagination" class="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                <div class="flex items-center gap-3">
+                    <div class="text-slate-500 dark:text-slate-400 text-[11px]" id="globalLogsRangeText">
+                        Menampilkan <strong class="text-slate-800 dark:text-slate-200"><?= $initialStart ?></strong> &ndash; <strong class="text-slate-800 dark:text-slate-200"><?= $initialEnd ?></strong> dari <strong class="text-slate-800 dark:text-slate-200"><?= number_format($globalActivityTotal) ?></strong> catatan
+                    </div>
+                    <div class="hidden sm:flex items-center space-x-1 text-[11px] text-slate-400">
+                        <span>Baris:</span>
+                        <?php foreach ([10, 20, 50] as $lim): ?>
+                            <button type="button" onclick="setGlobalLimit(<?= $lim ?>)"
+                                    class="px-1.5 py-0.5 rounded font-mono font-bold transition-colors <?= $globalLogLimit === $lim ? 'bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-white' : 'text-slate-500 hover:text-slate-800 dark:hover:text-white' ?>">
+                                <?= $lim ?>
+                            </button>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-1" id="globalLogsPageButtons">
+                    <?php if ($initialPages > 1): ?>
+                        <span class="h-7 px-2.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200/50 dark:border-slate-700 text-slate-400 font-semibold flex items-center text-[11px] cursor-not-allowed">
+                            &larr; Prev
+                        </span>
+                        <?php for ($i = 1; $i <= min($initialPages, 5); $i++): ?>
+                            <button type="button" onclick="loadGlobalLogs(<?= $i ?>)"
+                                    class="h-7 w-7 rounded-lg <?= $i === 1 ? 'bg-brand-600 text-white font-bold' : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700' ?> flex items-center justify-center transition-colors text-[11px]">
+                                <?= $i ?>
+                            </button>
+                        <?php endfor; ?>
+                        <?php if ($initialPages > 5): ?>
+                            <span class="px-1 text-slate-400 text-xs font-mono">...</span>
+                            <button type="button" onclick="loadGlobalLogs(<?= $initialPages ?>)"
+                                    class="h-7 w-7 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center transition-colors text-[11px]">
+                                <?= $initialPages ?>
+                            </button>
+                        <?php endif; ?>
+                        <button type="button" onclick="loadGlobalLogs(2)"
+                                class="h-7 px-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 font-semibold flex items-center transition-colors text-[11px]"
+                                title="Halaman Selanjutnya">
+                            Next &rarr;
+                        </button>
+                    <?php endif; ?>
+                </div>
             </div>
         </div>
 
@@ -1131,59 +1195,139 @@ async function testWebhook() {
     }
 }
 
-// 7. Global Logs Fetcher
+// 7. Global Logs Fetcher with Pagination & Action Filter
+let currentGlobalPage = 1;
+let currentGlobalLimit = <?= (int) $globalLogLimit ?>;
+
+function setGlobalLimit(newLimit) {
+    currentGlobalLimit = newLimit;
+    loadGlobalLogs(1);
+}
+
 async function loadGlobalLogs(page = 1) {
+    currentGlobalPage = page;
     const search = document.getElementById('globalSearchInput').value.trim();
+    const actionFilterEl = document.getElementById('globalActionFilter');
+    const actionType = actionFilterEl ? actionFilterEl.value : 'all';
     const tbody = document.getElementById('globalLogsTableBody');
     tbody.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-slate-400">Memuat data log...</td></tr>';
 
     try {
-        const res = await fetch(`?action=get_global_logs&page=${page}&search=${encodeURIComponent(search)}`);
+        const url = `?action=get_global_logs&page=${page}&limit=${currentGlobalLimit}&action_type=${encodeURIComponent(actionType)}&search=${encodeURIComponent(search)}`;
+        const res = await fetch(url);
         const json = await res.json();
-        if (json.success && json.logs.length > 0) {
-            tbody.innerHTML = json.logs.map(log => `
-                <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
-                    <td class="py-3 px-4 whitespace-nowrap">
-                        <div class="flex items-center space-x-2">
-                            <span class="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-bold flex items-center justify-center text-xs">
-                                ${escapeHtml(log.username.charAt(0).toUpperCase())}
-                            </span>
-                            <div>
-                                <span class="font-bold text-slate-900 dark:text-white block">${escapeHtml(log.username)}</span>
-                                <span class="text-[10px] text-slate-400 uppercase font-mono">${escapeHtml(log.role)}</span>
+        if (json.success) {
+            // Update counter badge
+            const countBadge = document.getElementById('globalLogsCountBadge');
+            if (countBadge) {
+                countBadge.innerText = Number(json.total).toLocaleString('id-ID') + ' Catatan';
+            }
+
+            if (json.logs.length > 0) {
+                tbody.innerHTML = json.logs.map(log => `
+                    <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                        <td class="py-3 px-4 whitespace-nowrap">
+                            <div class="flex items-center space-x-2">
+                                <span class="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-bold flex items-center justify-center text-xs">
+                                    ${escapeHtml(log.username.charAt(0).toUpperCase())}
+                                </span>
+                                <div>
+                                    <span class="font-bold text-slate-900 dark:text-white block">${escapeHtml(log.username)}</span>
+                                    <span class="text-[10px] text-slate-400 uppercase font-mono">${escapeHtml(log.role)}</span>
+                                </div>
                             </div>
-                        </div>
-                    </td>
-                    <td class="py-3 px-4 whitespace-nowrap">
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold ${log.badge.color}">
-                            <span class="w-1.5 h-1.5 rounded-full mr-1.5 ${log.badge.dot}"></span>
-                            ${escapeHtml(log.badge.label)}
-                        </span>
-                    </td>
-                    <td class="py-3 px-4">
-                        <div class="font-bold text-slate-800 dark:text-slate-200 max-w-xs truncate">
-                            ${escapeHtml(log.file_name)}
-                        </div>
-                        ${log.details ? `<div class="text-[11px] text-slate-400 mt-0.5 max-w-sm truncate">${escapeHtml(log.details)}</div>` : ''}
-                    </td>
-                    <td class="py-3 px-4 whitespace-nowrap">
-                        <span class="font-mono text-[11px] font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
-                            ${escapeHtml(log.ip_address)}
-                        </span>
-                        <div class="text-[10px] text-slate-400 mt-0.5">${escapeHtml(log.device)}</div>
-                    </td>
-                    <td class="py-3 px-4 text-right whitespace-nowrap">
-                        <div class="font-semibold text-slate-800 dark:text-slate-200">${escapeHtml(log.time_ago)}</div>
-                        <div class="text-[10px] font-mono text-slate-400 mt-0.5">${escapeHtml(log.created_at)}</div>
-                    </td>
-                </tr>
-            `).join('');
+                        </td>
+                        <td class="py-3 px-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold ${log.badge.color}">
+                                <span class="w-1.5 h-1.5 rounded-full mr-1.5 ${log.badge.dot}"></span>
+                                ${escapeHtml(log.badge.label)}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4">
+                            <div class="font-bold text-slate-800 dark:text-slate-200 max-w-xs truncate">
+                                ${escapeHtml(log.file_name)}
+                            </div>
+                            ${log.details ? `<div class="text-[11px] text-slate-400 mt-0.5 max-w-sm truncate">${escapeHtml(log.details)}</div>` : ''}
+                        </td>
+                        <td class="py-3 px-4 whitespace-nowrap">
+                            <span class="font-mono text-[11px] font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
+                                ${escapeHtml(log.ip_address)}
+                            </span>
+                            <div class="text-[10px] text-slate-400 mt-0.5">${escapeHtml(log.device)}</div>
+                        </td>
+                        <td class="py-3 px-4 text-right whitespace-nowrap">
+                            <div class="font-semibold text-slate-800 dark:text-slate-200">${escapeHtml(log.time_ago)}</div>
+                            <div class="text-[10px] font-mono text-slate-400 mt-0.5">${escapeHtml(log.created_at)}</div>
+                        </td>
+                    </tr>
+                `).join('');
+            } else {
+                tbody.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-slate-400">Tidak ada log yang sesuai dengan filter / pencarian.</td></tr>';
+            }
+
+            renderGlobalLogsPagination(json.total, json.page, json.limit, json.pages);
         } else {
-            tbody.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-slate-400">Tidak ada log yang sesuai dengan pencarian.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-rose-500">Gagal memuat log aktivitas.</td></tr>';
         }
     } catch (e) {
-        tbody.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-rose-500">Gagal memuat log aktivitas.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-rose-500">Gagal memuat log aktivitas: ' + escapeHtml(e.message) + '</td></tr>';
     }
+}
+
+function renderGlobalLogsPagination(total, page, limit, totalPages) {
+    const rangeText = document.getElementById('globalLogsRangeText');
+    const pageButtons = document.getElementById('globalLogsPageButtons');
+    if (!rangeText || !pageButtons) return;
+
+    const startItem = total > 0 ? (page - 1) * limit + 1 : 0;
+    const endItem = Math.min(page * limit, total);
+
+    rangeText.innerHTML = `Menampilkan <strong class="text-slate-800 dark:text-slate-200">${startItem}</strong> &ndash; <strong class="text-slate-800 dark:text-slate-200">${endItem}</strong> dari <strong class="text-slate-800 dark:text-slate-200">${Number(total).toLocaleString('id-ID')}</strong> catatan`;
+
+    if (totalPages <= 1) {
+        pageButtons.innerHTML = '';
+        return;
+    }
+
+    let html = '';
+
+    // Prev Button
+    if (page > 1) {
+        html += `<button type="button" onclick="loadGlobalLogs(${page - 1})" class="h-7 px-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 font-semibold flex items-center transition-colors text-[11px]" title="Sebelumnya">&larr; Prev</button>`;
+    } else {
+        html += `<span class="h-7 px-2.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200/50 dark:border-slate-700 text-slate-400 font-semibold flex items-center text-[11px] cursor-not-allowed">&larr; Prev</span>`;
+    }
+
+    // Number pills
+    const windowSize = 2;
+    const pagesToShow = [];
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= page - windowSize && i <= page + windowSize)) {
+            pagesToShow.push(i);
+        }
+    }
+
+    let prevPageNum = 0;
+    for (const p of pagesToShow) {
+        if (prevPageNum > 0 && p - prevPageNum > 1) {
+            html += `<span class="px-1 text-slate-400 text-xs font-mono">...</span>`;
+        }
+        if (p === page) {
+            html += `<span class="h-7 w-7 rounded-lg bg-brand-600 text-white font-bold flex items-center justify-center text-[11px] shadow-xs">${p}</span>`;
+        } else {
+            html += `<button type="button" onclick="loadGlobalLogs(${p})" class="h-7 w-7 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 font-semibold flex items-center justify-center transition-colors text-[11px]">${p}</button>`;
+        }
+        prevPageNum = p;
+    }
+
+    // Next Button
+    if (page < totalPages) {
+        html += `<button type="button" onclick="loadGlobalLogs(${page + 1})" class="h-7 px-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 font-semibold flex items-center transition-colors text-[11px]" title="Selanjutnya">Next &rarr;</button>`;
+    } else {
+        html += `<span class="h-7 px-2.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200/50 dark:border-slate-700 text-slate-400 font-semibold flex items-center text-[11px] cursor-not-allowed">Next &rarr;</span>`;
+    }
+
+    pageButtons.innerHTML = html;
 }
 
 function escapeHtml(str) {
