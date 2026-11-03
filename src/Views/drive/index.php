@@ -254,7 +254,7 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
     </header>
 
     <!-- Main Application Body: Sidebar + Main Content (2-Column Modern Shell) -->
-    <div id="driveContainer" class="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 lg:pb-8">
+    <div id="driveContainer" class="flex-1 max-w-[1440px] w-full mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6 pb-28 lg:pb-8">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
             <!-- ============================================================= -->
@@ -428,14 +428,14 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                     </div>
                 </nav>
 
-                <!-- Storage Metric Card in Sidebar (Clickable -> Opens Storage Cleaner) -->
-                <a href="?action=drive&tab=storage_analyzer" class="block p-3.5 bg-white hover:border-brand-300 rounded-2xl border border-slate-200/80 shadow-xs transition-all group">
-                    <div class="flex items-center justify-between text-xs font-bold text-slate-800 mb-1.5">
-                        <span class="flex items-center text-[11px] group-hover:text-brand-600 transition-colors">
-                            <svg class="w-3.5 h-3.5 mr-1.5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2 1.5 3 3.5 3h9c2 0 3.5-1 3.5-3V7c0-2-1.5-3-3.5-3h-9C5.5 4 4 5 4 7z"></path></svg>
+                <!-- Storage Metric Card in Sidebar (Clickable -> Opens Storage Cleaner, Desktop Only) -->
+                <a href="?action=drive&tab=storage_analyzer" class="hidden lg:block p-3.5 bg-white dark:bg-slate-900 hover:border-brand-300 dark:hover:border-brand-600 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs transition-all group">
+                    <div class="flex items-center justify-between text-xs font-bold text-slate-800 dark:text-slate-100 mb-1.5">
+                        <span class="flex items-center text-[11px] group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
+                            <svg class="w-3.5 h-3.5 mr-1.5 text-brand-600 dark:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2 1.5 3 3.5 3h9c2 0 3.5-1 3.5-3V7c0-2-1.5-3-3.5-3h-9C5.5 4 4 5 4 7z"></path></svg>
                             Penyimpanan
                         </span>
-                        <span class="text-[10px] font-mono text-brand-600 font-bold"><?= $quotaPercentage ?>%</span>
+                        <span class="text-[10px] font-mono text-brand-600 dark:text-brand-400 font-bold"><?= $quotaPercentage ?>%</span>
                     </div>
                     <!-- Multi-Color Segmented Storage Bar (Apple iCloud style) -->
                     <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden mb-1.5 flex">
@@ -452,14 +452,14 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                             <div class="storage-bar-glow h-full rounded-full transition-all duration-500" style="width: <?= $quotaPercentage ?>%"></div>
                         <?php endif; ?>
                     </div>
-                    <div class="flex items-center justify-between text-[10px] text-slate-500 font-mono">
+                    <div class="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 font-mono">
                         <span><?= StorageService::formatBytes($storageUsed) ?> terpakai</span>
                         <span><?= StorageService::formatBytes($storageQuota) ?></span>
                     </div>
 
                     <!-- Mini Category Legend -->
                     <?php if ($storageUsed > 0 && !empty($storageBreakdown)): ?>
-                        <div class="mt-2 flex flex-wrap gap-x-2 gap-y-1 text-[9px] text-slate-500 font-medium">
+                        <div class="mt-2 flex flex-wrap gap-x-2 gap-y-1 text-[9px] text-slate-500 dark:text-slate-400 font-medium">
                             <?php foreach (['images', 'documents', 'videos', 'archives'] as $k): ?>
                                 <?php if (!empty($storageBreakdown[$k]['size'])): ?>
                                     <span class="inline-flex items-center">
@@ -470,36 +470,36 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                             <?php endforeach; ?>
                         </div>
                     <?php endif; ?>
-                    <div class="mt-2 pt-2 border-t border-slate-100 grid grid-cols-3 gap-1 text-center font-mono">
+                    <div class="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800 grid grid-cols-3 gap-1 text-center font-mono">
                         <div title="<?= $totalFiles ?> Berkas">
-                            <div class="font-bold text-slate-800 text-[11px]"><?= $totalFiles ?></div>
+                            <div class="font-bold text-slate-800 dark:text-slate-100 text-[11px]"><?= $totalFiles ?></div>
                             <div class="text-slate-400 text-[9px]">Berkas</div>
                         </div>
                         <div title="<?= $totalFolders ?> Folder">
-                            <div class="font-bold text-slate-800 text-[11px]"><?= $totalFolders ?></div>
+                            <div class="font-bold text-slate-800 dark:text-slate-100 text-[11px]"><?= $totalFolders ?></div>
                             <div class="text-slate-400 text-[9px]">Folder</div>
                         </div>
                         <div title="<?= $totalShared ?> Dibagikan">
-                            <div class="font-bold text-slate-800 text-[11px]"><?= $totalShared ?></div>
+                            <div class="font-bold text-slate-800 dark:text-slate-100 text-[11px]"><?= $totalShared ?></div>
                             <div class="text-slate-400 text-[9px]">Berbagi</div>
                         </div>
                     </div>
-                    <div class="mt-2 pt-1.5 border-t border-slate-100 flex items-center justify-between text-[10px] font-bold text-brand-600">
+                    <div class="mt-2 pt-1.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px] font-bold text-brand-600 dark:text-brand-400">
                         <span>Analisis Berkas Terbesar</span>
                         <span class="group-hover:translate-x-0.5 transition-transform">→</span>
                     </div>
                 </a>
 
-                <!-- Keyboard Shortcuts Quick Hint -->
-                <div class="px-2 pt-2 text-[10px] text-slate-400 font-medium flex items-center justify-between">
+                <!-- Keyboard Shortcuts Quick Hint (Desktop Only) -->
+                <div class="hidden lg:flex px-2 pt-2 text-[10px] text-slate-400 font-medium items-center justify-between">
                     <span class="flex items-center gap-1">
-                        <kbd class="px-1 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-600 font-mono text-[9px]">/</kbd> Cari
+                        <kbd class="px-1 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-mono text-[9px]">/</kbd> Cari
                     </span>
                     <span class="flex items-center gap-1">
-                        <kbd class="px-1 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-600 font-mono text-[9px]">U</kbd> Unggah
+                        <kbd class="px-1 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-mono text-[9px]">U</kbd> Unggah
                     </span>
                     <span class="flex items-center gap-1">
-                        <kbd class="px-1 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-600 font-mono text-[9px]">N</kbd> Folder
+                        <kbd class="px-1 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-mono text-[9px]">N</kbd> Folder
                     </span>
                 </div>
             </aside>
@@ -563,20 +563,20 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                         <?php endif; ?>
                     </div>
 
-                    <!-- Right Header Actions (Catatan Baru, Folder Baru & Upload Berkas) -->
+                    <!-- Right Header Actions (Catatan Baru, Folder Baru & Upload Berkas - Desktop Only, Mobile uses FAB) -->
                     <?php if ($activeTab === 'my_drive'): ?>
-                        <div class="flex flex-wrap items-center gap-2 flex-shrink-0">
+                        <div class="hidden sm:flex flex-wrap items-center gap-2 flex-shrink-0">
                             <button type="button" onclick="openNewTextFileModal()" 
-                                    class="inline-flex items-center h-8 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs hover:border-slate-300 transition-all"
+                                    class="inline-flex items-center h-8 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold shadow-2xs hover:border-slate-300 dark:hover:border-slate-600 transition-all"
                                     title="Buat berkas teks, catatan, atau kode baru">
-                                <svg class="w-3.5 h-3.5 mr-1.5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-3.5 h-3.5 mr-1.5 text-brand-600 dark:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                                 </svg>
                                 Catatan / Teks Baru
                             </button>
                             <button type="button" id="btnNewFolderModal" 
-                                    class="inline-flex items-center h-8 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs hover:border-slate-300 transition-all">
-                                <svg class="w-3.5 h-3.5 mr-1.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    class="inline-flex items-center h-8 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold shadow-2xs hover:border-slate-300 dark:hover:border-slate-600 transition-all">
+                                <svg class="w-3.5 h-3.5 mr-1.5 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path>
                                 </svg>
                                 Folder Baru
@@ -588,39 +588,39 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                                 </svg>
                                 Upload Berkas
                             </label>
-                            <input type="file" id="fileUploadInput" class="hidden" multiple>
                         </div>
+                        <input type="file" id="fileUploadInput" class="hidden" multiple>
                     <?php endif; ?>
                 </div>
 
-                <!-- ROW 2: Unified Controls & Filter Bar (Compact 1-Card Toolbar) -->
-                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 bg-white p-2.5 rounded-2xl border border-slate-200/80 shadow-xs">
+                <!-- ROW 2: Unified Controls & Filter Bar (Compact Responsive Toolbar) -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white dark:bg-slate-900 p-2 sm:p-2.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs">
                     
                     <!-- Search Input & Quick Filter Chips -->
                     <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-1 min-w-0">
                         <div class="relative w-full sm:w-60 flex-shrink-0">
                             <input type="text" id="searchInput" placeholder="Cari berkas atau folder..." 
-                                   class="w-full h-8 pl-8 pr-7 text-xs rounded-xl border border-slate-200 bg-slate-50/70 placeholder:text-slate-400 focus:bg-white focus:border-brand-600 focus:ring-1 focus:ring-brand-600 transition-all">
+                                   class="w-full h-8 pl-8 pr-7 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:bg-white dark:focus:bg-slate-800 focus:border-brand-600 focus:ring-1 focus:ring-brand-600 transition-all">
                             <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                             </svg>
-                            <span class="hidden sm:inline-block absolute right-2 top-2 px-1 text-[9px] text-slate-400 bg-slate-100 border border-slate-200 rounded font-mono pointer-events-none">/</span>
+                            <span class="hidden sm:inline-block absolute right-2 top-2 px-1 text-[9px] text-slate-400 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded font-mono pointer-events-none">/</span>
                         </div>
 
-                        <!-- Filter Chips -->
-                        <div class="flex items-center gap-1 overflow-x-auto no-scrollbar text-xs">
-                            <button type="button" onclick="setFilterCategory('all', this)" class="filter-chip active px-2.5 py-1 rounded-lg font-bold bg-brand-600 text-white shadow-xs transition-all text-[11px]" data-category="all">Semua</button>
-                            <button type="button" onclick="setFilterCategory('image', this)" class="filter-chip px-2.5 py-1 rounded-lg font-semibold bg-slate-50 text-slate-600 hover:bg-slate-100 transition-all text-[11px]" data-category="image">🖼️ Gambar</button>
-                            <button type="button" onclick="setFilterCategory('document', this)" class="filter-chip px-2.5 py-1 rounded-lg font-semibold bg-slate-50 text-slate-600 hover:bg-slate-100 transition-all text-[11px]" data-category="document">📄 Dokumen</button>
-                            <button type="button" onclick="setFilterCategory('media', this)" class="filter-chip px-2.5 py-1 rounded-lg font-semibold bg-slate-50 text-slate-600 hover:bg-slate-100 transition-all text-[11px]" data-category="media">🎬 Media</button>
-                            <button type="button" onclick="setFilterCategory('archive', this)" class="filter-chip px-2.5 py-1 rounded-lg font-semibold bg-slate-50 text-slate-600 hover:bg-slate-100 transition-all text-[11px]" data-category="archive">📦 Arsip</button>
+                        <!-- Filter Chips (Horizontal Scrollable with Smooth Touch Flow) -->
+                        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 text-xs">
+                            <button type="button" onclick="setFilterCategory('all', this)" class="filter-chip active px-2.5 py-1 rounded-lg font-bold bg-brand-600 text-white shadow-xs transition-all text-[11px] whitespace-nowrap" data-category="all">Semua</button>
+                            <button type="button" onclick="setFilterCategory('image', this)" class="filter-chip px-2.5 py-1 rounded-lg font-semibold bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all text-[11px] whitespace-nowrap" data-category="image">🖼️ Gambar</button>
+                            <button type="button" onclick="setFilterCategory('document', this)" class="filter-chip px-2.5 py-1 rounded-lg font-semibold bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all text-[11px] whitespace-nowrap" data-category="document">📄 Dokumen</button>
+                            <button type="button" onclick="setFilterCategory('media', this)" class="filter-chip px-2.5 py-1 rounded-lg font-semibold bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all text-[11px] whitespace-nowrap" data-category="media">🎬 Media</button>
+                            <button type="button" onclick="setFilterCategory('archive', this)" class="filter-chip px-2.5 py-1 rounded-lg font-semibold bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all text-[11px] whitespace-nowrap" data-category="archive">📦 Arsip</button>
                         </div>
                     </div>
 
-                    <!-- Right Controls: Sort & Grid/List View Switcher -->
-                    <div class="flex items-center space-x-2 self-end lg:self-auto flex-shrink-0">
+                    <!-- Right Controls: Sort & Grid/List View Switcher (Aligned on Mobile & Desktop) -->
+                    <div class="flex items-center justify-between sm:justify-end gap-2 pt-1 sm:pt-0 border-t sm:border-t-0 border-slate-100 dark:border-slate-800 flex-shrink-0">
                         <select id="sortSelect" onchange="sortFiles(this.value)" 
-                                class="h-8 pl-2.5 pr-6 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50/70 text-slate-700 hover:border-slate-300 focus:border-brand-600 cursor-pointer appearance-none">
+                                class="h-8 pl-2.5 pr-6 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600 focus:border-brand-600 cursor-pointer appearance-none">
                             <option value="created_desc">Terbaru</option>
                             <option value="created_asc">Terlama</option>
                             <option value="name_asc">Nama (A - Z)</option>
@@ -629,22 +629,22 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                             <option value="size_asc">Ukuran (Kecil)</option>
                         </select>
 
-                        <div class="inline-flex p-0.5 bg-slate-100 rounded-xl border border-slate-200">
+                        <div class="inline-flex p-0.5 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
                             <button type="button" id="btnViewGrid" onclick="setViewMode('grid')" 
-                                    class="h-7 px-2 rounded-lg text-xs font-semibold flex items-center transition-all bg-white text-brand-600 shadow-xs" title="Tampilan Kartu">
+                                    class="h-7 px-2 rounded-lg text-xs font-semibold flex items-center transition-all bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 shadow-xs" title="Tampilan Kartu">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
                             </button>
                             <button type="button" id="btnViewList" onclick="setViewMode('list')" 
-                                    class="h-7 px-2 rounded-lg text-xs font-semibold flex items-center transition-all text-slate-500 hover:text-slate-800" title="Tampilan Tabel">
+                                    class="h-7 px-2 rounded-lg text-xs font-semibold flex items-center transition-all text-slate-500 hover:text-slate-800 dark:hover:text-slate-200" title="Tampilan Tabel">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- ROW 3: Compact Drop Strip -->
+                <!-- ROW 3: Compact Drop Strip (Desktop Only) -->
                 <?php if ($activeTab === 'my_drive'): ?>
-                    <div id="dropZone" class="group border border-dashed border-slate-300/90 dark:border-slate-800 hover:border-brand-500 dark:hover:border-brand-400 bg-white/70 dark:bg-slate-900/60 hover:bg-brand-50/30 dark:hover:bg-brand-950/40 rounded-xl px-4 py-2.5 text-center transition-all duration-200 cursor-pointer flex items-center justify-center space-x-2 text-xs text-slate-500 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-300">
+                    <div id="dropZone" class="hidden sm:flex group border border-dashed border-slate-300/90 dark:border-slate-800 hover:border-brand-500 dark:hover:border-brand-400 bg-white/70 dark:bg-slate-900/60 hover:bg-brand-50/30 dark:hover:bg-brand-950/40 rounded-xl px-4 py-2.5 text-center transition-all duration-200 cursor-pointer items-center justify-center space-x-2 text-xs text-slate-500 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-300">
                         <svg class="w-4 h-4 text-brand-600 dark:text-brand-400 flex-shrink-0 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
                         <span>Tarik & jatuhkan berkas ke sini, atau <span class="text-brand-600 dark:text-brand-400 font-bold underline">pilih dari komputer</span></span>
                     </div>
@@ -1438,7 +1438,7 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                     <?php else: ?>
 
                         <!-- GRID VIEW (Mockup Aligned: Clean Cards with Big Centered Icons) -->
-                        <div id="filesGridView" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+                        <div id="filesGridView" class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-4">
                             
                             <!-- 1. Folder Cards (macOS Modern Layered Style with Item Counts) -->
                             <?php foreach ($folders as $folder): ?>
@@ -1450,7 +1450,7 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                                 if ($fSubCnt > 0) $folderSummaryParts[] = "{$fSubCnt} folder";
                                 $folderCountText = !empty($folderSummaryParts) ? implode(' • ', $folderSummaryParts) : 'Kosong';
                                 ?>
-                                <div class="file-card folder-drop-zone group relative bg-white border border-slate-200/80 hover:border-brand-300 hover:shadow-lg hover:-translate-y-0.5 rounded-2xl p-4 flex flex-col justify-between transition-all duration-200 animate-item-in"
+                                <div class="file-card folder-drop-zone group relative bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 hover:border-brand-300 dark:hover:border-brand-600 hover:shadow-lg hover:-translate-y-0.5 rounded-2xl p-3 sm:p-4 flex flex-col justify-between transition-all duration-200 animate-item-in"
                                      data-folder-id="<?= $folder['id'] ?>"
                                      data-category="all"
                                      data-folder-name="<?= htmlspecialchars(strtolower($folder['name'])) ?>">
@@ -1487,8 +1487,8 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
 
                                     <!-- Big Centered Folder Icon with Layered Depth -->
                                     <a href="?action=drive&folder=<?= $folder['id'] ?>" class="my-3 flex flex-col items-center text-center">
-                                        <div class="relative h-16 w-16 rounded-2xl bg-gradient-to-br from-indigo-50 to-brand-100/70 text-brand-600 border border-indigo-200/60 flex items-center justify-center group-hover:scale-105 transition-transform shadow-2xs">
-                                            <svg class="w-10 h-10 drop-shadow-2xs" fill="currentColor" viewBox="0 0 20 20">
+                                        <div class="relative h-12 w-12 sm:h-16 sm:w-16 rounded-2xl bg-gradient-to-br from-indigo-50 to-brand-100/70 dark:from-indigo-950/40 dark:to-brand-900/40 text-brand-600 dark:text-brand-400 border border-indigo-200/60 dark:border-indigo-800/40 flex items-center justify-center group-hover:scale-105 transition-transform shadow-2xs">
+                                            <svg class="w-7 h-7 sm:w-10 sm:h-10 drop-shadow-2xs" fill="currentColor" viewBox="0 0 20 20">
                                                 <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path>
                                             </svg>
                                             <?php if ($fFilesCnt > 0): ?>
@@ -1532,7 +1532,7 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                                     'user_shares_count' => $directShareCount,
                                 ]), ENT_QUOTES, 'UTF-8');
                                 ?>
-                                <div class="file-card draggable-file group relative bg-white border border-slate-200/90 hover:border-brand-400 hover:shadow-md rounded-2xl p-3.5 flex flex-col justify-between transition-all duration-150 animate-item-in cursor-grab active:cursor-grabbing"
+                                <div class="file-card draggable-file group relative bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-brand-400 dark:hover:border-brand-600 hover:shadow-md rounded-2xl p-2.5 sm:p-3.5 flex flex-col justify-between transition-all duration-150 animate-item-in cursor-grab active:cursor-grabbing"
                                      draggable="true"
                                      data-id="<?= $file['id'] ?>"
                                      data-category="<?= htmlspecialchars($typeInfo['type']) ?>"
@@ -1641,58 +1641,58 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                                     <!-- Card Body: Thumbnail or Category-Specific Rich Illustration -->
                                     <div class="cursor-pointer" onclick="openFileDetail(<?= $fileJson ?>)">
                                         <?php if ($typeInfo['type'] === 'image'): ?>
-                                            <div class="h-28 w-full rounded-xl thumb-skeleton overflow-hidden relative mb-2.5 flex items-center justify-center border border-slate-200/60 group/thumb">
+                                            <div class="h-20 sm:h-28 w-full rounded-xl thumb-skeleton overflow-hidden relative mb-2 flex items-center justify-center border border-slate-200/60 dark:border-slate-800 group/thumb">
                                                 <img src="?action=download_direct&file_id=<?= $file['id'] ?>&thumb=1" 
                                                      alt="<?= htmlspecialchars($file['original_name']) ?>" 
                                                      class="h-full w-full object-cover group-hover/thumb:scale-105 transition-all duration-300" 
                                                      loading="lazy" 
                                                      onload="this.parentElement.classList.remove('thumb-skeleton')"
                                                      onerror="this.style.display='none'; this.parentElement.classList.remove('thumb-skeleton'); this.nextElementSibling.classList.remove('hidden');">
-                                                <div class="hidden h-full w-full flex items-center justify-center bg-rose-50 text-rose-500">
-                                                    <svg class="w-9 h-9" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"></path></svg>
+                                                <div class="hidden h-full w-full flex items-center justify-center bg-rose-50 dark:bg-rose-950/40 text-rose-500">
+                                                    <svg class="w-7 h-7 sm:w-9 sm:h-9" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"></path></svg>
                                                 </div>
                                             </div>
                                         <?php elseif ($typeInfo['type'] === 'video'): ?>
-                                            <div class="h-28 w-full rounded-xl bg-gradient-to-br from-amber-50/90 to-orange-50/60 border border-amber-200/60 mb-2.5 flex flex-col items-center justify-center group-hover:scale-[1.01] transition-all">
-                                                <div class="h-11 w-11 rounded-2xl bg-amber-500/15 text-amber-600 flex items-center justify-center mb-1.5 shadow-2xs">
-                                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path></svg>
+                                            <div class="h-20 sm:h-28 w-full rounded-xl bg-gradient-to-br from-amber-50/90 to-orange-50/60 dark:from-amber-950/30 dark:to-orange-950/20 border border-amber-200/60 dark:border-amber-900/40 mb-2 flex flex-col items-center justify-center group-hover:scale-[1.01] transition-all">
+                                                <div class="h-9 w-9 sm:h-11 sm:w-11 rounded-2xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-1 shadow-2xs">
+                                                    <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path></svg>
                                                 </div>
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold <?= $typeInfo['bg'] ?>"><?= $typeInfo['badge'] ?></span>
+                                                <span class="inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-bold <?= $typeInfo['bg'] ?>"><?= $typeInfo['badge'] ?></span>
                                             </div>
                                         <?php elseif ($typeInfo['type'] === 'audio'): ?>
-                                            <div class="h-28 w-full rounded-xl bg-gradient-to-br from-indigo-50/90 to-violet-50/60 border border-indigo-200/60 mb-2.5 flex flex-col items-center justify-center group-hover:scale-[1.01] transition-all">
-                                                <div class="h-11 w-11 rounded-2xl bg-indigo-500/15 text-indigo-600 flex items-center justify-center mb-1.5 shadow-2xs">
-                                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z"></path></svg>
+                                            <div class="h-20 sm:h-28 w-full rounded-xl bg-gradient-to-br from-indigo-50/90 to-violet-50/60 dark:from-indigo-950/30 dark:to-violet-950/20 border border-indigo-200/60 dark:border-indigo-900/40 mb-2 flex flex-col items-center justify-center group-hover:scale-[1.01] transition-all">
+                                                <div class="h-9 w-9 sm:h-11 sm:w-11 rounded-2xl bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-1 shadow-2xs">
+                                                    <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z"></path></svg>
                                                 </div>
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold <?= $typeInfo['bg'] ?>"><?= $typeInfo['badge'] ?></span>
+                                                <span class="inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-bold <?= $typeInfo['bg'] ?>"><?= $typeInfo['badge'] ?></span>
                                             </div>
                                         <?php elseif ($typeInfo['type'] === 'archive'): ?>
-                                            <div class="h-28 w-full rounded-xl bg-gradient-to-br from-emerald-50/90 to-teal-50/60 border border-emerald-200/60 mb-2.5 flex flex-col items-center justify-center group-hover:scale-[1.01] transition-all">
-                                                <div class="h-11 w-11 rounded-2xl bg-emerald-500/15 text-emerald-600 flex items-center justify-center mb-1.5 shadow-2xs">
-                                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+                                            <div class="h-20 sm:h-28 w-full rounded-xl bg-gradient-to-br from-emerald-50/90 to-teal-50/60 dark:from-emerald-950/30 dark:to-teal-950/20 border border-emerald-200/60 dark:border-emerald-900/40 mb-2 flex flex-col items-center justify-center group-hover:scale-[1.01] transition-all">
+                                                <div class="h-9 w-9 sm:h-11 sm:w-11 rounded-2xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-1 shadow-2xs">
+                                                    <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
                                                 </div>
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold <?= $typeInfo['bg'] ?>"><?= $typeInfo['badge'] ?></span>
+                                                <span class="inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-bold <?= $typeInfo['bg'] ?>"><?= $typeInfo['badge'] ?></span>
                                             </div>
                                         <?php elseif ($typeInfo['type'] === 'pdf'): ?>
-                                            <div class="h-28 w-full rounded-xl bg-gradient-to-br from-red-50/90 to-rose-50/60 border border-red-200/60 mb-2.5 flex flex-col items-center justify-center group-hover:scale-[1.01] transition-all">
-                                                <div class="h-11 w-11 rounded-2xl bg-red-500/15 text-red-600 flex items-center justify-center mb-1.5 shadow-2xs">
-                                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                                            <div class="h-20 sm:h-28 w-full rounded-xl bg-gradient-to-br from-red-50/90 to-rose-50/60 dark:from-red-950/30 dark:to-rose-950/20 border border-red-200/60 dark:border-red-900/40 mb-2 flex flex-col items-center justify-center group-hover:scale-[1.01] transition-all">
+                                                <div class="h-9 w-9 sm:h-11 sm:w-11 rounded-2xl bg-red-500/15 text-red-600 dark:text-red-400 flex items-center justify-center mb-1 shadow-2xs">
+                                                    <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
                                                 </div>
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold <?= $typeInfo['bg'] ?>"><?= $typeInfo['badge'] ?></span>
+                                                <span class="inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-bold <?= $typeInfo['bg'] ?>"><?= $typeInfo['badge'] ?></span>
                                             </div>
                                         <?php elseif ($typeInfo['type'] === 'code'): ?>
-                                            <div class="h-28 w-full rounded-xl bg-gradient-to-br from-violet-50/90 to-purple-50/60 border border-violet-200/60 mb-2.5 flex flex-col items-center justify-center group-hover:scale-[1.01] transition-all">
-                                                <div class="h-11 w-11 rounded-2xl bg-violet-500/15 text-violet-600 flex items-center justify-center mb-1.5 shadow-2xs">
-                                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+                                            <div class="h-20 sm:h-28 w-full rounded-xl bg-gradient-to-br from-violet-50/90 to-purple-50/60 dark:from-violet-950/30 dark:to-purple-950/20 border border-violet-200/60 dark:border-violet-900/40 mb-2 flex flex-col items-center justify-center group-hover:scale-[1.01] transition-all">
+                                                <div class="h-9 w-9 sm:h-11 sm:w-11 rounded-2xl bg-violet-500/15 text-violet-600 dark:text-violet-400 flex items-center justify-center mb-1 shadow-2xs">
+                                                    <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
                                                 </div>
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold <?= $typeInfo['bg'] ?>"><?= $typeInfo['badge'] ?></span>
+                                                <span class="inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-bold <?= $typeInfo['bg'] ?>"><?= $typeInfo['badge'] ?></span>
                                             </div>
                                         <?php else: ?>
-                                            <div class="h-28 w-full rounded-xl bg-gradient-to-br from-sky-50/70 to-slate-50 border border-slate-200/70 mb-2.5 flex flex-col items-center justify-center group-hover:bg-brand-50/30 transition-colors">
-                                                <div class="h-11 w-11 rounded-2xl bg-sky-500/10 text-sky-600 flex items-center justify-center mb-1.5">
-                                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                            <div class="h-20 sm:h-28 w-full rounded-xl bg-gradient-to-br from-sky-50/70 to-slate-50 dark:from-sky-950/30 dark:to-slate-800/60 border border-slate-200/70 dark:border-slate-800 mb-2 flex flex-col items-center justify-center group-hover:bg-brand-50/30 transition-colors">
+                                                <div class="h-9 w-9 sm:h-11 sm:w-11 rounded-2xl bg-sky-500/10 text-sky-600 dark:text-sky-400 flex items-center justify-center mb-1">
+                                                    <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                                                 </div>
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold <?= $typeInfo['bg'] ?>">
+                                                <span class="inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-bold <?= $typeInfo['bg'] ?>">
                                                     <?= $typeInfo['badge'] ?>
                                                 </span>
                                             </div>
@@ -1877,11 +1877,11 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
         </div>
     </div>
 
-    <!-- Mobile Floating Action Button (FAB) -->
-    <div class="sm:hidden fixed bottom-6 right-6 z-40">
+    <!-- Mobile Floating Action Button (FAB - Positioned safely above bottom nav) -->
+    <div class="sm:hidden fixed bottom-20 right-4 z-40">
         <!-- FAB Menu Popup -->
         <div id="mobileFabMenu" class="hidden mb-3 flex flex-col items-end space-y-2 animate-item-in">
-            <button type="button" onclick="document.getElementById('fileUploadInput').click(); toggleMobileFab();" 
+            <button type="button" onclick="triggerFileUpload(); toggleMobileFab();" 
                     class="flex items-center gap-2 px-3 py-2 rounded-xl bg-white dark:bg-slate-800 text-slate-800 dark:text-white shadow-xl border border-slate-200 dark:border-slate-700 text-xs font-bold hover:bg-slate-50">
                 <span>Unggah Berkas</span>
                 <span class="w-8 h-8 rounded-lg bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 flex items-center justify-center">
@@ -1906,16 +1906,16 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
 
         <!-- Main FAB Button -->
         <button type="button" id="mobileFabBtn" onclick="toggleMobileFab()" 
-                class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-brand-700 via-brand-600 to-indigo-500 text-white shadow-xl shadow-brand-500/30 flex items-center justify-center active:scale-95 transition-all"
+                class="w-13 h-13 sm:w-14 sm:h-14 p-3.5 rounded-2xl bg-gradient-to-tr from-brand-700 via-brand-600 to-indigo-500 text-white shadow-xl shadow-brand-500/35 flex items-center justify-center active:scale-95 transition-all"
                 title="Aksi Cepat">
-            <svg id="mobileFabIcon" class="w-7 h-7 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg id="mobileFabIcon" class="w-6 h-6 sm:w-7 sm:h-7 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path>
             </svg>
         </button>
     </div>
 
     <!-- Floating Bulk Actions Bar (Sticky bottom, animated slide-up when files are selected) -->
-    <div id="bulkActionBar" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900/95 backdrop-blur-md text-white border border-slate-700/80 rounded-2xl px-5 py-3 shadow-2xl flex items-center space-x-4 transition-all duration-300 transform translate-y-24 opacity-0 pointer-events-none">
+    <div id="bulkActionBar" class="fixed bottom-20 sm:bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900/95 backdrop-blur-md text-white border border-slate-700/80 rounded-2xl px-4 sm:px-5 py-2.5 sm:py-3 shadow-2xl flex items-center space-x-3 sm:space-x-4 transition-all duration-300 transform translate-y-24 opacity-0 pointer-events-none">
         <div class="flex items-center space-x-2">
             <span class="h-6 w-6 rounded-lg bg-brand-600 flex items-center justify-center text-xs font-bold font-mono" id="bulkSelectedCount">0</span>
             <span class="text-xs font-semibold text-slate-200">berkas dipilih</span>

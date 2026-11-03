@@ -2,6 +2,23 @@
 
 Semua perubahan pada spesifikasi dan implementasi proyek file-sharing akan dicatat di dokumen ini.
 
+## [v1.5.6] - 2026-11-03
+### Ditambahkan & Ditingkatkan (Penyempurnaan Tampilan Mobile Terpadu)
+- **Reposisi Mobile FAB (Floating Action Button)**:
+  - Mengubah posisi FAB ke `bottom-20 right-4` (80px dari bawah) sehingga mengambang bebas di atas bottom navigation bar dan **tidak lagi menabrak/menutupi tombol "Sampah"**.
+  - Menggunakan fungsi terpadu `triggerFileUpload()` untuk aksi unggah berkas dari FAB.
+- **Pembersihan Ruang Vertikal Header & Sidebar pada Layar HP**:
+  - Menyembunyikan kartu penyimpanan sidebar yang besar dan bar shortcut keyboard desktop (`/ Cari, U Unggah, N Folder`) di mobile (`hidden lg:block` / `hidden lg:flex`), sehingga saat membuka di smartphone layar langsung fokus ke konten drive.
+  - Menyembunyikan tombol header actions bertumpuk (`Catatan Baru`, `Folder Baru`, `Upload Berkas`) di mobile (`hidden sm:flex`) karena seluruh aksi cepat sudah dipusatkan pada Mobile FAB ungu di kanan bawah.
+  - Menyembunyikan strip dropzone komputer di smartphone (`hidden sm:flex`).
+- **Penyelarasan Toolbar Kontrol & Filter Mobile**:
+  - Merapikan penataan input pencarian, kategori chip dengan horizontal swipe scroll (`no-scrollbar`), serta menyelaraskan dropdown pengurutan (*Sort*) dan pengalih tampilan (*Grid/List*) dalam baris simetris `justify-between` di smartphone.
+- **Tata Letak Grid Berkas 2-Kolom yang Proporsional**:
+  - Mengubah tampilan kartu berkas mobile dari 1 kolom jangkung (`grid-cols-1`) menjadi **2 kolom simetris (`grid-cols-2`)** modern standar aplikasi mobile (Google Drive/Apple Files).
+  - Menyesuaikan proporsi thumbnail menjadi `h-20 sm:h-28` dan padding kartu `p-2.5 sm:p-3.5` agar nyaman dipandang.
+- **Pencegahan Konten Terpotong Navigasi Bawah**:
+  - Menyesuaikan padding bawah kontainer utama menjadi `pb-28 lg:pb-8` sehingga berkas di urutan paling bawah tidak terpotong oleh bilah navigasi bawah (*bottom bar*).
+
 ## [v1.5.5] - 2026-11-03
 ### Ditambahkan & Ditingkatkan
 - **Google Drive-Style '+ Baru' Primary Action Button di Sidebar**:
