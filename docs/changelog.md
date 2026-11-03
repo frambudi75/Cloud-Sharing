@@ -2,6 +2,13 @@
 
 Semua perubahan pada spesifikasi dan implementasi proyek file-sharing akan dicatat di dokumen ini.
 
+## [v1.5.2] - 2026-11-03
+### Diperbaiki
+- **Perbaikan Kosongkan Sampah (*Empty Trash*)**:
+  - Memperbaiki kueri `deleteFile()` pada `StorageService` yang tidak memuat kolom `original_name`, menyebabkan *uncaught exception* saat mencatat log aktivitas permanen.
+  - Memperbaiki penanganan `emptyTrash()` di `DriveController` dengan mengisolasi penghapusan folder di bawah `SET FOREIGN_KEY_CHECKS = 0` guna mencegah kegagalan *foreign key self-reference* pada subfolder di dalam sampah.
+  - Memperbaiki Service Worker (`sw.js`) agar selalu mengembalikan objek `Response` valid dan tidak melemparkan `TypeError: Failed to convert value to 'Response'` saat offline fallback.
+
 ## [v1.5.1] - 2026-11-03
 ### Ditambahkan & Ditingkatkan
 - **Direct-Offset Chunk Streaming (Zero-Merge Overhead)**:

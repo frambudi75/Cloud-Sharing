@@ -1,5 +1,5 @@
 // Service Worker for Cloud Sharing PWA
-const CACHE_NAME = 'cloudsharing-v1.5.1';
+const CACHE_NAME = 'cloudsharing-v1.5.2';
 const STATIC_ASSETS = [
     'assets/img/favicon.svg',
     'manifest.json'
@@ -57,10 +57,16 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // Dynamic Pages: Network-first with cache fallback
+    // Dynamic Pages: Network-first with safe cache fallback
     event.respondWith(
-        fetch(request).catch(() => {
-            return caches.match(request);
+        fetch(request).catch(async () => {
+            const cached = await caches.match(request);
+            if (cached) return cached;
+            return new Response('Halaman tidak dapat diakses saat offline.', {
+                status: 503,
+                statusText: 'Service Unavailable',
+                headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+            });
         })
     );
 });

@@ -385,7 +385,7 @@ class StorageService
     {
         $db = Database::getConnection();
         $stmt = $db->prepare("
-            SELECT id, storage_filename, storage_path, file_size 
+            SELECT id, original_name, storage_filename, storage_path, file_size 
             FROM files 
             WHERE id = :id AND user_id = :user_id 
             LIMIT 1

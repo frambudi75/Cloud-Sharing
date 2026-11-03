@@ -687,21 +687,33 @@ class DriveController
 
     public function emptyTrash(): void
     {
-        $this->validateCsrf();
-        $userId = (int) AuthService::id();
-        $db = Database::getConnection();
+        try {
+            $this->validateCsrf();
+            $userId = (int) AuthService::id();
+            $db = Database::getConnection();
 
-        $filesStmt = $db->prepare("SELECT id FROM files WHERE user_id = :user_id AND deleted_at IS NOT NULL");
-        $filesStmt->execute([':user_id' => $userId]);
-        $files = $filesStmt->fetchAll();
-        foreach ($files as $f) {
-            StorageService::deleteFile((int) $f['id'], $userId);
+            // 1. Ambil seluruh berkas yang ada di tong sampah
+            $filesStmt = $db->prepare("SELECT id FROM files WHERE user_id = :user_id AND deleted_at IS NOT NULL");
+            $filesStmt->execute([':user_id' => $userId]);
+            $files = $filesStmt->fetchAll();
+            $deletedFilesCount = 0;
+            foreach ($files as $f) {
+                $res = StorageService::deleteFile((int) $f['id'], $userId);
+                if (!empty($res['success'])) {
+                    $deletedFilesCount++;
+                }
+            }
+
+            // 2. Hapus seluruh folder di tong sampah (nonaktifkan foreign key checks sementara agar subfolder tidak konflik)
+            $db->exec("SET FOREIGN_KEY_CHECKS = 0");
+            $folderStmt = $db->prepare("DELETE FROM folders WHERE user_id = :user_id AND deleted_at IS NOT NULL");
+            $folderStmt->execute([':user_id' => $userId]);
+            $db->exec("SET FOREIGN_KEY_CHECKS = 1");
+
+            $this->respondJson(['success' => true, 'deleted_files' => $deletedFilesCount]);
+        } catch (\Throwable $e) {
+            $this->respondJson(['success' => false, 'error' => 'Gagal mengosongkan sampah: ' . $e->getMessage()]);
         }
-
-        $folderStmt = $db->prepare("DELETE FROM folders WHERE user_id = :user_id AND deleted_at IS NOT NULL");
-        $folderStmt->execute([':user_id' => $userId]);
-
-        $this->respondJson(['success' => true]);
     }
 
     public function downloadFolderZip(): void
