@@ -2,6 +2,18 @@
 
 Semua perubahan pada spesifikasi dan implementasi proyek file-sharing akan dicatat di dokumen ini.
 
+## [2026-11-03]
+### Ditambahkan & Ditingkatkan
+- **Upgrade Runtime ke PHP 8.5**:
+  - Peningkatan basis Docker image ke `php:8.5-fpm-alpine` dengan Zend OPcache built-in dan JIT Compiler (`tracing`, 64MB).
+  - Pembersihan fungsi deprecated `curl_close()` pada `WebhookService` untuk kompatibilitas penuh PHP 8.5+.
+  - Konfigurasi `display_errors = Off` dan `log_errors = On` di produksi.
+  - Tampilan versi PHP dinamis di badge header dashboard.
+- **Full Persistent Resumable Upload (TUS-Style Deterministic Chunks)**:
+  - Penambahan endpoint `?action=check_upload_chunks` untuk memeriksa potongan berkas yang sudah ada di server sebelum pengunggahan dimulai.
+  - Implementasi *deterministic file fingerprinting* di browser (`name`, `size`, `lastModified`, `folderId`) sehingga `upload_id` tetap konsisten meski tab di-refresh atau koneksi VPN/WiFi terputus.
+  - Sistem otomatis melanjutkan (*resume*) pengunggahan dari chunk terakhir yang tersimpan di disk server tanpa perlu mengulang dari 0%.
+
 ## [Unreleased] - 2026-10-31
 ### Ditambahkan & Ditingkatkan
 - **Alat Pemeliharaan & Optimasi Server (System Maintenance Tools)**:

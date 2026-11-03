@@ -366,6 +366,56 @@ class DriveController
         }
     }
 
+    public function checkUploadChunks(): void
+    {
+        try {
+            $this->validateCsrf();
+            $userId = (int) AuthService::id();
+
+            $uploadId = preg_replace('/[^a-zA-Z0-9_-]/', '', $_POST['upload_id'] ?? '');
+            $totalChunks = isset($_POST['total_chunks']) ? (int) $_POST['total_chunks'] : 0;
+            $totalSize = isset($_POST['total_size']) ? (int) $_POST['total_size'] : 0;
+
+            if (empty($uploadId) || $totalChunks <= 0) {
+                $this->respondJson(['success' => false, 'error' => 'Parameter potongan berkas tidak lengkap.']);
+                return;
+            }
+
+            // Validasi kuota penyimpanan pengguna
+            $user = AuthService::user();
+            if ($user && ($user['storage_used'] + $totalSize) > $user['storage_quota']) {
+                $this->respondJson(['success' => false, 'error' => 'Kapasitas penyimpanan Anda tidak mencukupi untuk berkas ini.']);
+                return;
+            }
+
+            $chunkBaseDir = StorageService::getChunkDir();
+            $chunkDir = $chunkBaseDir . DIRECTORY_SEPARATOR . $uploadId;
+
+            $existingChunks = [];
+            if (is_dir($chunkDir)) {
+                for ($i = 0; $i < $totalChunks; $i++) {
+                    $part = $chunkDir . DIRECTORY_SEPARATOR . "chunk_{$i}.part";
+                    if (file_exists($part) && filesize($part) > 0) {
+                        $existingChunks[] = $i;
+                    }
+                }
+            }
+
+            $this->respondJson([
+                'success' => true,
+                'upload_id' => $uploadId,
+                'existing_chunks' => $existingChunks,
+                'total_existing' => count($existingChunks),
+                'total_chunks' => $totalChunks
+            ]);
+        } catch (\Throwable $e) {
+            $this->respondJson([
+                'success' => false,
+                'error' => 'Gagal memeriksa status potongan berkas: ' . $e->getMessage()
+            ]);
+        }
+    }
+
     public function uploadChunk(): void
     {
         @set_time_limit(600);
@@ -385,8 +435,11 @@ class DriveController
                 return;
             }
 
-            // Cek kuota pada potongan pertama & bersihkan potongan usang secara berkala
-            if ($chunkIndex === 0) {
+            $chunkBaseDir = StorageService::getChunkDir();
+            $chunkDir = $chunkBaseDir . DIRECTORY_SEPARATOR . $uploadId;
+
+            // Cek kuota pada potongan pertama atau jika direktori chunk baru diinisialisasi & bersihkan potongan usang
+            if ($chunkIndex === 0 || !is_dir($chunkDir)) {
                 if (mt_rand(1, 10) === 1) {
                     StorageService::cleanOldChunks(86400);
                 }
@@ -403,8 +456,6 @@ class DriveController
                 return;
             }
 
-            $chunkBaseDir = StorageService::getChunkDir();
-            $chunkDir = $chunkBaseDir . DIRECTORY_SEPARATOR . $uploadId;
             if (!is_dir($chunkDir)) {
                 @mkdir($chunkDir, 0775, true);
             }

@@ -1518,16 +1518,86 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 xhr.send(formData);
             } else {
-                // Berkas besar (> 8MB, misal aplikasi/installer > 100MB): Chunked Upload via ?action=upload_chunk dengan Auto-Retry
+                // Berkas besar (> 8MB, misal aplikasi/installer/video > 100MB): Resumable Chunked Upload via ?action=upload_chunk
                 const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
-                const uploadId = 'up_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+                
+                // Deterministic Fingerprint Upload ID (Persistent antar-sesi & refresh)
+                const uploadId = (function (f, fId) {
+                    const raw = `${f.name}_${f.size}_${f.lastModified}_${fId || 0}`;
+                    let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+                    for (let i = 0; i < raw.length; i++) {
+                        const ch = raw.charCodeAt(i);
+                        h1 = Math.imul(h1 ^ ch, 2654435761);
+                        h2 = Math.imul(h2 ^ ch, 1597334677);
+                    }
+                    const hex = ((h1 ^ (h1 >>> 16)) >>> 0).toString(16).padStart(8, '0') + 
+                                ((h2 ^ (h2 >>> 16)) >>> 0).toString(16).padStart(8, '0');
+                    const cleanName = f.name.replace(/[^a-zA-Z0-9]/g, '').substring(0, 10).toLowerCase();
+                    return `up_${cleanName}_${f.size}_${hex}`;
+                })(file, currentFolderId);
+
+                // Periksa apakah ada potongan berkas yang sudah pernah diunggah sebelumnya di server (Resumable)
+                let existingChunksSet = new Set();
+                try {
+                    const checkFormData = new FormData();
+                    checkFormData.append('csrf_token', csrfToken);
+                    checkFormData.append('upload_id', uploadId);
+                    checkFormData.append('total_chunks', totalChunks);
+                    checkFormData.append('total_size', file.size);
+
+                    const checkRes = await fetch('?action=check_upload_chunks', {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': csrfToken
+                        },
+                        body: checkFormData
+                    });
+
+                    if (checkRes.ok) {
+                        const checkJson = await checkRes.json();
+                        if (checkJson.success && Array.isArray(checkJson.existing_chunks)) {
+                            // Simpan potongan yang sudah ada. Kecualikan potongan terakhir (totalChunks - 1)
+                            // agar pengiriman potongan terakhir tetap mengeksekusi merge di backend
+                            const validChunks = checkJson.existing_chunks.filter(idx => idx < totalChunks - 1);
+                            existingChunksSet = new Set(validChunks);
+                            if (existingChunksSet.size > 0) {
+                                console.info(`[Resumable Upload] Melanjutkan unggahan ${file.name}: ${existingChunksSet.size}/${totalChunks} potongan ditemukan di server.`);
+                            }
+                        } else if (!checkJson.success && checkJson.error) {
+                            alert(checkJson.error);
+                            resolve(false);
+                            return;
+                        }
+                    }
+                } catch (e) {
+                    console.debug('Pemeriksaan potongan awal dilewati:', e);
+                }
+
                 let uploadedBytes = 0;
+                // Hitung byte yang sudah ada dari potongan sebelumnya
+                for (const idx of existingChunksSet) {
+                    const s = idx * CHUNK_SIZE;
+                    const e = Math.min(s + CHUNK_SIZE, file.size);
+                    uploadedBytes += (e - s);
+                }
+
+                if (existingChunksSet.size > 0) {
+                    const initialPercent = Math.min(99, Math.round((uploadedBytes / file.size) * 100));
+                    if (barEl) barEl.style.width = initialPercent + '%';
+                    if (percentEl) percentEl.textContent = `Melanjutkan: ${initialPercent}% (${existingChunksSet.size}/${totalChunks} bagian siap)`;
+                }
 
                 try {
                     for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
                         if (isUploadCancelled) {
                             resolve(false);
                             return;
+                        }
+
+                        // Jika potongan ini sudah tersimpan sempurna di server, lewati pengunggahan ulang
+                        if (existingChunksSet.has(chunkIndex)) {
+                            continue;
                         }
 
                         const start = chunkIndex * CHUNK_SIZE;

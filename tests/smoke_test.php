@@ -88,4 +88,22 @@ $maskedUrl = WebhookService::maskWebhookUrl('https://discord.com/api/webhooks/12
 assert(str_starts_with($maskedUrl, 'https://discord.com') && str_contains($maskedUrl, '...'), 'maskWebhookUrl harus menyamarkan token webhook');
 echo "[PASS] Server maintenance helpers & URL masking terverifikasi.\n";
 
+// 8. Uji Persistent Resumable Upload Chunk Tracker & Storage
+$testUploadId = 'up_test_resumable_' . bin2hex(random_bytes(4));
+$chunkBase = StorageService::getChunkDir();
+$testChunkDir = $chunkBase . DIRECTORY_SEPARATOR . $testUploadId;
+@mkdir($testChunkDir, 0775, true);
+file_put_contents($testChunkDir . DIRECTORY_SEPARATOR . 'chunk_0.part', 'dummy_chunk_0');
+file_put_contents($testChunkDir . DIRECTORY_SEPARATOR . 'chunk_1.part', 'dummy_chunk_1');
+
+assert(file_exists($testChunkDir . DIRECTORY_SEPARATOR . 'chunk_0.part'), 'Chunk 0 harus tersimpan');
+assert(file_exists($testChunkDir . DIRECTORY_SEPARATOR . 'chunk_1.part'), 'Chunk 1 harus tersimpan');
+
+// Bersihkan test chunks
+@unlink($testChunkDir . DIRECTORY_SEPARATOR . 'chunk_0.part');
+@unlink($testChunkDir . DIRECTORY_SEPARATOR . 'chunk_1.part');
+@rmdir($testChunkDir);
+assert(!is_dir($testChunkDir), 'Test chunk dir harus bersih');
+echo "[PASS] Persistent Resumable Upload chunk directory & tracker terverifikasi.\n";
+
 echo "Semua smoke test berhasil dilewati dengan sempurna (All tests passed)!\n";

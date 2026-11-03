@@ -79,6 +79,9 @@ switch ($action) {
     case 'upload_chunk':
         (new DriveController())->uploadChunk();
         break;
+    case 'check_upload_chunks':
+        (new DriveController())->checkUploadChunks();
+        break;
     case 'delete_file':
         (new DriveController())->deleteFile();
         break;
