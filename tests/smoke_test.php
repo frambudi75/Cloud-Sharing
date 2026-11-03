@@ -50,9 +50,12 @@ SettingService::set('test_key', 'test_val');
 assert(SettingService::get('test_key') === 'test_val', 'SettingService::get harus mengembalikan nilai yang diset');
 assert(SettingService::get('non_existent_key', 'fallback') === 'fallback', 'SettingService::get harus mengembalikan fallback untuk key kosong');
 
-// WebhookService saat disabled (default 0) harus return false tanpa melempar exception
+$origWebhook = SettingService::get('webhook_enabled', '0');
+SettingService::set('webhook_enabled', '0');
 assert(WebhookService::trigger('upload', 'Judul', 'Deskripsi') === false, 'Webhook saat disable harus false');
+SettingService::set('webhook_enabled', '1');
 assert(WebhookService::trigger('invalid_event', 'Judul', 'Deskripsi') === false, 'Webhook dengan event tidak valid harus false');
+SettingService::set('webhook_enabled', $origWebhook);
 echo "[PASS] SettingService dan WebhookService safe execution terverifikasi.\n";
 
 // 6. Uji ActivityLogService Metadata & Formatting
