@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Services\AuthService;
+use App\Services\CacheService;
 use App\Services\DownloadService;
 use App\Services\ShareService;
 use App\Services\StorageService;
@@ -48,18 +49,31 @@ class GuestController
 
         $passwordError = null;
 
-        // Handle POST password unlock
+        // Handle POST password unlock dengan proteksi anti brute-force
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['unlock_password'])) {
-            $csrf = $_POST['csrf_token'] ?? null;
-            if (!AuthService::verifyCsrf($csrf)) {
-                $passwordError = 'Sesi keamanan kedaluwarsa. Silakan muat ulang halaman.';
+            $clientIp = $_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+            $rateKey = 'share_pass_rate:' . md5($clientIp . '_' . $token);
+            $attempts = (int) (CacheService::get($rateKey) ?? 0);
+
+            if ($attempts >= 5) {
+                $passwordError = 'Terlalu banyak percobaan kata sandi yang salah. Akses dibatasi selama 15 menit.';
             } else {
-                $submittedPassword = (string) $_POST['unlock_password'];
-                if (ShareService::verifyPassword($share, $submittedPassword)) {
-                    $_SESSION["unlocked_share_{$token}"] = true;
-                    $isUnlocked = true;
+                $csrf = $_POST['csrf_token'] ?? null;
+                if (!AuthService::verifyCsrf($csrf)) {
+                    $passwordError = 'Sesi keamanan kedaluwarsa. Silakan muat ulang halaman.';
                 } else {
-                    $passwordError = 'Kata sandi salah. Silakan coba kembali.';
+                    $submittedPassword = (string) $_POST['unlock_password'];
+                    if (ShareService::verifyPassword($share, $submittedPassword)) {
+                        CacheService::delete($rateKey);
+                        $_SESSION["unlocked_share_{$token}"] = true;
+                        $isUnlocked = true;
+                    } else {
+                        CacheService::set($rateKey, $attempts + 1, 900); // 15 menit
+                        $remaining = 5 - ($attempts + 1);
+                        $passwordError = $remaining > 0 
+                            ? "Kata sandi salah. Sisa {$remaining} kesempatan percobaan." 
+                            : 'Terlalu banyak percobaan kata sandi yang salah. Akses dibatasi selama 15 menit.';
+                    }
                 }
             }
         }
