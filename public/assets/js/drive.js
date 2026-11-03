@@ -1376,24 +1376,42 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    let currentUploadXhr = null;
+    let isUploadCancelled = false;
+    let isUploadActive = false;
+
+    window.addEventListener('beforeunload', (e) => {
+        if (isUploadActive) {
+            e.preventDefault();
+            e.returnValue = 'Unggahan berkas sedang berlangsung. Yakin ingin meninggalkan halaman ini?';
+            return e.returnValue;
+        }
+    });
+
     async function handleFiles(fileList) {
         if (!fileList || fileList.length === 0) return;
         const files = Array.from(fileList);
         let successCount = 0;
-        for (let i = 0; i < files.length; i++) {
-            const ok = await uploadSingleFile(files[i], i + 1, files.length);
-            if (ok) successCount++;
+        isUploadActive = true;
+        try {
+            for (let i = 0; i < files.length; i++) {
+                const ok = await uploadSingleFile(files[i], i + 1, files.length);
+                if (ok) successCount++;
+            }
+        } finally {
+            isUploadActive = false;
         }
         if (successCount > 0) {
             showToast(`${successCount} berkas berhasil diunggah.`);
             setTimeout(() => {
-                window.location.reload();
+                if (typeof navigateDriveSpa === 'function') {
+                    navigateDriveSpa(window.location.href, false);
+                } else {
+                    window.location.reload();
+                }
             }, 600);
         }
     }
-
-    let currentUploadXhr = null;
-    let isUploadCancelled = false;
 
     function getOrCreateUploadDock() {
         let dock = document.getElementById('uploadDock');
