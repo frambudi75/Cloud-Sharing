@@ -13,13 +13,12 @@ RUN apk update && apk add --no-cache \
     bash \
     $PHPIZE_DEPS
 
-# Konfigurasi dan install PHP extensions (GD, PDO MySQL, Zip, Opcache)
+# Konfigurasi dan install PHP extensions (GD, PDO MySQL, Zip; OPcache sudah built-in di PHP 8.5)
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-install -j$(nproc) \
         pdo_mysql \
         gd \
-        zip \
-        opcache
+        zip
 
 # Install Redis extension via PECL
 RUN pecl install redis \
@@ -39,4 +38,3 @@ EXPOSE 9000
 
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["php-fpm"]
-
