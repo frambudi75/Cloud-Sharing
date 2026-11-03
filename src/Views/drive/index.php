@@ -125,48 +125,48 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
 
     <!-- Top Navigation Bar (Mockup Aligned & Glassmorphism) -->
     <header class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 sticky top-0 z-30 shadow-xs transition-colors">
-        <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div class="max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
             
-            <!-- Left: Logo & Subtitle -->
-            <div class="flex items-center space-x-3">
-                <a href="?action=drive" class="flex items-center space-x-3 group">
+            <!-- Left: Logo & Brand Title -->
+            <div class="flex items-center space-x-2 sm:space-x-3 min-w-0">
+                <a href="?action=drive" class="flex items-center space-x-2.5 sm:space-x-3 group min-w-0">
                     <img src="assets/img/favicon.svg" alt="Cloud Sharing Logo" 
-                         class="h-10 w-10 rounded-xl shadow-sm shadow-brand-500/20 group-hover:scale-105 transition-all duration-200">
-                    <div>
-                        <div class="flex items-center gap-2">
-                            <span class="font-extrabold text-slate-900 dark:text-white text-lg tracking-tight block leading-tight">Cloud Sharing</span>
-                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/60 font-mono shadow-2xs" title="Versi Aplikasi">v<?= APP_VERSION ?></span>
+                         class="h-8 w-8 sm:h-10 sm:w-10 rounded-xl shadow-sm shadow-brand-500/20 group-hover:scale-105 transition-all duration-200 flex-shrink-0">
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-1.5 sm:gap-2">
+                            <span class="font-extrabold text-slate-900 dark:text-white text-base sm:text-lg tracking-tight whitespace-nowrap">Cloud Sharing</span>
+                            <span class="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/60 font-mono shadow-2xs" title="Versi Aplikasi">v<?= APP_VERSION ?></span>
                         </div>
-                        <span class="text-[10px] text-slate-400 font-medium">PHP <?= PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION ?> • Redis Powered</span>
+                        <span class="hidden sm:block text-[10px] text-slate-400 font-medium leading-none mt-0.5">PHP <?= PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION ?> • Redis Powered</span>
                     </div>
                 </a>
             </div>
 
-            <!-- Right: Quick Command Palette, Theme Toggle & Avatar Dropdown -->
-            <div class="flex items-center space-x-2 sm:space-x-2.5">
-                <!-- Command Palette Trigger (Ctrl + K) -->
+            <!-- Right: Quick Command Palette (Desktop), Theme Toggle & Avatar Dropdown -->
+            <div class="flex items-center space-x-1.5 sm:space-x-2.5 flex-shrink-0">
+                <!-- Command Palette Trigger (Ctrl + K) - Desktop & Tablet Only -->
                 <button type="button" onclick="openCommandPalette()" 
-                        class="inline-flex items-center h-9 px-3 rounded-xl border border-slate-200 hover:border-brand-300 bg-slate-50/80 hover:bg-white text-slate-500 hover:text-slate-800 text-xs font-medium transition-all shadow-2xs"
+                        class="hidden sm:inline-flex items-center h-9 px-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-brand-300 dark:hover:border-brand-500 bg-slate-50/80 dark:bg-slate-800 hover:bg-white dark:hover:bg-slate-700 text-slate-500 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white text-xs font-medium transition-all shadow-2xs"
                         title="Pencarian & Perintah Cepat (Ctrl+K)">
                     <svg class="w-3.5 h-3.5 sm:mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                     </svg>
                     <span class="hidden md:inline mr-2 text-slate-400">Cari atau perintah...</span>
-                    <kbd class="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono font-bold text-slate-500 bg-white rounded border border-slate-200">Ctrl K</kbd>
+                    <kbd class="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-700">Ctrl K</kbd>
                 </button>
 
                 <!-- Dark Mode Toggle Button -->
                 <button type="button" id="themeToggleBtn" onclick="toggleDarkMode()" 
-                        class="h-9 w-9 rounded-xl border border-slate-200 hover:bg-slate-100 flex items-center justify-center text-slate-600 transition-colors" 
+                        class="h-8 w-8 sm:h-9 sm:w-9 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 transition-colors shadow-2xs" 
                         title="Ganti Mode Terang / Gelap">
                     <svg id="themeIconSun" class="w-4 h-4 hidden text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                    <svg id="themeIconMoon" class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                    <svg id="themeIconMoon" class="w-4 h-4 text-slate-600 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
                 </button>
 
                 <!-- User Profile Avatar Dropdown -->
                 <div class="relative" id="userDropdownWrapper">
                     <button type="button" onclick="toggleUserDropdown(event)" 
-                            class="flex items-center space-x-2.5 p-1 pr-2.5 rounded-xl border border-slate-200/80 hover:border-slate-300 bg-white hover:bg-slate-50 transition-all shadow-2xs"
+                            class="flex items-center space-x-1.5 sm:space-x-2.5 p-1 sm:pr-2.5 pr-1.5 rounded-xl border border-slate-200/80 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-2xs"
                             title="Menu Akun & Administrasi">
                         <?php if (!empty($user['avatar_path'])): ?>
                             <img src="?action=avatar&user_id=<?= $user['id'] ?>&t=<?= !empty($user['updated_at']) ? strtotime($user['updated_at']) : time() ?>" 
@@ -178,7 +178,7 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                             </div>
                         <?php endif; ?>
                         <div class="hidden sm:flex flex-col text-left leading-none">
-                            <span class="text-xs font-bold text-slate-800"><?= htmlspecialchars($user['username'] ?? 'User') ?></span>
+                            <span class="text-xs font-bold text-slate-800 dark:text-slate-100"><?= htmlspecialchars($user['username'] ?? 'User') ?></span>
                             <span class="text-[9px] text-slate-400 font-bold uppercase mt-0.5"><?= htmlspecialchars($user['role'] ?? 'Member') ?></span>
                         </div>
                         <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

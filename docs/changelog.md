@@ -2,6 +2,14 @@
 
 Semua perubahan pada spesifikasi dan implementasi proyek file-sharing akan dicatat di dokumen ini.
 
+## [v1.5.7] - 2026-11-03
+### Diperbaiki & Ditingkatkan (Top Navigation Bar Mobile Polish)
+- **Restrukturisasi Navbar Atas pada Layar Smartphone**:
+  - Judul brand `Cloud Sharing` diatur menjadi satu baris rapat (`whitespace-nowrap`) sehingga tidak lagi membungkus (*wrap*) menjadi 2 baris canggung di mobile.
+  - Subtitle backend (`PHP 8.5 • Redis Powered`) dan badge versi `v1.5.7` disembunyikan di layar smartphone (`hidden sm:block` / `hidden sm:inline-flex`), merampingkan tinggi navbar menjadi `h-14` (56px) yang ringkas. Versi aplikasi tetap tersedia di dalam menu profil akun dan halaman About.
+  - Tombol pintasan Command Palette `Ctrl+K` (ikon search di navbar) disembunyikan di mobile (`hidden sm:inline-flex`) untuk menghilangkan redundansi dengan kolom pencarian berkas utama di toolbar bawah.
+  - Menghilangkan tumpang tindih elemen antara judul aplikasi, tombol search, toggle tema, dan tombol profil akun, sehingga bilah atas mobile kini tampil bersih, elegan, dan lega.
+
 ## [v1.5.6] - 2026-11-03
 ### Ditambahkan & Ditingkatkan (Penyempurnaan Tampilan Mobile Terpadu)
 - **Reposisi Mobile FAB (Floating Action Button)**:
