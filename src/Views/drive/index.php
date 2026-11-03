@@ -133,7 +133,10 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                     <img src="assets/img/favicon.svg" alt="Cloud Sharing Logo" 
                          class="h-10 w-10 rounded-xl shadow-sm shadow-brand-500/20 group-hover:scale-105 transition-all duration-200">
                     <div>
-                        <span class="font-extrabold text-slate-900 text-lg tracking-tight block leading-tight">Cloud Sharing</span>
+                        <div class="flex items-center gap-2">
+                            <span class="font-extrabold text-slate-900 dark:text-white text-lg tracking-tight block leading-tight">Cloud Sharing</span>
+                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/60 font-mono shadow-2xs" title="Versi Aplikasi">v<?= APP_VERSION ?></span>
+                        </div>
                         <span class="text-[10px] text-slate-400 font-medium">PHP <?= PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION ?> • Redis Powered</span>
                     </div>
                 </a>
@@ -185,9 +188,12 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
 
                     <!-- Dropdown Card -->
                     <div id="userDropdownMenu" class="hidden absolute right-0 mt-2 w-60 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl py-2 z-50 text-xs font-semibold text-slate-700 dark:text-slate-200 animate-item-in">
-                        <div class="px-4 py-2.5 border-b border-slate-100 dark:border-slate-800">
-                            <p class="font-bold text-slate-900 dark:text-white truncate"><?= htmlspecialchars($user['username'] ?? 'User') ?></p>
-                            <p class="text-[11px] text-slate-400 font-normal truncate mt-0.5"><?= htmlspecialchars($user['email'] ?? '') ?></p>
+                        <div class="px-4 py-2.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                            <div class="truncate pr-2">
+                                <p class="font-bold text-slate-900 dark:text-white truncate"><?= htmlspecialchars($user['username'] ?? 'User') ?></p>
+                                <p class="text-[11px] text-slate-400 font-normal truncate mt-0.5"><?= htmlspecialchars($user['email'] ?? '') ?></p>
+                            </div>
+                            <span class="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/40 font-mono">v<?= APP_VERSION ?></span>
                         </div>
 
                         <div class="py-1">

@@ -25,3 +25,8 @@ $envPath = dirname(__DIR__) . '/.env';
 if (file_exists($envPath)) {
     Env::load($envPath);
 }
+
+// Versi Rilis Aplikasi Terpadu (Global App Version)
+if (!defined('APP_VERSION')) {
+    define('APP_VERSION', '1.5.0');
+}

@@ -842,7 +842,7 @@ $maintenanceActive = $globalSettings['maintenance_mode'] ?? false;
                     <div>
                         <div class="flex items-center gap-2">
                             <h3 class="text-base font-bold text-slate-900 dark:text-white">Informasi Aplikasi & Pengembang</h3>
-                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-50 dark:bg-brand-950/60 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-800">v1.4.0</span>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-50 dark:bg-brand-950/60 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-800">v<?= APP_VERSION ?></span>
                         </div>
                         <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                             Dikembangkan oleh <strong class="text-slate-800 dark:text-slate-200">Habib Frambudi</strong> (<code class="font-mono text-brand-600 dark:text-brand-400 font-bold">@frambudi75</code>) — Full-Stack Developer & System Architect.

@@ -13,7 +13,7 @@ require_once dirname(__DIR__) . '/layouts/header.php';
         <div class="flex items-center space-x-2.5">
             <img src="assets/img/favicon.svg" alt="Cloud Sharing Logo" class="h-8 w-8 rounded-xl shadow-xs">
             <span class="font-extrabold text-slate-900 dark:text-white text-base tracking-tight">Cloud Sharing</span>
-            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-50 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300 border border-brand-200/60 dark:border-brand-800/40">v1.2</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-50 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300 border border-brand-200/60 dark:border-brand-800/40">v<?= APP_VERSION ?></span>
         </div>
 
         <!-- Dark Mode Toggle Button -->
