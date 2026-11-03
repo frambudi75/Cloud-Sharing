@@ -86,9 +86,9 @@ class StorageService
             foreach ($items as $item) {
                 if ($item === '.' || $item === '..') continue;
                 $itemPath = $chunkDir . DIRECTORY_SEPARATOR . $item;
-                if (is_dir($itemPath)) {
-                    $mtime = filemtime($itemPath);
-                    if ($maxAgeSeconds === 0 || ($mtime !== false && ($now - $mtime) > $maxAgeSeconds)) {
+                $mtime = filemtime($itemPath);
+                if ($maxAgeSeconds === 0 || ($mtime !== false && ($now - $mtime) > $maxAgeSeconds)) {
+                    if (is_dir($itemPath)) {
                         $files = scandir($itemPath);
                         if ($files) {
                             foreach ($files as $f) {
@@ -101,6 +101,9 @@ class StorageService
                         }
                         @rmdir($itemPath);
                         $deletedDirs++;
+                    } elseif (is_file($itemPath)) {
+                        $freedBytes += (int) @filesize($itemPath);
+                        @unlink($itemPath);
                     }
                 }
             }

@@ -389,16 +389,16 @@ class DriveController
             }
 
             $chunkBaseDir = StorageService::getChunkDir();
-            $chunkDir = $chunkBaseDir . DIRECTORY_SEPARATOR . $uploadId;
+            $metaPath = $chunkBaseDir . DIRECTORY_SEPARATOR . $uploadId . '.meta.json';
+            $targetTemp = $chunkBaseDir . DIRECTORY_SEPARATOR . $uploadId . '.part';
 
             $existingChunks = [];
-            if (is_dir($chunkDir)) {
-                @touch($chunkDir);
-                for ($i = 0; $i < $totalChunks; $i++) {
-                    $part = $chunkDir . DIRECTORY_SEPARATOR . "chunk_{$i}.part";
-                    if (file_exists($part) && (int)@filesize($part) > 0) {
-                        $existingChunks[] = $i;
-                    }
+            if (file_exists($metaPath) && file_exists($targetTemp)) {
+                @touch($metaPath);
+                @touch($targetTemp);
+                $meta = json_decode((string)file_get_contents($metaPath), true);
+                if (is_array($meta) && isset($meta['chunks']) && is_array($meta['chunks'])) {
+                    $existingChunks = array_values(array_unique(array_map('intval', $meta['chunks'])));
                 }
             }
 
@@ -437,10 +437,15 @@ class DriveController
             }
 
             $chunkBaseDir = StorageService::getChunkDir();
-            $chunkDir = $chunkBaseDir . DIRECTORY_SEPARATOR . $uploadId;
+            if (!is_dir($chunkBaseDir)) {
+                @mkdir($chunkBaseDir, 0775, true);
+            }
 
-            // Cek kuota pada potongan pertama atau jika direktori chunk baru diinisialisasi
-            if ($chunkIndex === 0 || !is_dir($chunkDir)) {
+            $metaPath = $chunkBaseDir . DIRECTORY_SEPARATOR . $uploadId . '.meta.json';
+            $targetTemp = $chunkBaseDir . DIRECTORY_SEPARATOR . $uploadId . '.part';
+
+            // Cek kuota pada potongan pertama atau jika berkas sementara belum ada
+            if ($chunkIndex === 0 || !file_exists($targetTemp)) {
                 $user = AuthService::user();
                 if ($user && ($user['storage_used'] + $totalSize) > $user['storage_quota']) {
                     $this->respondJson(['success' => false, 'error' => 'Kapasitas penyimpanan Anda tidak mencukupi untuk berkas ini.']);
@@ -454,16 +459,39 @@ class DriveController
                 return;
             }
 
-            if (!is_dir($chunkDir)) {
-                @mkdir($chunkDir, 0775, true);
-            }
+            // Tulis potongan langsung ke offset byte yang tepat (Direct-Offset Streaming)
+            // CHUNK_SIZE = 8MB (8388608 bytes)
+            $chunkSizeBytes = 8 * 1024 * 1024;
+            $offset = $chunkIndex * $chunkSizeBytes;
 
-            $chunkPath = $chunkDir . DIRECTORY_SEPARATOR . "chunk_{$chunkIndex}.part";
-            if (!move_uploaded_file($chunkFile['tmp_name'], $chunkPath)) {
-                $this->respondJson(['success' => false, 'error' => "Gagal menyimpan potongan ke-{$chunkIndex}."]);
+            $out = fopen($targetTemp, 'c+b');
+            if (!$out) {
+                $this->respondJson(['success' => false, 'error' => "Gagal membuka berkas penyimpanan sementara."]);
                 return;
             }
-            @touch($chunkDir);
+
+            fseek($out, $offset);
+            $in = fopen($chunkFile['tmp_name'], 'rb');
+            if ($in) {
+                stream_copy_to_stream($in, $out);
+                fclose($in);
+            }
+            fclose($out);
+            @touch($targetTemp);
+
+            // Catat potongan yang berhasil ke file metadata
+            $meta = [];
+            if (file_exists($metaPath)) {
+                $meta = json_decode((string)file_get_contents($metaPath), true) ?: [];
+            }
+            $uploadedChunks = isset($meta['chunks']) && is_array($meta['chunks']) ? $meta['chunks'] : [];
+            if (!in_array($chunkIndex, $uploadedChunks, true)) {
+                $uploadedChunks[] = $chunkIndex;
+            }
+            $meta['chunks'] = $uploadedChunks;
+            $meta['updated_at'] = time();
+            file_put_contents($metaPath, json_encode($meta));
+            @touch($metaPath);
 
             // Jika masih ada potongan berikutnya
             if ($chunkIndex < $totalChunks - 1) {
@@ -479,8 +507,7 @@ class DriveController
             // Seluruh potongan lengkap, verifikasi integritas
             $missingChunks = [];
             for ($i = 0; $i < $totalChunks; $i++) {
-                $part = $chunkDir . DIRECTORY_SEPARATOR . "chunk_{$i}.part";
-                if (!file_exists($part) || (int)@filesize($part) === 0) {
+                if (!in_array($i, $uploadedChunks, true)) {
                     $missingChunks[] = $i;
                 }
             }
@@ -488,41 +515,31 @@ class DriveController
             if (!empty($missingChunks)) {
                 $this->respondJson([
                     'success' => false,
-                    'error' => "Potongan berkas ke-{$missingChunks[0]} tidak ditemukan.",
+                    'error' => "Potongan berkas ke-{$missingChunks[0]} belum lengkap.",
                     'missing_chunks' => $missingChunks
                 ]);
                 return;
             }
 
-            // Gabungkan potongan
-            $mergedTempPath = $chunkDir . DIRECTORY_SEPARATOR . 'merged.tmp';
-            $out = fopen($mergedTempPath, 'wb');
-            if (!$out) {
-                $this->respondJson(['success' => false, 'error' => 'Gagal membuat berkas penggabungan di server.']);
-                return;
-            }
+            // Berkas sudah terpasang utuh 100% di disk secara langsung!
+            // Simpan berkas gabungan ke storage permanen (instan via rename/move)
+            $result = StorageService::storeMergedFile($targetTemp, $originalName, $userId, $folderId);
 
-            for ($i = 0; $i < $totalChunks; $i++) {
-                $part = $chunkDir . DIRECTORY_SEPARATOR . "chunk_{$i}.part";
-                $in = fopen($part, 'rb');
-                if ($in) {
-                    stream_copy_to_stream($in, $out);
-                    fclose($in);
-                }
-            }
-            fclose($out);
-
-            // Simpan berkas gabungan ke storage permanen
-            $result = StorageService::storeMergedFile($mergedTempPath, $originalName, $userId, $folderId);
-
-            // Bersihkan direktori chunk sementara setelah berhasil
+            // Bersihkan metadata & file sementara setelah berhasil
             if (!empty($result['success'])) {
-                for ($i = 0; $i < $totalChunks; $i++) {
-                    @unlink($chunkDir . DIRECTORY_SEPARATOR . "chunk_{$i}.part");
-                }
-                @unlink($mergedTempPath);
-                @rmdir($chunkDir);
+                @unlink($metaPath);
+                @unlink($targetTemp);
             }
+
+            $result['completed'] = true;
+            $this->respondJson($result);
+        } catch (\Throwable $e) {
+            $this->respondJson([
+                'success' => false,
+                'error' => 'Gagal memproses potongan berkas: ' . $e->getMessage()
+            ]);
+        }
+    }
 
             $result['completed'] = true;
             $this->respondJson($result);
