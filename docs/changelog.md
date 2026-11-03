@@ -2,7 +2,21 @@
 
 Semua perubahan pada spesifikasi dan implementasi proyek file-sharing akan dicatat di dokumen ini.
 
-## [2026-11-03]
+## [v1.5.1] - 2026-11-03
+### Ditambahkan & Ditingkatkan
+- **Direct-Offset Chunk Streaming (Zero-Merge Overhead)**:
+  - Mengubah metode penggabungan potongan berkas besar: tiap potongan 8 MB langsung ditulis ke byte offset target pada berkas sementara menggunakan `fseek()`.
+  - Mengeliminasi proses *reassembly / merge loop* 115 detik menjadi 0 detik, menuntaskan masalah HTTP 504 Gateway Timeout pada reverse proxy VPS.
+  - Bypass kalkulasi hash SHA-256 sinkron untuk file > 50 MB guna mencegah blocking CPU/IO.
+- **Proteksi Anti-Refresh Tidak Sengaja (*beforeunload Guard*)**:
+  - Penambahan pendeteksi navigasi browser `beforeunload` saat proses pengunggahan aktif.
+- **Auto-Detection Pintar Layar Setup Database**:
+  - Deteksi otomatis lingkungan Docker vs XAMPP pada `src/Views/system/db_setup.php`.
+  - Peringatan cerdas untuk penanganan password volume MariaDB yang terlanjur terinisialisasi.
+- **Anti-Brute Force Password Share Publik**:
+  - Penerapan rate limiting berbasis IP (maksimal 5 kali percobaan salah per 15 menit) pada pembukaan berkas yang diproteksi password.
+
+## [v1.5.0] - 2026-11-03
 ### Ditambahkan & Ditingkatkan
 - **Upgrade Runtime ke PHP 8.5**:
   - Peningkatan basis Docker image ke `php:8.5-fpm-alpine` dengan Zend OPcache built-in dan JIT Compiler (`tracing`, 64MB).
