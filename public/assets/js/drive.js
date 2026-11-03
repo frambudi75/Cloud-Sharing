@@ -606,16 +606,68 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // =========================================================================
-    // 6. New Folder Management
+    // 6. New Folder & Primary Action Management
     // =========================================================================
+    window.openNewFolderModal = function () {
+        const folderInput = document.getElementById('newFolderName');
+        if (folderInput) folderInput.value = '';
+        openModal('newFolderModal');
+        setTimeout(() => {
+            if (folderInput) folderInput.focus();
+        }, 150);
+    };
+
+    window.triggerFileUpload = function () {
+        const fileInput = document.getElementById('fileUploadInput');
+        if (fileInput) {
+            fileInput.click();
+        } else {
+            // Pindah ke tab Drive Saya dan buka file chooser secara otomatis
+            window.location.href = '?action=drive&tab=my_drive&trigger_upload=1';
+        }
+    };
+
+    window.toggleSidebarNewMenu = function (e) {
+        if (e) e.stopPropagation();
+        const dropdown = document.getElementById('sidebarNewMenuDropdown');
+        const caret = document.getElementById('sidebarNewCaret');
+        if (!dropdown) return;
+        const isClosed = dropdown.classList.toggle('hidden');
+        if (caret) {
+            caret.style.transform = isClosed ? 'rotate(0deg)' : 'rotate(180deg)';
+        }
+    };
+
+    window.closeSidebarNewMenu = function () {
+        const dropdown = document.getElementById('sidebarNewMenuDropdown');
+        const caret = document.getElementById('sidebarNewCaret');
+        if (dropdown && !dropdown.classList.contains('hidden')) {
+            dropdown.classList.add('hidden');
+            if (caret) caret.style.transform = 'rotate(0deg)';
+        }
+    };
+
     document.addEventListener('click', (e) => {
+        const wrapper = document.getElementById('sidebarNewActionWrapper');
+        if (wrapper && !wrapper.contains(e.target)) {
+            window.closeSidebarNewMenu();
+        }
+
         const btn = e.target.closest('#btnNewFolderModal');
         if (btn) {
-            const folderInput = document.getElementById('newFolderName');
-            if (folderInput) folderInput.value = '';
-            openModal('newFolderModal');
+            openNewFolderModal();
         }
     });
+
+    // Cek parameter trigger_upload saat dialihkan dari tab lain
+    if (new URLSearchParams(window.location.search).get('trigger_upload') === '1') {
+        const cleanUrl = window.location.pathname + '?action=drive&tab=my_drive';
+        window.history.replaceState({}, '', cleanUrl);
+        setTimeout(() => {
+            const fi = document.getElementById('fileUploadInput');
+            if (fi) fi.click();
+        }, 350);
+    }
 
     window.handleCreateFolder = async function (e) {
         e.preventDefault();
@@ -637,7 +689,13 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const result = await response.json();
             if (result.success) {
-                window.location.reload();
+                const urlParams = new URLSearchParams(window.location.search);
+                const currentTab = urlParams.get('tab') || 'my_drive';
+                if (currentTab !== 'my_drive') {
+                    window.location.href = '?action=drive&tab=my_drive';
+                } else {
+                    window.location.reload();
+                }
             } else {
                 alert(result.error || 'Gagal membuat folder.');
             }

@@ -1,5 +1,5 @@
 // Service Worker for Cloud Sharing PWA
-const CACHE_NAME = 'cloudsharing-v1.5.4';
+const CACHE_NAME = 'cloudsharing-v1.5.5';
 const STATIC_ASSETS = [
     'assets/img/favicon.svg',
     'manifest.json'
@@ -33,13 +33,25 @@ self.addEventListener('fetch', (event) => {
     const request = event.request;
     const url = new URL(request.url);
 
-    // Skip non-GET requests and API/download streams
-    if (request.method !== 'GET' || url.search.includes('download') || url.search.includes('upload')) {
+    // Only handle http and https requests
+    if (!url.protocol.startsWith('http')) {
         return;
     }
 
-    // Static Assets: Cache-first
-    if (url.pathname.includes('/assets/') || url.pathname.endsWith('.svg') || url.pathname.endsWith('.png') || url.pathname.endsWith('.css')) {
+    // Skip non-GET requests and dynamic streaming/actions
+    if (
+        request.method !== 'GET' ||
+        url.search.includes('download') ||
+        url.search.includes('upload') ||
+        url.search.includes('stream') ||
+        url.search.includes('raw=') ||
+        request.headers.get('range')
+    ) {
+        return;
+    }
+
+    // Static Assets: Cache-first with robust fallback
+    if (url.pathname.includes('/assets/') || url.pathname.endsWith('.svg') || url.pathname.endsWith('.png') || url.pathname.endsWith('.css') || url.pathname.endsWith('.js')) {
         event.respondWith(
             caches.match(request).then((cachedResponse) => {
                 if (cachedResponse) return cachedResponse;
@@ -51,7 +63,11 @@ self.addEventListener('fetch', (event) => {
                         });
                     }
                     return networkResponse;
+                }).catch(() => {
+                    return new Response('', { status: 408, statusText: 'Asset Fetch Failed' });
                 });
+            }).catch(() => {
+                return new Response('', { status: 408, statusText: 'Asset Match Failed' });
             })
         );
         return;
@@ -60,8 +76,12 @@ self.addEventListener('fetch', (event) => {
     // Dynamic Pages: Network-first with safe cache fallback
     event.respondWith(
         fetch(request).catch(async () => {
-            const cached = await caches.match(request);
-            if (cached) return cached;
+            try {
+                const cached = await caches.match(request);
+                if (cached) return cached;
+            } catch (e) {
+                // Ignore cache match error
+            }
             return new Response('Halaman tidak dapat diakses saat offline.', {
                 status: 503,
                 statusText: 'Service Unavailable',

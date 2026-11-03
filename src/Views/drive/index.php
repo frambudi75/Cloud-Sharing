@@ -261,6 +261,70 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
             <!-- 1. LEFT SIDEBAR NAVIGATION (Mockup Aligned)                    -->
             <!-- ============================================================= -->
             <aside class="col-span-12 lg:col-span-3 xl:col-span-2 space-y-2.5">
+                
+                <!-- Google Drive-Style '+ Baru' Primary Action Button with Dropdown -->
+                <div class="relative hidden lg:block" id="sidebarNewActionWrapper">
+                    <button type="button" 
+                            id="btnSidebarNewAction"
+                            onclick="toggleSidebarNewMenu(event)"
+                            class="w-full flex items-center justify-between px-4 py-3 bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-700 hover:to-indigo-700 text-white rounded-2xl shadow-md shadow-brand-500/25 hover:shadow-lg hover:shadow-brand-500/35 active:scale-[0.98] transition-all font-bold text-sm tracking-wide">
+                        <span class="flex items-center gap-2.5">
+                            <span class="w-6 h-6 rounded-lg bg-white/20 flex items-center justify-center">
+                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path>
+                                </svg>
+                            </span>
+                            <span>Baru</span>
+                        </span>
+                        <svg id="sidebarNewCaret" class="w-4 h-4 text-brand-200 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+
+                    <!-- Dropdown Menu -->
+                    <div id="sidebarNewMenuDropdown" 
+                         class="hidden absolute left-0 right-0 top-full mt-2 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 py-2 z-50 animate-item-in">
+                        <button type="button" onclick="openNewFolderModal(); closeSidebarNewMenu();" 
+                                class="w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors">
+                            <span class="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path>
+                                </svg>
+                            </span>
+                            <div class="text-left">
+                                <div class="font-bold text-slate-800 dark:text-slate-100">Folder Baru</div>
+                                <div class="text-[10px] text-slate-400">Buat folder pengelompokan</div>
+                            </div>
+                        </button>
+
+                        <button type="button" onclick="triggerFileUpload(); closeSidebarNewMenu();" 
+                                class="w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors">
+                            <span class="w-7 h-7 rounded-lg bg-brand-50 dark:bg-brand-950/50 text-brand-600 dark:text-brand-400 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                                </svg>
+                            </span>
+                            <div class="text-left">
+                                <div class="font-bold text-slate-800 dark:text-slate-100">Upload Berkas</div>
+                                <div class="text-[10px] text-slate-400">Unggah berkas ke drive</div>
+                            </div>
+                        </button>
+
+                        <button type="button" onclick="openNewTextFileModal(); closeSidebarNewMenu();" 
+                                class="w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors">
+                            <span class="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                            </span>
+                            <div class="text-left">
+                                <div class="font-bold text-slate-800 dark:text-slate-100">Catatan / Teks Baru</div>
+                                <div class="text-[10px] text-slate-400">Tulis teks, note atau kode</div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
                 <nav class="hidden lg:block space-y-1 bg-white p-2 rounded-2xl border border-slate-200/80 shadow-xs" aria-label="Sidebar">
                     
                     <!-- Drive Saya -->
@@ -1919,16 +1983,25 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
     </div>
 
     <!-- Modal 1: Buat Folder Baru -->
-    <div id="newFolderModal" class="hidden fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 animate-item-in">
-            <h3 class="text-base font-bold text-slate-900 mb-1">Buat Folder Baru</h3>
-            <p class="text-xs text-slate-500 mb-4">Masukkan nama untuk mengorganisir berkas Anda.</p>
+    <div id="newFolderModal" class="hidden fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-item-in">
+            <div class="flex items-center gap-3 mb-3">
+                <span class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path>
+                    </svg>
+                </span>
+                <div>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white">Buat Folder Baru</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Masukkan nama untuk mengorganisir berkas Anda.</p>
+                </div>
+            </div>
             <form id="newFolderForm" onsubmit="handleCreateFolder(event)">
                 <input type="text" id="newFolderName" required placeholder="Contoh: Dokumen Proyek" 
-                       class="w-full h-11 px-3.5 rounded-xl border border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-brand-600 focus:ring-1 focus:ring-brand-600 text-sm mb-4">
+                       class="w-full h-11 px-3.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-brand-600 focus:ring-1 focus:ring-brand-600 text-sm mb-4 outline-none transition-all">
                 <div class="flex justify-end gap-2">
                     <button type="button" onclick="closeModal('newFolderModal')" 
-                            class="h-9 px-4 rounded-lg border border-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-50 transition-colors">
+                            class="h-9 px-4 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                         Batal
                     </button>
                     <button type="submit" 

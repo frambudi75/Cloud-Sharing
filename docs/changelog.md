@@ -2,7 +2,23 @@
 
 Semua perubahan pada spesifikasi dan implementasi proyek file-sharing akan dicatat di dokumen ini.
 
-## [v1.5.4] - 2026-11-03
+## [v1.5.5] - 2026-11-03
+### Ditambahkan & Ditingkatkan
+- **Google Drive-Style '+ Baru' Primary Action Button di Sidebar**:
+  - Menambahkan tombol aksi utama `+ Baru` yang mencolok dengan efek gradien dan dropdown menu di bagian atas sidebar kiri (`<aside>`), terlihat di seluruh tab halaman (Drive Saya, Analisis Kuota, Log Aktivitas, Sampah, Tautan Publik, dll).
+  - Pilihan menu cepat:
+    - 📁 **Folder Baru**: Membuka modal pembuatan folder baru secara instan.
+    - 📤 **Upload Berkas**: Memicu dialog unggah berkas (otomatis mengarahkan ke tab Drive Saya jika sedang berada di tab lain).
+    - 📝 **Catatan / Teks Baru**: Membuka editor catatan/kode baru secara langsung.
+  - Mendukung fungsi penutup otomatis (*click outside / backdrop dismiss*).
+
+### Diperbaiki
+- **Akses Pembuatan Folder dari Seluruh Tab & Modal Enhancements**:
+  - Mendefinisikan fungsi global `window.openNewFolderModal()` dan `window.triggerFileUpload()` agar pemanggilan dari Mobile FAB, header, dan sidebar berjalan lancar tanpa `ReferenceError`.
+  - Mengarahkan pengguna secara otomatis ke tab *Drive Saya* setelah membuat folder dari tab sekunder (seperti *Analisis Kuota* atau *Log Aktivitas*) agar folder yang baru dibuat langsung terlihat.
+  - Menambahkan dukungan tema gelap (*Dark Mode*) pada modal pembuatan folder baru (`newFolderModal`).
+- **Service Worker Exception Handling (`sw.js`)**:
+  - Memperbaiki `TypeError: Failed to convert value to 'Response'` di console DevTools dengan menambahkan pengecekan skema protocol `http/https`, mengabaikan streaming/range request, serta menjamin seluruh alur `respondWith()` selalu mengembalikan objek `Response` valid bahkan ketika jaringan gagal atau berkas tidak ditemukan di cache.
 ### Diperbaiki
 - **Auto-Dismiss Upload Dock Widget**:
   - Memperbaiki bug di mana notifikasi/dock progres pengunggahan kecil di sudut kanan bawah tetap bertahan di layar pada status 100% setelah berkas selesai diunggah.

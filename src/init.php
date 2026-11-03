@@ -28,5 +28,5 @@ if (file_exists($envPath)) {
 
 // Versi Rilis Aplikasi Terpadu (Global App Version)
 if (!defined('APP_VERSION')) {
-    define('APP_VERSION', '1.5.4');
+    define('APP_VERSION', '1.5.5');
 }
