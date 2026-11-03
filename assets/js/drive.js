@@ -1401,8 +1401,34 @@ document.addEventListener('DOMContentLoaded', () => {
         } finally {
             isUploadActive = false;
         }
+
+        const dock = document.getElementById('uploadDock');
         if (successCount > 0) {
-            showToast(`${successCount} berkas berhasil diunggah.`);
+            if (dock) {
+                const titleEl = dock.querySelector('#uploadDockTitle');
+                const percentEl = dock.querySelector('#uploadDockPercent');
+                const barEl = dock.querySelector('#uploadDockBar');
+                if (titleEl) titleEl.innerHTML = `<span class="text-emerald-400 font-bold">✓ ${successCount} Berkas Berhasil Diunggah</span>`;
+                if (percentEl) percentEl.innerHTML = '<span class="text-emerald-500 font-bold">100%</span>';
+                if (barEl) {
+                    barEl.style.width = '100%';
+                    barEl.className = 'h-2 rounded-full bg-emerald-500 transition-all duration-150';
+                }
+                // Otomatis tutup dock popup setelah 1.8 detik
+                setTimeout(() => {
+                    const activeDock = document.getElementById('uploadDock');
+                    if (activeDock) {
+                        activeDock.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+                        activeDock.style.opacity = '0';
+                        activeDock.style.transform = 'translateY(16px)';
+                        setTimeout(() => {
+                            try { activeDock.remove(); } catch (e) {}
+                        }, 400);
+                    }
+                }, 1800);
+            }
+
+            showToast(`✓ ${successCount} berkas berhasil diunggah.`);
             setTimeout(() => {
                 if (typeof navigateDriveSpa === 'function') {
                     navigateDriveSpa(window.location.href, false);
@@ -1410,6 +1436,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     window.location.reload();
                 }
             }, 600);
+        } else {
+            if (dock) {
+                setTimeout(() => {
+                    try { dock.remove(); } catch (e) {}
+                }, 1500);
+            }
         }
     }
 
@@ -1418,9 +1450,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!dock) {
             dock = document.createElement('div');
             dock.id = 'uploadDock';
-            dock.className = 'fixed bottom-5 right-5 z-50 w-80 sm:w-96 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden';
+            dock.className = 'fixed bottom-5 right-5 z-50 w-80 sm:w-96 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden';
             dock.innerHTML = `
-                <div class="h-11 px-4 bg-slate-900 text-white flex items-center justify-between text-xs font-semibold">
+                <div class="h-11 px-4 bg-slate-900 dark:bg-slate-800 text-white flex items-center justify-between text-xs font-semibold">
                     <span id="uploadDockTitle">Mengunggah berkas...</span>
                     <div class="flex items-center gap-2">
                         <button type="button" id="uploadDockCancelBtn" class="px-2 py-0.5 rounded text-[11px] bg-rose-500/20 text-rose-300 hover:bg-rose-500 hover:text-white transition-colors">Batal</button>
@@ -1429,10 +1461,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="p-4 space-y-2.5">
                     <div class="flex items-center justify-between text-xs">
-                        <span id="uploadDockFileName" class="text-slate-800 font-medium truncate max-w-[220px]">Nama Berkas</span>
-                        <span id="uploadDockPercent" class="text-brand-600 font-mono font-bold">0%</span>
+                        <span id="uploadDockFileName" class="text-slate-800 dark:text-slate-200 font-medium truncate max-w-[220px]">Nama Berkas</span>
+                        <span id="uploadDockPercent" class="text-brand-600 dark:text-brand-400 font-mono font-bold">0%</span>
                     </div>
-                    <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                    <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
                         <div id="uploadDockBar" class="h-2 rounded-full bg-brand-600 transition-all duration-150" style="width: 0%"></div>
                     </div>
                 </div>
@@ -1510,6 +1542,12 @@ document.addEventListener('DOMContentLoaded', () => {
                                 resolve(false);
                                 return;
                             }
+                            if (barEl) {
+                                barEl.style.width = '100%';
+                                barEl.className = 'h-2 rounded-full bg-emerald-500 transition-all duration-150';
+                            }
+                            if (percentEl) percentEl.innerHTML = '<span class="text-emerald-500 font-bold">100%</span>';
+                            if (titleEl) titleEl.innerHTML = '<span class="text-emerald-400 font-semibold">✓ Selesai</span>';
                             resolve(true);
                         } catch (e) {
                             console.error('Non-JSON response:', xhr.responseText);
@@ -1733,8 +1771,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
 
-                    if (barEl) barEl.style.width = '100%';
-                    if (percentEl) percentEl.textContent = '100%';
+                    if (barEl) {
+                        barEl.style.width = '100%';
+                        barEl.className = 'h-2 rounded-full bg-emerald-500 transition-all duration-150';
+                    }
+                    if (percentEl) percentEl.innerHTML = '<span class="text-emerald-500 font-bold">100%</span>';
+                    if (titleEl) titleEl.innerHTML = '<span class="text-emerald-400 font-semibold">✓ Selesai</span>';
                     resolve(true);
                 } catch (err) {
                     if (!isUploadCancelled) {
@@ -2161,77 +2203,92 @@ document.addEventListener('DOMContentLoaded', () => {
             const textExtensions = ['.txt', '.md', '.markdown', '.json', '.js', '.ts', '.css', '.html', '.htm', '.xml', '.sql', '.sh', '.py', '.php', '.yml', '.yaml', '.log', '.csv', '.env', '.ini'];
             const isTextCode = textExtensions.some(ext => fileNameLower.endsWith(ext)) || (fileData.mime && (fileData.mime.startsWith('text/') || fileData.mime === 'application/json' || fileData.mime === 'application/javascript'));
 
+            const imageControls = document.getElementById('detailImageControls');
+            currentPreviewZoom = 1;
+            currentPreviewRotate = 0;
+
             if (fileData.mime && fileData.mime.startsWith('image/')) {
+                if (imageControls) {
+                    imageControls.classList.remove('hidden');
+                    imageControls.classList.add('flex');
+                }
                 const img = document.createElement('img');
+                img.id = 'previewActiveImage';
                 img.src = previewUrl;
                 img.alt = fileData.name;
-                img.className = 'max-h-[50vh] max-w-full rounded-xl object-contain shadow-xs mx-auto';
+                img.className = 'max-h-[52vh] max-w-full rounded-xl object-contain shadow-xs mx-auto transition-transform duration-200';
                 previewContainer.appendChild(img);
-            } else if (fileData.mime === 'application/pdf' || fileNameLower.endsWith('.pdf')) {
-                const iframe = document.createElement('iframe');
-                iframe.src = previewUrl;
-                iframe.className = 'w-full h-[55vh] rounded-xl border border-slate-200 dark:border-slate-700 bg-white';
-                previewContainer.appendChild(iframe);
-            } else if (fileData.mime && fileData.mime.startsWith('video/')) {
-                const video = document.createElement('video');
-                video.src = previewUrl;
-                video.controls = true;
-                video.className = 'max-h-[50vh] max-w-full rounded-xl shadow-xs mx-auto bg-black';
-                previewContainer.appendChild(video);
-            } else if (fileData.mime && fileData.mime.startsWith('audio/')) {
-                const audioBox = document.createElement('div');
-                audioBox.className = 'p-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl flex flex-col items-center justify-center w-full max-w-md mx-auto';
-                audioBox.innerHTML = `
-                    <div class="h-14 w-14 rounded-xl bg-indigo-50 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-3">
-                        <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 20 20"><path d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z"></path></svg>
-                    </div>
-                    <audio controls class="w-full"><source src="${previewUrl}"></audio>
-                `;
-                previewContainer.appendChild(audioBox);
-            } else if (isTextCode) {
-                const codeBox = document.createElement('div');
-                codeBox.className = 'w-full flex flex-col space-y-2';
-                codeBox.innerHTML = `
-                    <div class="flex items-center justify-between text-xs font-mono text-slate-500 pb-1.5 border-b border-slate-200 dark:border-slate-700">
-                        <span>Pratinjau Kode / Teks</span>
-                        <div class="flex items-center space-x-2">
-                            <span class="text-[10px] text-slate-400">Maks. 200KB</span>
-                            <button type="button" id="btnInlineEditText" class="px-2.5 py-0.5 rounded-lg bg-brand-50 hover:bg-brand-100 text-brand-700 border border-brand-200 font-sans font-bold text-[11px] transition-colors">
-                                ✏️ Edit Teks
-                            </button>
-                        </div>
-                    </div>
-                    <pre class="w-full max-h-[50vh] overflow-auto p-4 rounded-xl bg-slate-900 text-slate-100 font-mono text-xs leading-relaxed select-text whitespace-pre border border-slate-800"><code id="codePreviewContent">Memuat isi berkas...</code></pre>
-                `;
-                previewContainer.appendChild(codeBox);
-
-                fetch(previewUrl)
-                    .then(r => r.text())
-                    .then(text => {
-                        const codeEl = document.getElementById('codePreviewContent');
-                        if (codeEl) {
-                            codeEl.textContent = text.slice(0, 200000);
-                        }
-                        const editBtn = document.getElementById('btnInlineEditText');
-                        if (editBtn) {
-                            editBtn.onclick = () => window.openEditTextFileModal(fileData.id, fileData.name, text);
-                        }
-                    })
-                    .catch(() => {
-                        const codeEl = document.getElementById('codePreviewContent');
-                        if (codeEl) codeEl.textContent = 'Gagal memuat pratinjau teks.';
-                    });
             } else {
-                const emptyBox = document.createElement('div');
-                emptyBox.className = 'p-8 text-center text-slate-400';
-                emptyBox.innerHTML = `
-                    <div class="h-16 w-16 mx-auto mb-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center">
-                        <span class="text-base font-bold">${fileData.badge || 'FILE'}</span>
-                    </div>
-                    <h4 class="text-xs font-semibold text-slate-700 dark:text-slate-300">${escapeHtml(fileData.name)}</h4>
-                    <p class="text-xs text-slate-400 mt-1 max-w-xs mx-auto">Pratinjau langsung tidak tersedia untuk format berkas ini. Anda dapat mengunduhnya secara langsung.</p>
-                `;
-                previewContainer.appendChild(emptyBox);
+                if (imageControls) {
+                    imageControls.classList.add('hidden');
+                    imageControls.classList.remove('flex');
+                }
+                if (fileData.mime === 'application/pdf' || fileNameLower.endsWith('.pdf')) {
+                    const iframe = document.createElement('iframe');
+                    iframe.src = previewUrl;
+                    iframe.className = 'w-full h-[55vh] rounded-xl border border-slate-200 dark:border-slate-700 bg-white';
+                    previewContainer.appendChild(iframe);
+                } else if (fileData.mime && fileData.mime.startsWith('video/')) {
+                    const video = document.createElement('video');
+                    video.src = previewUrl;
+                    video.controls = true;
+                    video.className = 'max-h-[50vh] max-w-full rounded-xl shadow-xs mx-auto bg-black';
+                    previewContainer.appendChild(video);
+                } else if (fileData.mime && fileData.mime.startsWith('audio/')) {
+                    const audioBox = document.createElement('div');
+                    audioBox.className = 'p-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl flex flex-col items-center justify-center w-full max-w-md mx-auto';
+                    audioBox.innerHTML = `
+                        <div class="h-14 w-14 rounded-xl bg-indigo-50 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-3">
+                            <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 20 20"><path d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z"></path></svg>
+                        </div>
+                        <audio controls class="w-full"><source src="${previewUrl}"></audio>
+                    `;
+                    previewContainer.appendChild(audioBox);
+                } else if (isTextCode) {
+                    const codeBox = document.createElement('div');
+                    codeBox.className = 'w-full flex flex-col space-y-2';
+                    codeBox.innerHTML = `
+                        <div class="flex items-center justify-between text-xs font-mono text-slate-500 pb-1.5 border-b border-slate-200 dark:border-slate-700">
+                            <span>Pratinjau Kode / Teks</span>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-[10px] text-slate-400">Maks. 200KB</span>
+                                <button type="button" id="btnInlineEditText" class="px-2.5 py-0.5 rounded-lg bg-brand-50 hover:bg-brand-100 text-brand-700 border border-brand-200 font-sans font-bold text-[11px] transition-colors">
+                                    ✏️ Edit Teks
+                                </button>
+                            </div>
+                        </div>
+                        <pre class="w-full max-h-[50vh] overflow-auto p-4 rounded-xl bg-slate-900 text-slate-100 font-mono text-xs leading-relaxed select-text whitespace-pre border border-slate-800"><code id="codePreviewContent">Memuat isi berkas...</code></pre>
+                    `;
+                    previewContainer.appendChild(codeBox);
+
+                    fetch(previewUrl)
+                        .then(r => r.text())
+                        .then(text => {
+                            const codeEl = document.getElementById('codePreviewContent');
+                            if (codeEl) {
+                                codeEl.textContent = text.slice(0, 200000);
+                            }
+                            const editBtn = document.getElementById('btnInlineEditText');
+                            if (editBtn) {
+                                editBtn.onclick = () => window.openEditTextFileModal(fileData.id, fileData.name, text);
+                            }
+                        })
+                        .catch(() => {
+                            const codeEl = document.getElementById('codePreviewContent');
+                            if (codeEl) codeEl.textContent = 'Gagal memuat pratinjau teks.';
+                        });
+                } else {
+                    const emptyBox = document.createElement('div');
+                    emptyBox.className = 'p-8 text-center text-slate-400';
+                    emptyBox.innerHTML = `
+                        <div class="h-16 w-16 mx-auto mb-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center">
+                            <span class="text-base font-bold">${fileData.badge || 'FILE'}</span>
+                        </div>
+                        <h4 class="text-xs font-semibold text-slate-700 dark:text-slate-300">${escapeHtml(fileData.name)}</h4>
+                        <p class="text-xs text-slate-400 mt-1 max-w-xs mx-auto">Pratinjau langsung tidak tersedia untuk format berkas ini. Anda dapat mengunduhnya secara langsung.</p>
+                    `;
+                    previewContainer.appendChild(emptyBox);
+                }
             }
         }
 
@@ -2304,7 +2361,22 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 3000);
     };
 
-    // Global Shortcut: U to trigger file upload
+    // Image Preview Controls (Zoom & Rotate)
+    window.zoomPreviewImage = function (delta) {
+        const img = document.getElementById('previewActiveImage');
+        if (!img) return;
+        currentPreviewZoom = Math.max(0.4, Math.min(3.5, currentPreviewZoom + delta));
+        img.style.transform = `scale(${currentPreviewZoom}) rotate(${currentPreviewRotate}deg)`;
+    };
+
+    window.rotatePreviewImage = function () {
+        const img = document.getElementById('previewActiveImage');
+        if (!img) return;
+        currentPreviewRotate = (currentPreviewRotate + 90) % 360;
+        img.style.transform = `scale(${currentPreviewZoom}) rotate(${currentPreviewRotate}deg)`;
+    };
+
+    // Global Shortcuts: U for upload, Space for Quick-Look Preview
     document.addEventListener('keydown', function (e) {
         if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
             return;
@@ -2313,8 +2385,80 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const uploadInput = document.getElementById('fileUploadInput');
             if (uploadInput) uploadInput.click();
+            return;
+        }
+        if (e.code === 'Space') {
+            const detailModal = document.getElementById('fileDetailModal');
+            if (detailModal && !detailModal.classList.contains('hidden')) {
+                e.preventDefault();
+                closeModal('fileDetailModal');
+                return;
+            }
+            const checkedBoxes = Array.from(document.querySelectorAll('.file-select-checkbox:checked'));
+            if (checkedBoxes.length > 0) {
+                const targetCard = checkedBoxes[0].closest('.file-card') || checkedBoxes[0].closest('.file-row');
+                if (targetCard) {
+                    const jsonStr = targetCard.getAttribute('data-filejson');
+                    if (jsonStr) {
+                        try {
+                            e.preventDefault();
+                            openFileDetail(JSON.parse(jsonStr));
+                            return;
+                        } catch (err) {}
+                    }
+                }
+            }
         }
     });
+
+    // Copy IP Address Utility
+    window.copyIpAddress = function (ip, btn) {
+        if (!ip) return;
+        navigator.clipboard.writeText(ip).then(() => {
+            if (btn) {
+                const origHtml = btn.innerHTML;
+                btn.innerHTML = `<span class="text-emerald-600 dark:text-emerald-400 font-bold">✓ Disalin</span>`;
+                setTimeout(() => { btn.innerHTML = origHtml; }, 1800);
+            }
+            showToast('✓ IP ' + ip + ' berhasil disalin ke clipboard');
+        }).catch(() => {
+            prompt('Salin IP:', ip);
+        });
+    };
+
+    // User Logs Auto-Refresh Toggle
+    let userLogsAutoRefreshTimer = null;
+    window.toggleUserLogsAutoRefresh = function (enabled) {
+        if (userLogsAutoRefreshTimer) {
+            clearInterval(userLogsAutoRefreshTimer);
+            userLogsAutoRefreshTimer = null;
+        }
+        if (enabled) {
+            userLogsAutoRefreshTimer = setInterval(() => {
+                if (typeof navigateDriveSpa === 'function') {
+                    navigateDriveSpa(window.location.href, false);
+                } else {
+                    window.location.reload();
+                }
+            }, 10000);
+            showToast('ℹ Auto-Refresh aktif (10 detik)');
+        }
+    };
+
+    // Mobile FAB Toggle
+    window.toggleMobileFab = function () {
+        const menu = document.getElementById('mobileFabMenu');
+        const icon = document.getElementById('mobileFabIcon');
+        if (!menu) return;
+        const isHidden = menu.classList.contains('hidden');
+        if (isHidden) {
+            menu.classList.remove('hidden');
+            if (icon) icon.style.transform = 'rotate(45deg)';
+        } else {
+            menu.classList.add('hidden');
+            if (icon) icon.style.transform = 'rotate(0deg)';
+        }
+    };
 
     // =========================================================================
     // 13. User Avatar Dropdown, QR Modal, Revoke Public Share, Inspector & Command Palette

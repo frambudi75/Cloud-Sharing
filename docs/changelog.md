@@ -2,6 +2,28 @@
 
 Semua perubahan pada spesifikasi dan implementasi proyek file-sharing akan dicatat di dokumen ini.
 
+## [v1.5.4] - 2026-11-03
+### Diperbaiki
+- **Auto-Dismiss Upload Dock Widget**:
+  - Memperbaiki bug di mana notifikasi/dock progres pengunggahan kecil di sudut kanan bawah tetap bertahan di layar pada status 100% setelah berkas selesai diunggah.
+  - Menambahkan animasi transisi penyelesaian (`✓ Selesai 100%` dengan indikator warna hijau *emerald*) dan auto-dismiss otomatis setelah 1.8 detik.
+  - Memperbaiki dukungan tema gelap (*dark mode*) pada komponen `uploadDock`.
+
+### Ditambahkan & Ditingkatkan (UI/UX Polish)
+- **Modal Quick-Look Preview & Kontrol Gambar**:
+  - Penambahan kontrol perbesar (+), perkecil (-), dan putar 90° (*rotate*) pada pratinjau gambar di dalam modal rincian berkas.
+  - Shortcut keyboard `Space` untuk membuka/menutup pratinjau (*Quick-Look*) pada berkas yang sedang dipilih.
+  - Dukungan penuh *Dark Mode* pada jendela modal pratinjau berkas (`fileDetailModal`).
+- **Penyempurnaan Ikonografi & Badge Format Berkas**:
+  - Penambahan identifikasi visual kontras tinggi untuk format installer/aplikasi (`.exe, .msi, .apk`), image disk (`.iso, .img, .dmg`), database (`.sql, .db, .sqlite`), audio (`.flac, .m4a, .wav`), dan arsip (`.rar, .7z, .tar, .gz`).
+- **Interaksi Log Aktivitas & Audit Trail Cepat**:
+  - Tombol **Quick Copy IP**: 1-klik untuk menyalin alamat IP pengguna ke clipboard langsung dari tabel riwayat.
+  - Sakelar **Auto-Refresh (10 detik)** pada Log Aktivitas Pengguna dan Audit Trail Global Administrator untuk pemantauan data baru tanpa reload manual.
+- **Mobile Floating Action Button (FAB)**:
+  - Tombol aksi mengambang `+` di pojok kanan bawah khusus tampilan smartphone untuk akses instan ke: *Unggah Berkas*, *Folder Baru*, dan *Catatan Teks Baru*.
+- **Breadcrumbs Folder sebagai Drop Target**:
+  - Jalur navigasi folder di bagian atas kini mendukung drag-and-drop berkas langsung untuk memindahkan berkas ke folder induk dengan efek highlight hover.
+
 ## [v1.5.3] - 2026-11-03
 ### Ditambahkan & Ditingkatkan
 - **Sistem Pagination Interaktif pada Seluruh Log Aktivitas (Audit Trail)**:

@@ -123,8 +123,8 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
         <p class="text-xs text-slate-300 mt-1">Berkas akan langsung diunggah ke folder aktif</p>
     </div>
 
-    <!-- Top Navigation Bar (Mockup Aligned) -->
-    <header class="bg-white/95 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-30 shadow-xs">
+    <!-- Top Navigation Bar (Mockup Aligned & Glassmorphism) -->
+    <header class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 sticky top-0 z-30 shadow-xs transition-colors">
         <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             
             <!-- Left: Logo & Subtitle -->
@@ -468,15 +468,17 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                                         <svg class="w-3.5 h-3.5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                                     <?php endif; ?>
                                     <?php if ($index === count($breadcrumbs) - 1): ?>
-                                        <h1 class="text-base sm:text-lg font-bold text-slate-900 truncate">
+                                        <h1 class="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white truncate">
                                             <?= htmlspecialchars($crumb['name']) ?>
                                         </h1>
                                     <?php else: ?>
                                         <a href="?action=drive<?= $crumb['id'] !== null ? '&folder=' . $crumb['id'] : '' ?>" 
-                                           class="folder-drop-zone hover:text-brand-600 font-semibold px-1.5 py-0.5 rounded hover:bg-slate-100 transition-all truncate"
+                                           class="folder-drop-zone inline-flex items-center gap-1 font-semibold px-2 py-0.5 rounded-lg border border-transparent hover:border-slate-200 dark:hover:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-all truncate group"
                                            data-folder-id="<?= $crumb['id'] !== null ? $crumb['id'] : 'root' ?>"
-                                           data-folder-name="<?= htmlspecialchars($crumb['name']) ?>">
-                                            <?= htmlspecialchars($crumb['name']) ?>
+                                           data-folder-name="<?= htmlspecialchars($crumb['name']) ?>"
+                                           title="Buka / Lepaskan berkas di sini untuk memindahkan">
+                                            <svg class="w-3 h-3 text-slate-400 group-hover:text-brand-500" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path></svg>
+                                            <span><?= htmlspecialchars($crumb['name']) ?></span>
                                         </a>
                                     <?php endif; ?>
                                 <?php endforeach; ?>
@@ -1137,8 +1139,13 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                                         <?= number_format($activityTotal) ?> Catatan
                                     </span>
                                 </div>
-                                <div class="text-[11px] text-slate-400">
-                                    Menampilkan <?= (int) $logLimit ?> entri per halaman
+                                <div class="flex items-center space-x-3 text-[11px] text-slate-400">
+                                    <label class="inline-flex items-center space-x-1.5 cursor-pointer text-slate-500 hover:text-slate-800 transition-colors">
+                                        <input type="checkbox" id="userLogsAutoRefreshToggle" onchange="toggleUserLogsAutoRefresh(this.checked)" class="h-3.5 w-3.5 rounded border-slate-300 text-brand-600 focus:ring-brand-500">
+                                        <span>Auto-Refresh (10d)</span>
+                                    </label>
+                                    <span>&bull;</span>
+                                    <span>Menampilkan <?= (int) $logLimit ?> entri per halaman</span>
                                 </div>
                             </div>
 
@@ -1188,9 +1195,11 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
                                                     </td>
                                                     <td class="py-3 px-4 whitespace-nowrap">
                                                         <div class="flex items-center space-x-1.5">
-                                                            <span class="font-mono text-[11px] font-bold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded">
-                                                                <?= htmlspecialchars($log['ip_address']) ?>
-                                                            </span>
+                                                            <button type="button" onclick="copyIpAddress('<?= htmlspecialchars($log['ip_address']) ?>', this)"
+                                                                    class="inline-flex items-center gap-1 font-mono text-[11px] font-bold text-slate-700 hover:text-brand-600 bg-slate-100 hover:bg-slate-200 px-2 py-0.5 rounded transition-all group" title="Klik untuk salin alamat IP">
+                                                                <span><?= htmlspecialchars($log['ip_address']) ?></span>
+                                                                <svg class="w-3 h-3 text-slate-400 group-hover:text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                                                            </button>
                                                         </div>
                                                         <div class="text-[10px] text-slate-400 mt-0.5">
                                                             <?= htmlspecialchars($devInfo['device']) ?> &bull; <?= htmlspecialchars($devInfo['browser']) ?>
@@ -1804,6 +1813,43 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
         </div>
     </div>
 
+    <!-- Mobile Floating Action Button (FAB) -->
+    <div class="sm:hidden fixed bottom-6 right-6 z-40">
+        <!-- FAB Menu Popup -->
+        <div id="mobileFabMenu" class="hidden mb-3 flex flex-col items-end space-y-2 animate-item-in">
+            <button type="button" onclick="document.getElementById('fileUploadInput').click(); toggleMobileFab();" 
+                    class="flex items-center gap-2 px-3 py-2 rounded-xl bg-white dark:bg-slate-800 text-slate-800 dark:text-white shadow-xl border border-slate-200 dark:border-slate-700 text-xs font-bold hover:bg-slate-50">
+                <span>Unggah Berkas</span>
+                <span class="w-8 h-8 rounded-lg bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 flex items-center justify-center">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                </span>
+            </button>
+            <button type="button" onclick="openNewFolderModal(); toggleMobileFab();" 
+                    class="flex items-center gap-2 px-3 py-2 rounded-xl bg-white dark:bg-slate-800 text-slate-800 dark:text-white shadow-xl border border-slate-200 dark:border-slate-700 text-xs font-bold hover:bg-slate-50">
+                <span>Folder Baru</span>
+                <span class="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path></svg>
+                </span>
+            </button>
+            <button type="button" onclick="openNewTextFileModal(); toggleMobileFab();" 
+                    class="flex items-center gap-2 px-3 py-2 rounded-xl bg-white dark:bg-slate-800 text-slate-800 dark:text-white shadow-xl border border-slate-200 dark:border-slate-700 text-xs font-bold hover:bg-slate-50">
+                <span>Catatan / Teks</span>
+                <span class="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                </span>
+            </button>
+        </div>
+
+        <!-- Main FAB Button -->
+        <button type="button" id="mobileFabBtn" onclick="toggleMobileFab()" 
+                class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-brand-700 via-brand-600 to-indigo-500 text-white shadow-xl shadow-brand-500/30 flex items-center justify-center active:scale-95 transition-all"
+                title="Aksi Cepat">
+            <svg id="mobileFabIcon" class="w-7 h-7 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path>
+            </svg>
+        </button>
+    </div>
+
     <!-- Floating Bulk Actions Bar (Sticky bottom, animated slide-up when files are selected) -->
     <div id="bulkActionBar" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900/95 backdrop-blur-md text-white border border-slate-700/80 rounded-2xl px-5 py-3 shadow-2xl flex items-center space-x-4 transition-all duration-300 transform translate-y-24 opacity-0 pointer-events-none">
         <div class="flex items-center space-x-2">
@@ -2043,27 +2089,40 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
         </div>
     </div>
 
-    <!-- Modal 3: File Detail & Preview Modal (With Gallery Navigation) -->
-    <div id="fileDetailModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden animate-item-in">
+    <!-- Modal 3: File Detail & Preview Modal (With Gallery Navigation & Dark Mode Support) -->
+    <div id="fileDetailModal" class="hidden fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden animate-item-in">
             <!-- Header -->
-            <div class="h-14 px-6 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+            <div class="h-14 px-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-850">
                 <div class="flex items-center space-x-2.5 truncate max-w-[70%]">
-                    <span id="detailFileBadge" class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-700">FILE</span>
-                    <h3 class="font-bold text-slate-800 text-sm truncate" id="detailFileName">Nama Berkas</h3>
-                    <span id="detailGalleryCounter" class="hidden px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-slate-200/70 text-slate-600 shrink-0">1 / 1</span>
+                    <span id="detailFileBadge" class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">FILE</span>
+                    <h3 class="font-bold text-slate-800 dark:text-white text-sm truncate" id="detailFileName">Nama Berkas</h3>
+                    <span id="detailGalleryCounter" class="hidden px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-slate-200/70 dark:bg-slate-800 text-slate-600 dark:text-slate-400 shrink-0">1 / 1</span>
                 </div>
                 <div class="flex items-center space-x-1.5">
-                    <button type="button" id="detailBtnPrev" onclick="navigatePreviewGallery(-1)" class="hidden h-8 w-8 rounded-lg items-center justify-center text-slate-500 hover:text-brand-600 hover:bg-slate-200 transition-colors" title="Berkas Sebelumnya (←)">
+                    <!-- Image Quick Controls -->
+                    <div id="detailImageControls" class="hidden items-center space-x-1 border-r border-slate-200 dark:border-slate-700 pr-2 mr-1">
+                        <button type="button" onclick="zoomPreviewImage(-0.2)" class="h-8 w-8 rounded-lg flex items-center justify-center text-slate-500 hover:text-brand-600 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors" title="Perkecil (-)">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>
+                        </button>
+                        <button type="button" onclick="zoomPreviewImage(0.2)" class="h-8 w-8 rounded-lg flex items-center justify-center text-slate-500 hover:text-brand-600 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors" title="Perbesar (+)">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        </button>
+                        <button type="button" onclick="rotatePreviewImage()" class="h-8 w-8 rounded-lg flex items-center justify-center text-slate-500 hover:text-brand-600 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors" title="Putar 90°">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                        </button>
+                    </div>
+
+                    <button type="button" id="detailBtnPrev" onclick="navigatePreviewGallery(-1)" class="hidden h-8 w-8 rounded-lg items-center justify-center text-slate-500 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors" title="Berkas Sebelumnya (←)">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                     </button>
-                    <button type="button" id="detailBtnNext" onclick="navigatePreviewGallery(1)" class="hidden h-8 w-8 rounded-lg items-center justify-center text-slate-500 hover:text-brand-600 hover:bg-slate-200 transition-colors" title="Berkas Berikutnya (→)">
+                    <button type="button" id="detailBtnNext" onclick="navigatePreviewGallery(1)" class="hidden h-8 w-8 rounded-lg items-center justify-center text-slate-500 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors" title="Berkas Berikutnya (→)">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                     </button>
-                    <a id="detailBtnOpenNewTab" href="#" target="_blank" class="h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-brand-600 hover:bg-slate-200 transition-colors" title="Buka di Tab Baru">
+                    <a id="detailBtnOpenNewTab" href="#" target="_blank" class="h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors" title="Buka di Tab Baru">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                     </a>
-                    <button type="button" onclick="closeModal('fileDetailModal')" class="h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition-colors">
+                    <button type="button" onclick="closeModal('fileDetailModal')" class="h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
@@ -2072,23 +2131,23 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
             <!-- Content Area (Preview & Meta) -->
             <div class="flex-1 overflow-y-auto p-6 space-y-6">
                 <!-- Preview Canvas -->
-                <div class="relative rounded-xl border border-slate-200 bg-slate-50 p-4 flex items-center justify-center min-h-[220px]" id="detailPreviewContainer">
+                <div class="relative rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-4 flex items-center justify-center min-h-[240px] overflow-hidden" id="detailPreviewContainer">
                     <!-- Dynamic preview loaded by JS -->
                 </div>
 
                 <!-- File Metadata Grid -->
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-xl bg-slate-50/70 border border-slate-200 text-xs">
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 text-xs">
                     <div>
                         <span class="text-slate-400 block mb-0.5">Ukuran Berkas</span>
-                        <span class="font-semibold text-slate-800 font-mono" id="detailFileSize">-</span>
+                        <span class="font-semibold text-slate-800 dark:text-slate-200 font-mono" id="detailFileSize">-</span>
                     </div>
                     <div>
                         <span class="text-slate-400 block mb-0.5">Tipe Konten</span>
-                        <span class="font-semibold text-slate-800 truncate block font-mono" id="detailFileMime">-</span>
+                        <span class="font-semibold text-slate-800 dark:text-slate-200 truncate block font-mono" id="detailFileMime">-</span>
                     </div>
                     <div>
                         <span class="text-slate-400 block mb-0.5">Tanggal Diunggah</span>
-                        <span class="font-semibold text-slate-800" id="detailFileDate">-</span>
+                        <span class="font-semibold text-slate-800 dark:text-slate-200" id="detailFileDate">-</span>
                     </div>
                     <div>
                         <span class="text-slate-400 block mb-0.5">Status Berbagi</span>
@@ -2098,17 +2157,17 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
             </div>
 
             <!-- Footer Action Buttons -->
-            <div class="h-16 px-6 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
-                <button type="button" id="detailBtnDelete" class="inline-flex items-center px-3.5 py-2 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 border border-rose-200 transition-colors">
+            <div class="h-16 px-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850 flex items-center justify-between">
+                <button type="button" id="detailBtnDelete" class="inline-flex items-center px-3.5 py-2 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 transition-colors">
                     <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                     Hapus
                 </button>
                 <div class="flex items-center space-x-2">
-                    <button type="button" id="detailBtnRename" class="inline-flex items-center px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition-colors">
+                    <button type="button" id="detailBtnRename" class="inline-flex items-center px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
                         <svg class="w-4 h-4 mr-1.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                         Ganti Nama
                     </button>
-                    <button type="button" id="detailBtnShare" class="inline-flex items-center px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition-colors">
+                    <button type="button" id="detailBtnShare" class="inline-flex items-center px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
                         <svg class="w-4 h-4 mr-1.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 12a3 3 0 100-6 3 3 0 000 6zM18 6a3 3 0 100-6 3 3 0 000 6zM18 20a3 3 0 100-6 3 3 0 000 6z"></path></svg>
                         Bagikan
                     </button>

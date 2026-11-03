@@ -588,21 +588,48 @@ class StorageService
             ];
         }
 
-        if (str_starts_with($mime, 'audio/') || in_array($ext, ['mp3', 'wav', 'ogg', 'm4a', 'flac'])) {
+        if (str_starts_with($mime, 'audio/') || in_array($ext, ['mp3', 'wav', 'ogg', 'm4a', 'flac', 'aac', 'wma'])) {
             return [
                 'type' => 'audio',
-                'badge' => 'AUD',
-                'bg' => 'bg-indigo-50 text-indigo-600 border border-indigo-200/80',
+                'badge' => strtoupper($ext ?: 'AUD'),
+                'bg' => 'bg-emerald-50 text-emerald-700 border border-emerald-200/80',
+                'icon_bg' => 'bg-emerald-100/70 text-emerald-600',
+            ];
+        }
+
+        if (in_array($mime, ['application/zip', 'application/x-rar-compressed', 'application/x-tar', 'application/gzip', 'application/x-7z-compressed', 'application/x-bzip2']) || in_array($ext, ['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz', 'tgz'])) {
+            return [
+                'type' => 'archive',
+                'badge' => strtoupper($ext ?: 'ZIP'),
+                'bg' => 'bg-amber-50 text-amber-800 border border-amber-200/80',
+                'icon_bg' => 'bg-amber-100/70 text-amber-700',
+            ];
+        }
+
+        if (in_array($ext, ['iso', 'img', 'dmg', 'vhd', 'vhdx', 'qcow2', 'bin'])) {
+            return [
+                'type' => 'archive',
+                'badge' => strtoupper($ext),
+                'bg' => 'bg-purple-50 text-purple-700 border border-purple-200/80',
+                'icon_bg' => 'bg-purple-100/70 text-purple-600',
+            ];
+        }
+
+        if (in_array($ext, ['exe', 'msi', 'apk', 'deb', 'rpm', 'appx', 'bat', 'cmd'])) {
+            return [
+                'type' => 'file',
+                'badge' => strtoupper($ext),
+                'bg' => 'bg-indigo-50 text-indigo-700 border border-indigo-200/80',
                 'icon_bg' => 'bg-indigo-100/70 text-indigo-600',
             ];
         }
 
-        if (in_array($mime, ['application/zip', 'application/x-rar-compressed', 'application/x-tar', 'application/gzip', 'application/x-7z-compressed']) || in_array($ext, ['zip', 'rar', '7z', 'tar', 'gz'])) {
+        if (in_array($ext, ['sql', 'db', 'sqlite', 'sqlite3', 'mdb', 'accdb'])) {
             return [
-                'type' => 'archive',
-                'badge' => 'ZIP',
-                'bg' => 'bg-emerald-50 text-emerald-700 border border-emerald-200/80',
-                'icon_bg' => 'bg-emerald-100/70 text-emerald-600',
+                'type' => 'code',
+                'badge' => strtoupper($ext),
+                'bg' => 'bg-cyan-50 text-cyan-700 border border-cyan-200/80',
+                'icon_bg' => 'bg-cyan-100/70 text-cyan-600',
             ];
         }
 
@@ -615,7 +642,7 @@ class StorageService
             ];
         }
 
-        if (in_array($ext, ['php', 'js', 'json', 'html', 'css', 'ts', 'py', 'sql', 'yml', 'yaml', 'xml'])) {
+        if (in_array($ext, ['php', 'js', 'json', 'html', 'css', 'ts', 'py', 'yml', 'yaml', 'xml', 'sh', 'env', 'ini'])) {
             return [
                 'type' => 'code',
                 'badge' => strtoupper($ext),
