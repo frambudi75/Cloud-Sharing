@@ -1653,7 +1653,11 @@ document.addEventListener('DOMContentLoaded', () => {
                                             try {
                                                 const res = JSON.parse(chunkXhr.responseText);
                                                 if (!res.success) {
-                                                    chunkReject(new Error(res.error || `Gagal mengunggah bagian ke-${chunkIndex + 1}`));
+                                                    const err = new Error(res.error || `Gagal mengunggah bagian ke-${chunkIndex + 1}`);
+                                                    if (Array.isArray(res.missing_chunks)) {
+                                                        err.missingChunks = res.missing_chunks;
+                                                    }
+                                                    chunkReject(err);
                                                     return;
                                                 }
                                                 chunkResolve(res);
@@ -1683,6 +1687,17 @@ document.addEventListener('DOMContentLoaded', () => {
                                     return;
                                 }
 
+                                // Self-healing: jika server melaporkan ada potongan awal yang hilang saat verifikasi integritas
+                                if (err.missingChunks && Array.isArray(err.missingChunks) && err.missingChunks.length > 0) {
+                                    console.warn('[Resumable Upload] Mengunggah ulang potongan yang terlewat:', err.missingChunks);
+                                    for (const missingIdx of err.missingChunks) {
+                                        existingChunksSet.delete(missingIdx);
+                                    }
+                                    // Pindahkan loop mundur ke indeks potongan terkecil yang hilang
+                                    chunkIndex = Math.min(...err.missingChunks) - 1;
+                                    break;
+                                }
+
                                 attempt++;
                                 if (attempt >= maxRetries) {
                                     throw err;
@@ -1695,7 +1710,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
                         }
 
-                        uploadedBytes += (end - start);
+                        if (chunkSuccess) {
+                            uploadedBytes += (end - start);
+                        }
                     }
 
                     if (barEl) barEl.style.width = '100%';

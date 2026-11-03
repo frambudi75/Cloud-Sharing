@@ -2355,6 +2355,6 @@ $myPublicSharesCount = isset($myPublicShares) ? count($myPublicShares) : 0;
 </div>
 
 <!-- Script Drive Client Interactivity -->
-<script src="assets/js/drive.js?v=1.4.1" defer></script>
+<script src="assets/js/drive.js?v=<?= defined('APP_VERSION') ? APP_VERSION : '1.5.0' ?>" defer></script>
 
 <?php require_once dirname(__DIR__) . '/layouts/footer.php'; ?>

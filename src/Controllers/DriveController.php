@@ -393,9 +393,10 @@ class DriveController
 
             $existingChunks = [];
             if (is_dir($chunkDir)) {
+                @touch($chunkDir);
                 for ($i = 0; $i < $totalChunks; $i++) {
                     $part = $chunkDir . DIRECTORY_SEPARATOR . "chunk_{$i}.part";
-                    if (file_exists($part) && filesize($part) > 0) {
+                    if (file_exists($part) && (int)@filesize($part) > 0) {
                         $existingChunks[] = $i;
                     }
                 }
@@ -438,11 +439,8 @@ class DriveController
             $chunkBaseDir = StorageService::getChunkDir();
             $chunkDir = $chunkBaseDir . DIRECTORY_SEPARATOR . $uploadId;
 
-            // Cek kuota pada potongan pertama atau jika direktori chunk baru diinisialisasi & bersihkan potongan usang
+            // Cek kuota pada potongan pertama atau jika direktori chunk baru diinisialisasi
             if ($chunkIndex === 0 || !is_dir($chunkDir)) {
-                if (mt_rand(1, 10) === 1) {
-                    StorageService::cleanOldChunks(86400);
-                }
                 $user = AuthService::user();
                 if ($user && ($user['storage_used'] + $totalSize) > $user['storage_quota']) {
                     $this->respondJson(['success' => false, 'error' => 'Kapasitas penyimpanan Anda tidak mencukupi untuk berkas ini.']);
@@ -465,6 +463,7 @@ class DriveController
                 $this->respondJson(['success' => false, 'error' => "Gagal menyimpan potongan ke-{$chunkIndex}."]);
                 return;
             }
+            @touch($chunkDir);
 
             // Jika masih ada potongan berikutnya
             if ($chunkIndex < $totalChunks - 1) {
@@ -478,12 +477,21 @@ class DriveController
             }
 
             // Seluruh potongan lengkap, verifikasi integritas
+            $missingChunks = [];
             for ($i = 0; $i < $totalChunks; $i++) {
                 $part = $chunkDir . DIRECTORY_SEPARATOR . "chunk_{$i}.part";
-                if (!file_exists($part)) {
-                    $this->respondJson(['success' => false, 'error' => "Potongan berkas ke-{$i} tidak ditemukan."]);
-                    return;
+                if (!file_exists($part) || (int)@filesize($part) === 0) {
+                    $missingChunks[] = $i;
                 }
+            }
+
+            if (!empty($missingChunks)) {
+                $this->respondJson([
+                    'success' => false,
+                    'error' => "Potongan berkas ke-{$missingChunks[0]} tidak ditemukan.",
+                    'missing_chunks' => $missingChunks
+                ]);
+                return;
             }
 
             // Gabungkan potongan
@@ -501,16 +509,20 @@ class DriveController
                     stream_copy_to_stream($in, $out);
                     fclose($in);
                 }
-                @unlink($part);
             }
             fclose($out);
 
             // Simpan berkas gabungan ke storage permanen
             $result = StorageService::storeMergedFile($mergedTempPath, $originalName, $userId, $folderId);
 
-            // Bersihkan direktori chunk sementara
-            @unlink($mergedTempPath);
-            @rmdir($chunkDir);
+            // Bersihkan direktori chunk sementara setelah berhasil
+            if (!empty($result['success'])) {
+                for ($i = 0; $i < $totalChunks; $i++) {
+                    @unlink($chunkDir . DIRECTORY_SEPARATOR . "chunk_{$i}.part");
+                }
+                @unlink($mergedTempPath);
+                @rmdir($chunkDir);
+            }
 
             $result['completed'] = true;
             $this->respondJson($result);
