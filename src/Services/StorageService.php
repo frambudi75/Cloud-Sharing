@@ -266,8 +266,11 @@ class StorageService
         $finfo = new finfo(FILEINFO_MIME_TYPE);
         $mimeType = $finfo->file($tempFilePath) ?: 'application/octet-stream';
 
-        // Checksum SHA-256
-        $fileHash = hash_file('sha256', $tempFilePath) ?: null;
+        // Checksum SHA-256 (hanya untuk file <= 50 MB agar tidak memblokir IO & menyebabkan gateway timeout pada file bergiga-giga)
+        $fileHash = null;
+        if ($fileSize <= 52428800) {
+            $fileHash = hash_file('sha256', $tempFilePath) ?: null;
+        }
 
         // Generate nama file acak
         $storageFilename = bin2hex(random_bytes(16)) . '.bin';
