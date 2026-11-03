@@ -101,7 +101,7 @@ class WebhookService
             ]);
             $response = curl_exec($ch);
             $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close($ch);
+            unset($ch); // PHP 8.0+ otomatis menutup CurlHandle saat dihancurkan; curl_close() deprecated di PHP 8.5
 
             $success = ($response !== false && $httpCode >= 200 && $httpCode < 300);
         } else {
