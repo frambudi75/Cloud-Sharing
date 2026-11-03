@@ -1,4 +1,4 @@
-ARG PHP_VERSION=8.4
+ARG PHP_VERSION=8.5
 FROM php:${PHP_VERSION}-fpm-alpine
 
 # Install build dependencies dan libraries yang dibutuhkan
